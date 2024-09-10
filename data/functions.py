@@ -4,6 +4,33 @@ import numpy as np
 import time
 from datetime import datetime
 import pyautogui
+from moviepy.editor import VideoFileClip, TextClip, CompositeVideoClip
+import pandas as pd
+import numpy as np
+
+def overlay_mouse_actions(video_file, csv_file, output_file):
+    video = VideoFileClip(video_file)
+    mouse_data = pd.read_csv(csv_file)
+    fps = video.fps
+    
+    def make_frame(t):
+        # Find the closest mouse action to the current time
+        closest_index = mouse_data['Timestamp'].sub(t).abs().idxmin()
+        action = mouse_data.iloc[closest_index]
+        
+        # Create a text clip for the mouse position
+        txt_clip = TextClip(f"X: {action['X']}, Y: {action['Y']}, Clicked: {action['Clicked']}", fontsize=24, color='white')
+        txt_clip = txt_clip.set_position(('center', 'bottom')).set_duration(video.duration)
+        
+        # Create a background clip to overlay text on
+        background = np.zeros((video.h, video.w, 3), dtype='uint8')
+        background[:] = 0  # Black background
+        return txt_clip.set_duration(video.duration).set_fps(fps).get_frame(t)
+    
+    txt_clips = [make_frame(t) for t in np.arange(0, video.duration, 1 / fps)]
+    final_clip = CompositeVideoClip([video] + txt_clips)
+    final_clip.write_videofile(output_file, codec='libx264')
+
 
 def record_screen(output_file, fps=12, duration=6):
     with mss.mss() as sct:
@@ -18,35 +45,11 @@ def record_screen(output_file, fps=12, duration=6):
         # Define the codec and create a VideoWriter object
         fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # Codec for .avi files
         out = cv2.VideoWriter(output_file, fourcc, fps, (screen_width, screen_height))
-
-        # Load cursor image
-        cursor = cv2.imread('cursor.png', cv2.IMREAD_UNCHANGED)
-        cursor_height, cursor_width = cursor.shape[:2]
         
         while time.time() < end_time:
             start_time = time.time()
             img = np.array(sct.grab(monitor))  # Capture the screen
             frame = cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)  # Convert from BGRA to BGR
-
-            # Get mouse position
-            mouse_x, mouse_y = pyautogui.position()
-            
-            # Ensure cursor is within screen bounds
-            if 0 <= mouse_x < screen_width and 0 <= mouse_y < screen_height:
-                # Overlay cursor on the frame
-                cursor_x = mouse_x - cursor_width // 2
-                cursor_y = mouse_y - cursor_height // 2
-                
-                # Create a mask for cursor
-                cursor_mask = cursor[:, :, 3] / 255.0
-                cursor_rgb = cursor[:, :, :3]
-                
-                # Place cursor on frame
-                for c in range(3):  # Loop over color channels
-                    frame[cursor_y:cursor_y + cursor_height, cursor_x:cursor_x + cursor_width, c] = (
-                        cursor_mask * cursor_rgb[:, :, c] +
-                        (1 - cursor_mask) * frame[cursor_y:cursor_y + cursor_height, cursor_x:cursor_x + cursor_width, c]
-                    )
             
             # Write the frame to the video file
             out.write(frame)
@@ -66,4 +69,5 @@ def record_screen(output_file, fps=12, duration=6):
 
 if __name__ == "__main__":
     output_file=f'record_{datetime.now().strftime("%Y-%m-%d")}.mp4'
-    record_screen(output_file=output_file)
+    # record_screen(output_file=output_file)
+    overlay_mouse_actions('your_video.mp4', 'mouse_actions.csv', 'output_with_mouse.mp4')

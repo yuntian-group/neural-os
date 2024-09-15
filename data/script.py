@@ -1,22 +1,24 @@
-import subprocess
-import time
 
-def start_obs():
-    # Start OBS (Adjust path to your OBS executable)
-    subprocess.Popen([r"C:\\Program Files (x86)\\obs-studio\\bin\\64bit\\obs64.exe", "--startrecording"], cwd=r"C:\Program Files (x86)\obs-studio\obs-plugins\64bit")
-
-def record_mouse_actions():
-    # Import the mouse recording function from your script
-    from record_mouse import record_mouse_actions
-    record_mouse_actions(fps=12, duration=12)
+import obsws_python as obs
+from record_mouse import record_mouse_actions
 
 def script():
-    # Start OBS
-    start_obs()
+    # Connect to OBS
+    ws = obs.ReqClient(host='192.168.1.177', port=4455, password='mypassword')  # Update with your WebSocket password if needed
+
+    # Start OBS recording
+    ws.start_record()
 
     # Start recording mouse actions
-    record_mouse_actions()
-    print("We are recording!")
+    max_x, max_y = record_mouse_actions(fps=15, duration=12)
+
+    # Stop OBS recording
+    ws.stop_record()
+
+    # Disconnect from OBS
+    ws.disconnect()
+
+    print(f"Recorded mouse data on: width {max_x} height {max_y} screen.")
 
 if __name__ == "__main__":
     script()

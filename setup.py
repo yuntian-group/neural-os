@@ -1,6 +1,6 @@
 
 import os
-from setuptools import setup
+from setuptools import setup, find_packages
 
 def parse_requirements(filename):
     with open(filename, "r", encoding="utf-8") as f:
@@ -16,5 +16,7 @@ setup(
     # author_email="your.email@example.com",
     # description="Computer simulator",
     # url="https://github.com/yourusername/your-repo",
+    description='',
+    packages=find_packages(),
     install_requires=requirements
 )

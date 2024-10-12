@@ -1,0 +1,9 @@
+name: collection
+channels:
+  - pytorch
+  - defaults
+dependencies:
+  - python=3.9
+  - pip:
+    - obsws_python==1.7.0
+    - -e .

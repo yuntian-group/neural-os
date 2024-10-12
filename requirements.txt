@@ -4,4 +4,3 @@ pynput
 pyautogui
 opencv-python
 moviepy
-obsws_python

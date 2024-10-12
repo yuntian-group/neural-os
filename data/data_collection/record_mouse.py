@@ -54,10 +54,10 @@ def record_mouse_actions_x(fps=12, duration=12, output_file='data/raw_data/mouse
 
     return pyautogui.size()
 
-def record_mouse_actions(fps=12, duration=12, output_file='data/raw_data/mouse_actions.csv'):
+def record_mouse_actions(fps=12, duration=12, save_path: str = 'raw_data/record_0'):
     start_time = time.time()
     data = []
-    interval = 1 / fps
+    interval = 1 / (fps)
 
     elapsed_time = 0
 
@@ -85,9 +85,9 @@ def record_mouse_actions(fps=12, duration=12, output_file='data/raw_data/mouse_a
     listener.stop()
     
     df = pd.DataFrame(data, columns=['Timestamp', 'Timestamp_formated', 'X', 'Y', 'Right Click', 'Left Click'])
-    df.to_csv(output_file, index=False)
+    df.to_csv(save_path, index=False)
 
     return pyautogui.size()
 
 if __name__ == "__main__":
-    record_mouse_actions(fps=12, duration=5, output_file='data/raw_data/mouse_actions.csv')
+    record_mouse_actions(fps=12, duration=5, output_file='raw_data/mouse_actions.csv')

@@ -3,7 +3,6 @@ import cv2
 import numpy as np
 import time
 from datetime import datetime
-import pyautogui
 from moviepy.editor import VideoFileClip, TextClip, CompositeVideoClip
 import pandas as pd
 import numpy as np
@@ -21,6 +20,7 @@ def overlay_mouse_actions(video_file, csv_file, output_file):
     def make_frame(t):
         # Find the closest mouse action to the current time
         closest_index = mouse_data['Timestamp'].sub(t).abs().idxmin()
+        closest_index = mouse_data['Timestamp'].sub(t).abs().idxmin()
         action = mouse_data.iloc[closest_index]
         
         # Read the corresponding video frame
@@ -28,21 +28,21 @@ def overlay_mouse_actions(video_file, csv_file, output_file):
         
         # Convert the frame to OpenCV format (BGR)
         frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-        
-        # Add text to the frame
-        text = f"(MOUSE INPUTS) X: {action['X']}, Y: {action['Y']}, Right Click: {action['Right Click']}, Left Click: {action['Left Click']}"
-        cv2.putText(frame, text, (50, video.h - 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
-        
+
         # Get the mouse coordinates
         x_pos = int(action['X'])
         y_pos = int(action['Y'])
+
+        x_pos = int(x_pos - (1920 - 512)/2) #relative cordinate mapped to video
+        y_pos = int(y_pos - (1080 - 512)/2) #relative cordinate mapped to video
         
-        x_pos = int(video_width / 1920 * x_pos)
-        y_pos = int(video_height / 1080 * y_pos)
-        
+        # Add text to the frame
+        text = f"X: {x_pos}, Y: {y_pos}, RC: {action['Right Click']}, LC: {action['Left Click']}"
+        cv2.putText(frame, text, (10, video.h - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2, cv2.LINE_AA)     
+
         # Overlay a red dot at the (X, Y) position
         if 0 <= x_pos <= video.w and 0 <= y_pos <= video.h:
-            cv2.circle(frame, (x_pos, y_pos), 5, (0, 0, 255), -1)  # Red dot with radius 10
+            cv2.circle(frame, (x_pos, y_pos), 3, (0, 0, 255), -1)  # Red dot with radius 10
         
         return frame
 

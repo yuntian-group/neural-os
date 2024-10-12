@@ -1,0 +1,6 @@
+pandas
+numpy
+pynput
+pyautogui
+opencv-python
+moviepy

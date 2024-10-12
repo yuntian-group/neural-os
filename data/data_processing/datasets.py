@@ -9,6 +9,12 @@ import torch
 from typing import List
 from latent_diffusion.ldm.modules.encoders.modules import BERTTokenizer
 import ast
+import pytorch_lightning as pl
+
+from torch.utils.data import DataLoader, Dataset
+from PIL import Image
+
+from latent_diffusion.ldm.util import instantiate_from_config
 
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
@@ -166,8 +172,6 @@ class ActionsSequenceData(Dataset):
                  val=False
                  ):
         self.data_path = data_csv_path
-
-        bert_tokenizer = BERTTokenizer(vq_interface=False)
         
         data = pd.read_csv(data_csv_path)
         self.image_seq_paths = data["Image_seq_cond_path"].apply(ast.literal_eval).to_list()
@@ -212,6 +216,72 @@ class ActionsSequenceData(Dataset):
         return torch.tensor(image)
 
 
+class DataModule(pl.LightningDataModule):
+
+    """
+    This is the module we pass to the trainer. 
+    """
+
+    def __init__(self, 
+                 batch_size, 
+                 train=None, 
+                 validation=None, 
+                 test=None, 
+                 wrap=False, 
+                 num_workers=None, 
+                 shuffle=True,
+                 drop_last=False,
+                 pin_memory=False,
+                 prefetch_factor=2,
+                 persistent_workers=False
+        ):
+        super().__init__()
+        self.batch_size = batch_size
+        self.wrap=wrap, 
+        self.num_workers=num_workers
+        self.shuffle=shuffle,
+        self.drop_last=drop_last,
+        self.pin_memory=pin_memory,
+        self.prefetch_factor=prefetch_factor,
+        self.persistent_workers=persistent_workers
+
+        if num_workers > 1:
+            os.environ["TOKENIZERS_PARALLELISM"] = "true"
+
+        self.dataset_configs = dict()
+
+        if train:
+            self.dataset_configs["train"] = train
+            self.train_dataloader = self.init_train_dataloader
+        if validation:
+            self.dataset_configs["validation"] = validation
+            self.val_dataloader = self.init_val_dataloader
+        if test:
+            self.dataset_configs["test"] = test
+            self.test_dataloader = self.init_test_dataloader
+
+    def setup(self, stage=None):
+        self.datasets = dict(
+            (k, instantiate_from_config(self.dataset_configs[k]))
+            for k in self.dataset_configs)
+
+    def init_train_dataloader(self):
+        return DataLoader(self.datasets["train"], 
+                          batch_size=self.batch_size,
+                          num_workers=self.num_workers, 
+                          shuffle=self.shuffle)
+
+    def init_val_dataloader(self):
+        return DataLoader(self.datasets["validation"],
+                          batch_size=self.batch_size,
+                          num_workers=self.num_workers,
+                          shuffle=self.shuffle)
+
+    def init_test_dataloader(self):
+        return DataLoader(self.datasets["test"], 
+                          batch_size=self.batch_size,
+                          num_workers=self.num_workers, 
+                          shuffle=self.shuffle)
         
 
         
@@ -240,7 +310,7 @@ class PersonalizeVal0(Personalize0):
         
 class CsllmTrainSeq(ActionsSequenceData):
     def __init__(self, **kwargs):
-        super().__init__(data_csv_path='/u4/jlrivard/latent-diffusion/data/train_256x256_w_actions_binned/train_sequence_info.csv')
+        super().__init__(data_csv_path='/u4/jlrivard/CSLLM/data/data_processing/train_256x256_w_actions_binned/train_sequence_info.csv', **kwargs)
 
 
 # 'C:/Users/Luke/latent-diffusion/data/train_256x256_w_actions_seq_2/train_sequence_info.csv'

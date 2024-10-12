@@ -28,13 +28,17 @@ def create_video_from_frames(frames: list, save_path: str):
     print(f"\u2705 Saved video at {save_path}")
 
 
-def video_to_frames(video_path: str, save_path: str, actions_path: str):
+def video_to_frames(video_path: str, save_path: str, actions_path: str, save_map: bool = False, video_num: int = 0) -> pd.DataFrame:
 
     '''
     Opens a video and ouputs the frame and corresponding actions. Needs to be processed into sequences later.
     Also saves each frame in save_path folder.
+
+    Paramters:
+        video_num: The video number to label the image to. Used for conversion of multiple videos.
+        save_map: If true saves the map to a csv @ save_path.
     Returns:
-        df: a dataframe with image frame path and action column.
+        df: a dataframe with image frame path and action column. Maps frames to actions.
     '''
 
     os.makedirs(save_path, exist_ok=True)
@@ -64,13 +68,15 @@ def video_to_frames(video_path: str, save_path: str, actions_path: str):
             elif closest_action['Left Click']:
                 action = 'left_click'
             else: #Its a move.
-                action = f"{closest_action['X']}:{closest_action['Y']}"
+                action = f"{closest_action['X']}~{closest_action['Y']}"
             
             # Get the frame at the specified time
             frame = video.get_frame(time)
             
             frame_rgb = frame #cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            path = f'{save_path}/image_{frame_number}.png'
+            save_dir = f'{save_path}/record_{video_num}'
+            os.makedirs(save_dir, exist_ok=True)
+            path = f'{save_dir}/image_{frame_number}.png'
             Image.fromarray(frame_rgb).save(path)  # Saves in the correct format
 
             #append the path and labels
@@ -81,7 +87,10 @@ def video_to_frames(video_path: str, save_path: str, actions_path: str):
     df = pd.DataFrame()
     df['Image_path'] = images_paths
     df['Action'] = actions
-    df.to_csv(os.path.join(save_path, 'train_info.csv'), index=False)
+
+    #Save the mapping of frames to action if needed.
+    if save_map:
+        df.to_csv(os.path.join(save_dir, 'frame_action_map.csv'), index=False)
 
     return df
 
@@ -98,12 +107,12 @@ def action_binning(actions_list: list, bin_width = 4) -> list:
     prev_x, prev_y = 0, 0  # Initial point is set to (0, 0)
 
     #first action entry has no deltas so normalize to 0,0
-    prev_x, prev_y = map(int, actions_list[0].split(':'))
+    prev_x, prev_y = map(int, actions_list[0].split('~'))
     
     for action in actions_list:
         #Check if the action is a x:y pair.
         if ':' in action: 
-            x, y = map(int, action.split(':'))  # Convert 'x:y' into integers
+            x, y = map(int, action.split('~'))  # Convert 'x:y' into integers
             delta_x = x - prev_x
             delta_y = y - prev_y
             deltas.append(f"{delta_x//bin_width}:{delta_y//bin_width}")
@@ -112,43 +121,67 @@ def action_binning(actions_list: list, bin_width = 4) -> list:
 
     return deltas
 
-def sequence_creator(dataframe: pd.DataFrame, save_path: str, seq_len: int = 8, bin_width: int = 1):
+def sequence_creator(dataframe: pd.DataFrame, save_path: str, seq_len: int = 8, bin_width: int = 1, pad_start: bool = False, save_dataset: bool = False) -> pd.DataFrame:
 
     """
     Turns images and their corresponding actions into sequences of length seq_len. (seq_len - 1 cond actions and images).
     Also converts the action X,Y cordinates and bins them by bin_width. Saves the sequence dataset to save_path to be referenced by a dataset.
+    
+    Parameters:
+        seq_len: The number of previous conditioning frames -1.
+        bin_width: The divisor of the deltas in x,y.
+        pad_start: Pads the start of the video with padding frames such that each frame in the video is a target. This is so we can start inference with < seq_len frames.
+        save_dataset: If true saves the sequence dataset to csv @ save_path.
+
+    Returns:
+        seq_df: Dataframe with video and actions in sequences.
     """
 
     image_paths = dataframe['Image_path'].tolist()
-    actions = action_binning(dataframe['Action'].tolist(), bin_width=bin_width)
+    actions = dataframe['Action'].tolist() # action_binning(dataframe['Action'].tolist(), bin_width=bin_width)
+
+    #If padding, prepend the padding image and first action to the list.
+    if pad_start:
+        image_paths_padding = [save_path + '/padding.png' for _ in range(seq_len - 1)]
+        actions_padding = [actions[0] for _ in range(seq_len - 1)]
+
+    #prepend the padding if needed.
+    image_paths = image_paths_padding + image_paths
+    actions = actions_padding + actions
 
     seq_df = pd.DataFrame() #holds the new sequences
     context_cond_images = []
     target_image = []
     context_actions = []
 
-    for i in range(len(df) - seq_len + 1):
+    for i in range(len(dataframe) - seq_len + 1):
         context_cond_images.append(image_paths[i:i+seq_len-1])
         context_actions.append(actions[i:i+seq_len])
-        target_image.append(image_paths[i+seq_len - 1])
+        target_image.append(image_paths[i+seq_len-1])
 
     seq_df['Image_seq_cond_path'] = context_cond_images
     seq_df['Action_seq'] = context_actions
     seq_df['Target_image'] = target_image
-    seq_df.to_csv(os.path.join(save_path, 'train_sequence_info.csv'), index=False)
+
+    #Saves an individual video if specified
+    if save_path: 
+        seq_df.to_csv(os.path.join(save_path, 'train_dataset.csv'), index=False)
+
+    return seq_df
 
 
 
 
 if __name__ == "__main__":
 
-    save_path='train_256x256_w_actions_binned'
-    
+    save_path='train_paths_seq8_1000s'
+
     df = video_to_frames(
         video_path='sample11_256x256.mp4',
         save_path=save_path,
         actions_path='mouse_actions11.csv'
     )
+    
 
     #Saves the sequence dataset file
     sequence_creator(df, save_path, seq_len=8, bin_width=4)

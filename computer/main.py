@@ -32,21 +32,21 @@ if __name__ == "__main__":
 
     print("---------------------------------"); print("\u2705 Model loaded with ae and cond."); print("---------------------------------")
 
-    # device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-    # model = model.to(device)
+    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+    model = model.to(device)
 
     # for name, child in model.model.diffusion_model.named_children():
     #     print(name)
     #     if name == 'input_blocks': print(child)
 
-    # prompts, image_sequences, targets = get_ground_truths(data.datasets['train'], idxs=[i for i in range(173)])
+    prompts, image_sequences, targets = get_ground_truths(data.datasets['train'], idxs=[i for i in range(173)])
 
-    # os.makedirs(save_path, exist_ok=True)
+    os.makedirs(save_path, exist_ok=True)
 
     # sample_model(model, prompts, image_sequences, save_path, create_video=True)
 
-    # model = train_model(model, data, save_path, config)
-    # model = model.to(device)
+    model = train_model(model, data, save_path, config)
+    model = model.to(device)
 
-    # sample_model(model, prompts, image_sequences, save_path, True)
-    # prompts, image_sequences, targets = get_ground_truths(data.datasets['train'], idxs=[i for i in range(173)])
+    sample_model(model, prompts, image_sequences, save_path, True)
+    prompts, image_sequences, targets = get_ground_truths(data.datasets['train'], idxs=[i for i in range(173)])

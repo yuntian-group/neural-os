@@ -1,0 +1,14 @@
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info
+.pytest_cache
+.ipynb_checkpoints
+
+*.cpython-*
+*.pyc
+*.png
+*.csv
+thumbs.db
+.DS_Store
+.idea

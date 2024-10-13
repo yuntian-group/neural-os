@@ -84,92 +84,13 @@ class Personalize0(Dataset):
         example["class_label"] = torch.tensor(self.labels[i], device=device).unsqueeze(0).unsqueeze(0).repeat(800,1)
 
         return example
-    
-def get_all_images(images, labels):
-
-    t_images = []
-    t_labels = []
-
-    for path, label in zip(images, labels):
-        image = Image.open(path)
-        if not image.mode == "RGB":
-            image = image.convert("RGB")
-
-        image = np.array(image).astype(np.float32)
-
-        image = torch.tensor((image / 127.5 - 1.0).astype(np.float32)).unsqueeze(0)
-        label = torch.tensor(label).unsqueeze(0)
-
-        t_images.append(image)
-        t_labels.append(label)
-
-    return torch.stack(t_images), torch.stack(t_labels)
-
-
-
-
-
 
 class ActionsData(Dataset):
-    """
-    class dataset for csllm. includes images and corresponding action labels.
-    """
-    def __init__(self,
-                 data_csv_path,
-                 size=256,
-                 val=False
-                 ):
-        self.data_path = data_csv_path
-
-        bert_tokenizer = BERTTokenizer(vq_interface=False)
-        
-        data = pd.read_csv(data_csv_path)
-        self.image_paths = data["Image_path"]
-
-        # data["Label"] = data['Label'].apply(lambda label: bert_tokenizer.encode(label)) #tokenizes the actions.
-        self.labels = data['Label']
-    
-        if val:
-            self.image_paths=self.image_paths[:1024]
-            self.labels=self.lables[:1024]
-
-        self._length = len(self.image_paths) * 10
-        self.size = size
-
-
-    def __len__(self):
-        return self._length
-
-    def __getitem__(self, i):
-        example = dict()
-        # i = 157
-        # i = i % 180
-        i = 50 if i%2 == 0 else 0
-        image = Image.open(self.image_paths[i])
-        if not image.mode == "RGB":
-            image = image.convert("RGB")
-
-        image = np.array(image).astype(np.float32)
-
-        device = 'cpu'
-
-        #single sample overfit
-        example["image"] = torch.tensor((image / 127.5 - 1.0).astype(np.float32))# n b w h c
-        example["caption"] = str(self.labels[i])
-
-        # example["image"] = torch.tensor((image / 127.5 - 1.0).astype(np.float32))# n b w h c
-        # example["caption"] = self.labels[i]
-
-        return example   
-
-class ActionsSequenceData(Dataset):
     """
     class dataset for csllm. includes image sequences and corresponding action sequences for cond.
     """
     def __init__(self,
                  data_csv_path,
-                 size=256,
-                 val=False
                  ):
         self.data_path = data_csv_path
         
@@ -178,12 +99,7 @@ class ActionsSequenceData(Dataset):
         self.actions_seq = data['Action_seq'].apply(ast.literal_eval).to_list()
         self.targets = data['Target_image'].to_list()
 
-        # if val:
-        #     self.image_paths=self.image_seq_paths[:1024]
-        #     self.labels=self.image_seq_paths[:1024]
-
         self._length = len(self.image_seq_paths)
-        self.size = size
 
 
     def __len__(self):
@@ -194,7 +110,7 @@ class ActionsSequenceData(Dataset):
         takes a sequence of cond. images and actions and a single target.
         """
         example = dict()
-        i = i % 173
+        i = i % self._length
         # i = 0 if i % 2 == 0 else 50
 
 
@@ -290,27 +206,10 @@ class DataModule(pl.LightningDataModule):
 class PersonalizeTrain0(Personalize0):
     def __init__(self, **kwargs):
         super().__init__(data_csv_path='/u4/jlrivard/latent-diffusion/data/train_256x256/train_info.csv')
-
-class PersonalizeVal0(Personalize0):
-    def __init__(self, flip_p=0., **kwargs):
-        super().__init__(txt_file='' ,val=True,
-                         flip_p=flip_p)
-
-
-
-
+       
 class CsllmTrain(ActionsData):
     def __init__(self, **kwargs):
-        super().__init__(data_csv_path='/u4/jlrivard/latent-diffusion/data/train_256x256_actions/train_info.csv')
-
-class PersonalizeVal0(Personalize0):
-    def __init__(self, flip_p=0., **kwargs):
-        super().__init__(txt_file='' ,val=True,
-                         flip_p=flip_p)
-        
-class CsllmTrainSeq(ActionsSequenceData):
-    def __init__(self, **kwargs):
-        super().__init__(data_csv_path='/u4/jlrivard/CSLLM/data/data_processing/train_256x256_w_actions_binned/train_sequence_info.csv', **kwargs)
+        super().__init__(**kwargs)
 
 
 # 'C:/Users/Luke/latent-diffusion/data/train_256x256_w_actions_seq_2/train_sequence_info.csv'

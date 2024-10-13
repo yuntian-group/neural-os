@@ -9,7 +9,7 @@ from torchvision.utils import make_grid
 from PIL import Image
 from data.data_processing.video_convert import create_video_from_frames
 
-def sample_model(model: LatentDiffusion, prompts: List[str], image_sequences: list, save_path: str, create_video: bool):
+def sample_model(model: LatentDiffusion, prompts: List[str], image_sequences: list, save_path: str, create_video: bool = False):
 
     """
     Samples the model for each prompt and saves the resulting image.

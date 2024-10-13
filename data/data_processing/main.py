@@ -20,8 +20,10 @@ if __name__ == "__main__":
 
     n = 1000
 
+    print(f"Proccessing {n} videos.")
+
     for i in range(n):
-        if i% 50 == 49: print(f"\u2705 Proccessed 50 videos... {n-i} remaining.")
+        if i% 50 == 49: print(f"\u2705 Proccessed 50 videos... {n-i-1} remaining.")
 
         df = video_to_frames(
             video_path=f'../raw_data/videos/record_{i}.mp4',

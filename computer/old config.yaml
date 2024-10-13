@@ -69,34 +69,35 @@ model:
         n_embed: 640
         n_layer: 32
 
+# data:
+#   target: data.datasets.CsllmTrainSeq
+#   params:
+#     num_workers: 1
+#     batch_size: 1
+#     wrap: False
+#     train:
+#       target: data.datasets.CsllmTrainSeq
+#       params:
+#         size: 256
 data:
-  target: data.data_processing.datasets.DataModule
+  target: data.data_processing.datasets.CsllmTrainSeq
   params:
     batch_size: 32
     num_workers: 16
     wrap: false
-    shuffle: True
-    drop_last: True
-    pin_memory: True
-    prefetch_factor: 2
-    persistent_workers: True
     train:
-      target: data.data_processing.datasets.CsllmTrain
+      target: data.data_processing.datasets.CsllmTrainSeq
       params:
-        data_csv_path: /u4/jlrivard/CSLLM/data/data_processing/train_dataset_1000_videos/train_dataset.csv
-    validation:
-      target: data.data_processing.datasets.CsllmTrain
-      params:
-        data_csv_path: /u4/jlrivard/CSLLM/data/data_processing/train_dataset_1000_videos/train_dataset.csv
+        config:
+          size: 256
 
 lightning:
   trainer:
     benchmark: False
-    max_epochs: 1
-    limit_val_batches: 0
+    max_epochs: 750
     accelerator: gpu
     gpus: 1
-    accumulate_grad_batches: 4
+    accumulate_grad_batches: 6
     gradient_clip_val: 1
     checkpoint_callback: False
     callbacks: []

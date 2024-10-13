@@ -1,5 +1,5 @@
 from random import shuffle
-from data.data_processing.datasets import ActionsSequenceData, DataModule
+from data.data_processing.datasets import ActionsData, DataModule
 from latent_diffusion.ldm.models.diffusion.ddpm import DDIMSampler, LatentDiffusion, disabled_train
 from omegaconf import OmegaConf
 from PIL import Image

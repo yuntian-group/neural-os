@@ -83,16 +83,16 @@ data:
     train:
       target: data.data_processing.datasets.ActionsData
       params:
-        data_csv_path: /u4/jlrivard/CSLLM/data/data_processing/train_dataset_1000_videos/train_dataset.csv
+        data_csv_path: train_dataset_1000_videos/train_dataset.csv
     validation:
       target: data.data_processing.datasets.ActionsData
       params:
-        data_csv_path: /u4/jlrivard/CSLLM/data/data_processing/train_dataset_1000_videos/train_dataset.csv
+        data_csv_path: train_dataset_1000_videos/train_dataset.csv
 
 lightning:
   trainer:
     benchmark: False
-    max_epochs: 1
+    max_epochs: 5
     limit_val_batches: 0
     accelerator: gpu
     gpus: 1

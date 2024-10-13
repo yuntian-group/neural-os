@@ -1,9 +1,9 @@
-from data.data_processing.datasets import ActionsSequenceData
+from data.data_processing.datasets import ActionsData
 from latent_diffusion.ldm.util import instantiate_from_config
 from omegaconf import OmegaConf
 import torch
 from typing import List
-from data.data_processing.datasets import ActionsSequenceData
+from data.data_processing.datasets import ActionsData
 from latent_diffusion.ldm.models.diffusion.ddpm import LatentDiffusion, disabled_train
 
 def load_model(config):
@@ -81,7 +81,7 @@ def load_first_stage_from_config(model: LatentDiffusion, ckpt, verbose=False) ->
 
     return model
 
-def get_ground_truths(data: ActionsSequenceData, idxs: List[int]):
+def get_ground_truths(data: ActionsData, idxs: List[int]):
 
     """
     Gets the action and image sequences up to the sequence length, belonging to each target idx.

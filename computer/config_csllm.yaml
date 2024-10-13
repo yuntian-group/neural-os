@@ -81,11 +81,11 @@ data:
     prefetch_factor: 2
     persistent_workers: True
     train:
-      target: data.data_processing.datasets.CsllmTrain
+      target: data.data_processing.datasets.ActionsData
       params:
         data_csv_path: /u4/jlrivard/CSLLM/data/data_processing/train_dataset_1000_videos/train_dataset.csv
     validation:
-      target: data.data_processing.datasets.CsllmTrain
+      target: data.data_processing.datasets.ActionsData
       params:
         data_csv_path: /u4/jlrivard/CSLLM/data/data_processing/train_dataset_1000_videos/train_dataset.csv
 

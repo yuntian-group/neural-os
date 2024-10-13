@@ -19,7 +19,7 @@ if __name__ == "__main__":
     """
 
     config = OmegaConf.load("config_csllm.yaml")  # TODO: Optionally download from same location as ckpt and chnage this logic
-    # model = load_model_from_config(config, "model.ckpt")  # TODO: check path
+    model = load_model_from_config(config, "model.ckpt")  # TODO: check path
 
     # model: LatentDiffusion = load_model_from_config(config, 'model.ckpt')
     # model = load_first_stage_from_config(model, "model_ae.ckpt")

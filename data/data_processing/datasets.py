@@ -206,10 +206,6 @@ class DataModule(pl.LightningDataModule):
 class PersonalizeTrain0(Personalize0):
     def __init__(self, **kwargs):
         super().__init__(data_csv_path='/u4/jlrivard/latent-diffusion/data/train_256x256/train_info.csv')
-       
-class CsllmTrain(ActionsData):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
 
 
 # 'C:/Users/Luke/latent-diffusion/data/train_256x256_w_actions_seq_2/train_sequence_info.csv'

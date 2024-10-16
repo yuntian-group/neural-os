@@ -4,12 +4,14 @@ import time
 import matplotlib.pyplot as plt
 from scipy.special import comb
 
+
+
 def bernstein_poly(i, n, t):
     return comb(n, i) * (t**(i)) * ((1-t)**(n-i))
 
 def bezier_curve(points, num_points=1000):
     n = len(points) - 1
-    t = np.linspace(0, 1, num_points) ** 1.1
+    t = np.linspace(0, 1, num_points)
     curve = np.zeros((num_points, 2))
     for i, point in enumerate(points):
         curve += np.outer(bernstein_poly(i, n, t), point)
@@ -24,14 +26,14 @@ def generate_control_points(num_points, screen_width, screen_height):
     y = np.random.randint(0, screen_height, num_points)
     return list(zip(x, y))
 
-def generate_human_like_trajectory(screen_width=1920, screen_height=1080, 
-                                   num_control_points=5, num_points=1000):
+def generate_human_like_trajectory(screen_width, screen_height, 
+                                   num_control_points=25, num_points=110):
     control_points = generate_control_points(num_control_points, screen_width, screen_height)
     curve = bezier_curve(control_points, num_points)
     noisy_curve = add_noise(curve)
     return np.clip(noisy_curve, 0, [screen_width, screen_height]).astype(int)
 
-def generate_multiple_trajectories(num_trajectories=5, screen_width=1920, screen_height=1080):
+def generate_multiple_trajectories(num_trajectories, screen_width, screen_height):
     trajectories = []
     for _ in range(num_trajectories):
         trajectory = generate_human_like_trajectory(screen_width, screen_height)
@@ -39,16 +41,20 @@ def generate_multiple_trajectories(num_trajectories=5, screen_width=1920, screen
     return trajectories
 
 def move_mouse_through_trajectory(trajectory, delay=0.005):
+    screen_width, screen_height = pyautogui.size()
     for point in trajectory:
         x, y = point
-        pyautogui.moveTo(x + int((1920 - 256)/2), y + int((1080 - 256)/2))  # Move mouse to the point
+        #pyautogui.moveTo(x + int((screen_width - 256)/2), y + int((screen_height - 256)/2))  # Move mouse to the point
+        pyautogui.moveTo(x, y)  # Move mouse to the point
+
         # time.sleep(delay)
 
-def plot_trajectories(trajectories, screen_width=1920, screen_height=1080):
+def plot_trajectories(trajectories, screen_width, screen_height):
     plt.figure(figsize=(12, 6))
     for trajectory in trajectories:
         x, y = trajectory.T
-        plt.plot(x + int((1920 - 256)/2), y + int((1080 - 256)/2))
+        #plt.plot(x + int((screen_width - 256)/2), y + int((screen_height - 256)/2))
+        plt.plot(x, y)
         plt.scatter(x[0], y[0], color='green', s=50, label='Start')
         plt.scatter(x[-1], y[-1], color='red', s=50, label='End')
     plt.xlim(0, screen_width)
@@ -61,7 +67,9 @@ def plot_trajectories(trajectories, screen_width=1920, screen_height=1080):
     plt.show()
 
 if __name__ == "__main__":
-    trajectories = generate_multiple_trajectories(5, 256, 256)
+    #trajectories = generate_multiple_trajectories(5, 256, 256)
+    screen_width, screen_height = pyautogui.size()
+    trajectories = generate_multiple_trajectories(5, screen_width, screen_height)
     
     # Print the trajectories
     for i, trajectory in enumerate(trajectories):
@@ -69,6 +77,7 @@ if __name__ == "__main__":
         for x, y in trajectory:
             print(f"({x}, {y})")
         print()
+        move_mouse_through_trajectory(trajectory)
     
     # Plot the trajectories
-    plot_trajectories(trajectories)
+    plot_trajectories(trajectories, screen_width, screen_height)

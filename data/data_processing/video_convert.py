@@ -4,9 +4,14 @@ import pandas as pd
 from moviepy.editor import VideoFileClip
 from PIL import Image
 import os
+import argparse
 from math import exp, floor
 
-def create_video_from_frames(frames: list, save_path: str):
+#Creates the padding image for your model as a starting point for the generation process.
+def create_padding_img() -> Image.Image:
+    return Image.new('RGB', (256, 256), color=(0, 0, 0))
+
+def create_video_from_frames(frames: list, save_path: str, fps: int = 15):
 
     """
     Takse a sequence of generated images from the model and constructs a video.
@@ -16,7 +21,7 @@ def create_video_from_frames(frames: list, save_path: str):
 
     W, H = image.size
 
-    out = cv2.VideoWriter(save_path, cv2.VideoWriter_fourcc(*'mp4v'), 15, (W, H))
+    out = cv2.VideoWriter(save_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, (W, H))
     for frame in frames:
         frame = np.array(frame)
         frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
@@ -28,7 +33,7 @@ def create_video_from_frames(frames: list, save_path: str):
     print(f"\u2705 Saved video at {save_path}")
 
 
-def video_to_frames(video_path: str, save_path: str, actions_path: str, save_map: bool = False, video_num: int = 0) -> pd.DataFrame:
+def video_to_frames(video_path: str = '../raw_data/custom/videos/record_custom.mp4', save_path: str = 'train_dataset', actions_path: str = '../raw_data/custom/actions/record_custom.csv', save_map: bool = False, video_num: int = 0) -> pd.DataFrame:
 
     '''
     Opens a video and ouputs the frame and corresponding actions. Needs to be processed into sequences later.
@@ -53,9 +58,11 @@ def video_to_frames(video_path: str, save_path: str, actions_path: str, save_map
     with VideoFileClip(video_path) as video:
         duration = int(video.duration)  # Total duration in seconds
         fps = video.fps  # Frames per second
+        assert fps == 30, fps
+        subsample_factor = 2  # Take every other frame
         
-        # Iterate through each frame
-        for frame_number in range(int(fps * duration)):
+        # Iterate through each frame, subsampling by factor of 2
+        for frame_number in range(0, int(fps * duration), subsample_factor):
             # Calculate the time in seconds for the current frame
             time = frame_number / fps
 
@@ -76,7 +83,7 @@ def video_to_frames(video_path: str, save_path: str, actions_path: str, save_map
             frame_rgb = frame #cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             save_dir = f'{save_path}/record_{video_num}'
             os.makedirs(save_dir, exist_ok=True)
-            path = f'{save_dir}/image_{frame_number}.png'
+            path = f'{save_dir}/image_{frame_number//subsample_factor}.png'
             Image.fromarray(frame_rgb).save(path)  # Saves in the correct format
 
             #append the path and labels
@@ -143,7 +150,7 @@ def sequence_creator(dataframe: pd.DataFrame, save_path: str, seq_len: int = 8, 
     #If padding, prepend the padding image and first action to the list.
     if pad_start:
         image_paths_padding = [save_path + '/padding.png' for _ in range(seq_len - 1)]
-        actions_padding = [actions[0] for _ in range(seq_len - 1)]
+        actions_padding = ['0~0' for _ in range(seq_len - 1)]
 
     #prepend the padding if needed.
     image_paths = image_paths_padding + image_paths
@@ -170,18 +177,39 @@ def sequence_creator(dataframe: pd.DataFrame, save_path: str, seq_len: int = 8, 
     return seq_df
 
 
+def parse_args():
+    parser = argparse.ArgumentParser(description="Convert a video mp4 and actions csv into a training ready dataset.")
+    
+    parser.add_argument("--video_path", type=str, default='../raw_data/custom/videos/record_custom.mp4',
+                        help="path of the source video.")
 
+    parser.add_argument("--save_path", type=str, default='train_dataset',
+                        help="where to save the dataset.")
+    
+    parser.add_argument("--actions_path", type=str, default='../raw_data/custom/actions/record_custom.csv',
+                        help="where to save the dataset.")
+    
+    parser.add_argument("--save_map", type=bool, default=False,
+                        help="saves the map of frames to actions.")
+
+    parser.add_argument("--seq_len", type=int, default=8,
+                        help="This number -1 is the number of frames conditioned on.")
+    
+    parser.add_argument("--bin_width", type=int, default=1,
+                        help="divides the x,y cordinates by this number.")
+
+    return parser.parse_args()
 
 if __name__ == "__main__":
+    args = parse_args()
 
-    save_path='train_paths_seq8_1000s'
+    save_path=args.save_path
 
     df = video_to_frames(
-        video_path='sample11_256x256.mp4',
+        video_path=args.video_path,
         save_path=save_path,
-        actions_path='mouse_actions11.csv'
+        actions_path=args.actions_path
     )
     
-
     #Saves the sequence dataset file
-    sequence_creator(df, save_path, seq_len=8, bin_width=4)
+    sequence_creator(df, save_path, seq_len=args.seq_len, bin_width=args.bin_width)

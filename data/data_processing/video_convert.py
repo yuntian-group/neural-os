@@ -161,7 +161,7 @@ def sequence_creator(dataframe: pd.DataFrame, save_path: str, seq_len: int = 8, 
     target_image = []
     context_actions = []
 
-    for i in range(len(dataframe) - seq_len + 1):
+    for i in range(len(image_paths) - seq_len + 1):
         context_cond_images.append(image_paths[i:i+seq_len-1])
         context_actions.append(actions[i:i+seq_len])
         target_image.append(image_paths[i+seq_len-1])

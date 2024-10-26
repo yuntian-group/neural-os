@@ -2,6 +2,8 @@ import torch
 import pytorch_lightning as pl
 import torch.nn.functional as F
 from contextlib import contextmanager
+from einops import rearrange
+import numpy as np
 
 from taming.modules.vqvae.quantize import VectorQuantizer2 as VectorQuantizer
 
@@ -35,6 +37,7 @@ class VQModel(pl.LightningModule):
         self.image_key = image_key
         self.encoder = Encoder(**ddconfig)
         self.decoder = Decoder(**ddconfig)
+        self.automatic_optimization = False
         self.loss = instantiate_from_config(lossconfig)
         self.quantize = VectorQuantizer(n_embed, embed_dim, beta=0.25,
                                         remap=remap,
@@ -139,27 +142,60 @@ class VQModel(pl.LightningModule):
             x = x.detach()
         return x
 
-    def training_step(self, batch, batch_idx, optimizer_idx):
+    def training_step(self, batch, batch_idx):
         # https://github.com/pytorch/pytorch/issues/37142
         # try not to fool the heuristics
         x = self.get_input(batch, self.image_key)
         xrec, qloss, ind = self(x, return_pred_indices=True)
 
-        if optimizer_idx == 0:
-            # autoencode
-            aeloss, log_dict_ae = self.loss(qloss, x, xrec, optimizer_idx, self.global_step,
-                                            last_layer=self.get_last_layer(), split="train",
-                                            predicted_indices=ind)
+        opt_ae, opt_disc = self.optimizers()
 
-            self.log_dict(log_dict_ae, prog_bar=False, logger=True, on_step=True, on_epoch=True)
-            return aeloss
+        # train encoder+decoder+logvar
+        aeloss, log_dict_ae = self.loss(qloss, x, xrec, 0, self.global_step,
+                                            last_layer=self.get_last_layer(), cond=None, split="train",
+                                            )
+        self.log("aeloss", aeloss, prog_bar=True, logger=True, on_step=True, on_epoch=True)
+        self.log_dict(log_dict_ae, prog_bar=False, logger=True, on_step=True, on_epoch=True)
 
-        if optimizer_idx == 1:
-            # discriminator
-            discloss, log_dict_disc = self.loss(qloss, x, xrec, optimizer_idx, self.global_step,
-                                            last_layer=self.get_last_layer(), split="train")
-            self.log_dict(log_dict_disc, prog_bar=False, logger=True, on_step=True, on_epoch=True)
-            return discloss
+        opt_ae.zero_grad()  # Zero gradients for the autoencoder optimizer
+        self.manual_backward(aeloss)  # Backpropagate the autoencoder loss
+        torch.nn.utils.clip_grad_norm_(list(self.encoder.parameters()) +
+                      list(self.decoder.parameters()) +
+                      list(self.quantize.parameters()) +
+                      list(self.quant_conv.parameters()) +
+                      list(self.post_quant_conv.parameters()),
+                      1) #gradient clipping of 1
+
+        opt_ae.step()  # Step the autoencoder optimizer
+
+        # train the discriminator
+        discloss, log_dict_disc = self.loss(qloss, x, xrec, 1, self.global_step,
+                                        last_layer=self.get_last_layer(), split="train")
+        self.log("discloss", discloss, prog_bar=True, logger=True, on_step=True, on_epoch=True)
+        self.log_dict(log_dict_disc, prog_bar=False, logger=True, on_step=True, on_epoch=True)
+
+        opt_disc.zero_grad()  # Zero gradients for the discriminator optimizer
+        self.manual_backward(discloss)  # Backpropagate the discriminator loss
+        torch.nn.utils.clip_grad_norm_(self.loss.discriminator.parameters(), 1) #gradient clipping of 1
+        opt_disc.step()  # Step the discriminator optimizer
+        
+        return {'aeloss': aeloss, 'discloss': discloss}
+
+        # if optimizer_idx == 0:
+        #     # autoencode
+        #     aeloss, log_dict_ae = self.loss(qloss, x, xrec, optimizer_idx, self.global_step,
+        #                                     last_layer=self.get_last_layer(), split="train",
+        #                                     predicted_indices=ind)
+
+        #     self.log_dict(log_dict_ae, prog_bar=False, logger=True, on_step=True, on_epoch=True)
+        #     return aeloss
+
+        # if optimizer_idx == 1:
+        #     # discriminator
+        #     discloss, log_dict_disc = self.loss(qloss, x, xrec, optimizer_idx, self.global_step,
+        #                                     last_layer=self.get_last_layer(), split="train")
+        #     self.log_dict(log_dict_disc, prog_bar=False, logger=True, on_step=True, on_epoch=True)
+        #     return discloss
 
     def validation_step(self, batch, batch_idx):
         log_dict = self._validation_step(batch, batch_idx)
@@ -352,6 +388,8 @@ class AutoencoderKL(pl.LightningModule):
         inputs = self.get_input(batch, self.image_key)
         reconstructions, posterior = self(inputs)
 
+        opt_ae, opt_disc = self.optimizers()
+
         if optimizer_idx == 0:
             # train encoder+decoder+logvar
             aeloss, log_dict_ae = self.loss(inputs, reconstructions, posterior, optimizer_idx, self.global_step,
@@ -441,3 +479,4 @@ class IdentityFirstStage(torch.nn.Module):
 
     def forward(self, x, *args, **kwargs):
         return x
+

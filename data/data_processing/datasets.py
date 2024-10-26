@@ -1,7 +1,5 @@
 import pandas as pd               # For reading CSV files with image and MRI paths.
 import numpy as np                # For handling numerical operations, arrays, and data types.
-from PIL import Image    
-import PIL         # To open, manipulate, and process images.
 import torchvision.transforms as transforms  # For performing image augmentations like random horizontal flips.
 from torch.utils.data import Dataset  # Dataset class to inherit for custom datasets.
 import os
@@ -115,21 +113,27 @@ class ActionsData(Dataset):
 
 
         #single sample overfit
-        example["image"] = self.process_image(self.targets[i]) # torch.stack(image_target) # n b w h c
+        example["image"] = normalize_image(self.targets[i]) # torch.stack(image_target) # n b w h c
         example["caption"] = ' '.join(self.actions_seq[i]) # actions_cond #untokenized actions
-        example['c_concat'] = torch.stack([self.process_image(image_path) for image_path in self.image_seq_paths[i]]) # sequence of images
+        example['c_concat'] = torch.stack([normalize_image(image_path) for image_path in self.image_seq_paths[i]]) # sequence of images
 
         return example 
 
-    def process_image(self, image_path):  
+def normalize_image(image_path : str | Image.Image): 
 
-        image = Image.open(image_path)
-        if not image.mode == "RGB":
-            image = image.convert("RGB")
+    """
+    Takes in an image path or an image and returns the normalized image in a tensor.
+    """
+    
+    if isinstance(image_path, str): image = Image.open(image_path)
+    else: image = image_path
 
-        image = (np.array(image) / 127.5 - 1.0).astype(np.float32)
+    if not image.mode == "RGB":
+        image = image.convert("RGB")
 
-        return torch.tensor(image)
+    image = (np.array(image) / 127.5 - 1.0).astype(np.float32)
+
+    return torch.tensor(image)
 
 
 class DataModule(pl.LightningDataModule):
@@ -185,19 +189,28 @@ class DataModule(pl.LightningDataModule):
         return DataLoader(self.datasets["train"], 
                           batch_size=self.batch_size,
                           num_workers=self.num_workers, 
-                          shuffle=self.shuffle)
+                          shuffle=self.shuffle,
+                          pin_memory=self.pin_memory,
+                          persistent_workers=self.persistent_workers,
+                          drop_last=True)
 
     def init_val_dataloader(self):
         return DataLoader(self.datasets["validation"],
                           batch_size=self.batch_size,
                           num_workers=self.num_workers,
-                          shuffle=self.shuffle)
+                          shuffle=self.shuffle,
+                          pin_memory=self.pin_memory,
+                          persistent_workers=self.persistent_workers,
+                          drop_last=True)
 
     def init_test_dataloader(self):
         return DataLoader(self.datasets["test"], 
                           batch_size=self.batch_size,
                           num_workers=self.num_workers, 
-                          shuffle=self.shuffle)
+                          shuffle=self.shuffle,
+                          pin_memory=self.pin_memory,
+                          persistent_workers=self.persistent_workers,
+                          drop_last=True)
         
 
         

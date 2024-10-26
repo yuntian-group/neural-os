@@ -6,6 +6,63 @@ from typing import List
 from data.data_processing.datasets import ActionsData
 from latent_diffusion.ldm.models.diffusion.ddpm import LatentDiffusion, disabled_train
 
+
+def init_model(config: OmegaConf):
+
+    """
+    Instantiates the model from a config but doesnt load any weights.
+    """
+
+    print("\u23F3 Loading configuration...")
+    model = instantiate_from_config(config.model)
+    return model
+
+
+#Loads cond model from ckpt (grabbed from txt2img)
+def load_cond_from_ckpt(model: LatentDiffusion, ckpt: str, verbose=False) -> LatentDiffusion:
+    
+    """
+    Loads the actions encoder weights from ckpt for a given model.
+    """
+
+    print(f"\u23F3 Loading actions embedding model from {ckpt}")
+    m, u = model.cond_stage_model.load_state_dict(torch.load(ckpt, map_location='cpu'))
+    if len(m) > 0 and verbose:
+        print("missing keys:")
+        print(m)
+    if len(u) > 0 and verbose:
+        print("unexpected keys:")
+        print(u)
+
+    return model
+
+#Loads choosen autoencoder from ckpt
+def load_autoencoder_from_ckpt(model: LatentDiffusion, ckpt: str, verbose=False) -> LatentDiffusion:
+
+    """
+    Loads the autoencoder weights from ckpt for a given model.
+    """
+
+    print(f"\u23F3 Loading autoencoder model from {ckpt}")
+    pl_sd = torch.load(ckpt, map_location='cpu')
+    sd = pl_sd["state_dict"]
+    m, u = model.first_stage_model.load_state_dict(sd, strict=False)
+    if len(m) > 0 and verbose:
+        print("missing keys:")
+        print(m)
+    if len(u) > 0 and verbose:
+        print("unexpected keys:")
+        print(u)
+
+    #Disables training for the autoencoder
+    model.first_stage_model.eval()
+    model.first_stage_model.train = disabled_train
+    for param in model.first_stage_model.parameters():
+        param.requires_grad = False
+
+    return model
+
+
 def load_model(config):
     """
     Loads the model configuration but no weights. Used to train from scratch. 

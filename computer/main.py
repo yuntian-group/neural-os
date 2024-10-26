@@ -1,4 +1,4 @@
-from computer.util import load_cond_from_config, load_first_stage_from_config, load_model, load_model_from_config, get_ground_truths
+from computer.util import load_cond_from_config, load_first_stage_from_config, load_model, load_model_from_config, get_ground_truths, init_model, load_autoencoder_from_ckpt, load_cond_from_ckpt
 from computer.train import train_model
 from computer.sample import sample_model
 from data.data_processing.datasets import DataModule
@@ -25,7 +25,11 @@ if __name__ == "__main__":
     # model = load_first_stage_from_config(model, "model_ae.ckpt")
     # model = load_cond_from_config(model, "model_bert.ckpt")
 
-    model = load_model_from_config(config, 'test_12_600_epoch_no_deltas/model_test_12_600_epoch_no_deltas.ckpt')
+    #model = load_model_from_config(config, 'test_12_600_epoch_no_deltas/model_test_12_600_epoch_no_deltas.ckpt')
+    model = init_model(config) #initializes the all model modules.
+
+    model = load_autoencoder_from_ckpt(model, 'autoencoder/train_0/model_ae_epoch=00.ckpt') #loads autoencoder weights.
+    model = load_cond_from_ckpt(model, 'model_bert.ckpt') #loads encoder weights.
 
     data: DataModule = instantiate_from_config(config.data)
     data.setup()
@@ -48,5 +52,5 @@ if __name__ == "__main__":
     model = train_model(model, data, save_path, config)
     model = model.to(device)
 
-    sample_model(model, prompts, image_sequences, save_path, True)
-    prompts, image_sequences, targets = get_ground_truths(data.datasets['train'], idxs=[i for i in range(173)])
+    #sample_model(model, prompts, image_sequences, save_path, True)
+    #prompts, image_sequences, targets = get_ground_truths(data.datasets['train'], idxs=[i for i in range(173)])

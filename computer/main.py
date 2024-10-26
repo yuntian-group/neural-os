@@ -43,7 +43,7 @@ if __name__ == "__main__":
     #     print(name)
     #     if name == 'input_blocks': print(child)
 
-    prompts, image_sequences, targets = get_ground_truths(data.datasets['train'], idxs=[i for i in range(173)])
+    #prompts, image_sequences, targets = get_ground_truths(data.datasets['train'], idxs=[i for i in range(173)])
 
     os.makedirs(save_path, exist_ok=True)
 

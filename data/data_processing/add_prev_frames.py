@@ -29,12 +29,10 @@ def convert_to_14_frames(input_file, output_file):
     
     # Function to extend the image sequence
     def extend_image_seq(seq):
-        extended = []
         for _ in range(7):
             prev = get_prev_image(seq[0])
-            extended.append(prev)
             seq = [prev] + seq
-        return extended + seq[:-7]  # Return all 14 frames
+        return seq  # Return all 14 frames
     
     # Create new columns for the extended sequences
     df['Extended_Image_seq'] = df['Image_seq_cond_path'].apply(extend_image_seq)
@@ -43,19 +41,25 @@ def convert_to_14_frames(input_file, output_file):
     def extend_action_seq(row):
         extended_images = row['Extended_Image_seq']
         original_actions = row['Action_seq']
-        extended_actions = [image_to_action[img] for img in extended_images] + [original_actions[-1]]
+        extended_images = extended_images + [row['Target_image']]
+        extended_actions = [image_to_action[img] for img in extended_images]
         
         # Assert that the last 8 elements of extended_actions are the same as original_actions
-        assert all(a == b for a, b in zip(extended_actions[-8:], original_actions)), "Mismatch in action sequences"
+        #import pdb; pdb.set_trace()
+        if not all(a == b for a, b in zip(extended_actions[-8:], original_actions)):
+            import pdb; pdb.set_trace()
+        def diff(action1, action2):
+            a11, a12 = action1.split('~')
+            a21, a22 = action2.split('~')
+            a11, a12, a21, a22 = int(a11), int(a12), int(a21), int(a22)
+            return f'{a11-a21}~{a12-a22}'
+        #import pdb; pdb.set_trace()
+        extended_actions = [diff(image_to_action[img], image_to_action[get_prev_image(img)]) for img in extended_images]
         
         return extended_actions
     
     # Create new columns for the extended action sequences
     df['Extended_Action_seq'] = df.apply(extend_action_seq, axis=1)
-    
-    # Ensure we have exactly 14 frames and 15 actions
-    df['Extended_Image_seq'] = df['Extended_Image_seq'].apply(lambda seq: seq[-14:])
-    df['Extended_Action_seq'] = df['Extended_Action_seq'].apply(lambda seq: seq[-15:])
     
     # Replace the original columns with the extended ones
     df['Image_seq_cond_path'] = df['Extended_Image_seq']
@@ -69,6 +73,6 @@ def convert_to_14_frames(input_file, output_file):
     print(f"Converted data saved to {output_file}")
 
 # Usage
-input_file = '../../computer/train_dataset/train_dataset.csv'
+input_file = '../../computer/train_dataset/train_dataset.csv.backup'
 output_file = '../../computer/train_dataset/train_dataset_14frames.csv'
 convert_to_14_frames(input_file, output_file)

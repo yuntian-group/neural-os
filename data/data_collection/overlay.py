@@ -6,6 +6,7 @@ from datetime import datetime
 from moviepy.editor import VideoFileClip, TextClip, CompositeVideoClip
 import pandas as pd
 import numpy as np
+import pyautogui
 
 import argparse
 
@@ -13,16 +14,20 @@ def overlay_mouse_actions(video_file, csv_file, output_file):
     video = VideoFileClip(video_file)
     mouse_data = pd.read_csv(csv_file)
     fps = video.fps
-    video_duration = video.duration
+    total_frames = int(video.duration * fps)
     video_width, video_height = video.w, video.h
     
     # Function to create an image with the cursor and text overlay
-    def make_frame(t):
-        # Find the closest mouse action to the current time
-        closest_index = mouse_data['Timestamp'].sub(t).abs().idxmin()
-        action = mouse_data.iloc[closest_index]
+    def make_frame(frame_number):
+        # Get the corresponding mouse action directly
+        if frame_number < len(mouse_data):
+            action = mouse_data.iloc[frame_number]
+        else:
+            assert False, "Frame number out of range"
+            action = mouse_data.iloc[-1]
         
         # Read the corresponding video frame
+        t = frame_number / fps  # Convert frame number to time for video.get_frame
         frame = video.get_frame(t)
         
         # Convert the frame to OpenCV format (BGR)
@@ -35,13 +40,13 @@ def overlay_mouse_actions(video_file, csv_file, output_file):
         # Get the mouse coordinates
         x_pos = int(action['X'])
         y_pos = int(action['Y'])
-        
-        x_pos = int(video_width / 1920 * x_pos)
-        y_pos = int(video_height / 1080 * y_pos)
+        screen_width, screen_height = pyautogui.size()
+        x_pos = int(video_width / screen_width * x_pos)
+        y_pos = int(video_height / screen_height * y_pos)
 
         # Overlay a red dot at the (X, Y) position
         if 0 <= x_pos <= video.w and 0 <= y_pos <= video.h:
-            cv2.circle(frame, (x_pos, y_pos), 5, (0, 0, 255), -1)  # Red dot with radius 10
+            cv2.circle(frame, (x_pos, y_pos), 5, (0, 0, 255), -1)  # Red dot with radius 5
         
         return frame
 
@@ -49,8 +54,8 @@ def overlay_mouse_actions(video_file, csv_file, output_file):
     out = cv2.VideoWriter(output_file, cv2.VideoWriter_fourcc(*'mp4v'), fps, (video.w, video.h))
     
     # Process each frame and write it to the output video
-    for t in np.arange(0, video_duration, 1 / fps):
-        frame = make_frame(t)
+    for frame_number in range(total_frames):
+        frame = make_frame(frame_number)
         out.write(frame)
     
     out.release()

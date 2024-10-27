@@ -25,11 +25,13 @@ if __name__ == "__main__":
     # model = load_first_stage_from_config(model, "model_ae.ckpt")
     # model = load_cond_from_config(model, "model_bert.ckpt")
 
-    #model = load_model_from_config(config, 'test_12_600_epoch_no_deltas/model_test_12_600_epoch_no_deltas.ckpt')
-    model = init_model(config) #initializes the all model modules.
+    model = load_model_from_config(config, 'oct27_test_15_no_deltas_1000_paths/model_test_15_no_deltas_1000_paths.ckpt')
 
-    model = load_autoencoder_from_ckpt(model, 'autoencoder/train_0/model_ae_epoch=00.ckpt') #loads autoencoder weights.
-    model = load_cond_from_ckpt(model, 'model_bert.ckpt') #loads encoder weights.
+    #model = load_model_from_config(config, 'test_12_600_epoch_no_deltas/model_test_12_600_epoch_no_deltas.ckpt')
+    #model = init_model(config) #initializes the all model modules.
+
+    #model = load_autoencoder_from_ckpt(model, 'autoencoder/train_0/model_ae_epoch=00.ckpt') #loads autoencoder weights.
+    #model = load_cond_from_ckpt(model, 'model_bert.ckpt') #loads encoder weights.
 
     data: DataModule = instantiate_from_config(config.data)
     data.setup()

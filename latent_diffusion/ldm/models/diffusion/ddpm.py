@@ -7,6 +7,7 @@ https://github.com/CompVis/taming-transformers
 """
 
 import torch
+import random
 import torch.nn as nn
 import numpy as np
 import pytorch_lightning as pl
@@ -746,8 +747,8 @@ class LatentDiffusion(DDPM):
             c = {'c_crossattn': batch[cond_key]} #cond_key is converted to cross attention.
             #return the dict of conds with cattn for the learnable cond. and cconcat for latent cond.
             c = self.enc_concat_seq(c, batch, hkey)
-
-            if self.scheduler_sampling_rate > 0:
+            
+            if random.random() < self.scheduler_sampling_rate:
                 #import pdb; pdb.set_trace()
                 with torch.no_grad():
                     
@@ -777,7 +778,7 @@ class LatentDiffusion(DDPM):
                         z_samples = self.encode_first_stage(x_samples_ddim)
                         
                         # Replace the corresponding frames in c[hkey]
-                        mask = torch.rand(batch_size, 1, 1, 1, device=c[hkey].device) < self.scheduler_sampling_rate
+                        mask = torch.rand(batch_size, 1, 1, 1, device=c[hkey].device) < 0.5 #self.scheduler_sampling_rate
                         c[hkey][:, 7*3+j*3:7*3+j*3+3] = torch.where(mask, z_samples, c[hkey][:, 7*3+j*3:7*3+j*3+3])
 
             c[hkey] = c[hkey][:, 3*7:]

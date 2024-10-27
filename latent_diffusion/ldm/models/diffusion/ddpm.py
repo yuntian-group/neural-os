@@ -750,48 +750,36 @@ class LatentDiffusion(DDPM):
             if self.scheduler_sampling_rate > 0:
                 #import pdb; pdb.set_trace()
                 with torch.no_grad():
+                    
                     assert cond_key == 'action_7', "Only action conditioning is supported for now"
-                    batch_size = c[hkey].shape[0]
-                    c_prev_batch = torch.cat([c[hkey][:, 3*j:3*j+21] for j in range(6, -1, -1)], dim=0)
-                    action_batch = [batch[f"action_{j}"] for j in range(6, -1, -1)]
-                    flattened_actions = [action[i] for action in action_batch for i in range(batch_size)]
-                    c_dict_batch = {
-                        'c_crossattn': flattened_actions,
-                        'c_concat': c_prev_batch
-                    }
-                    c_dict_batch = self.get_learned_conditioning(c_dict_batch)
-
-                    uc_dict_batch = {
-                        'c_crossattn': ['']*batch_size*7,
-                        'c_concat': c_prev_batch
-                    }
-                    uc_dict_batch = self.get_learned_conditioning(uc_dict_batch)
-                    # Sample in batch
-                    sampler = DDIMSampler(self)
-                    samples_ddim, _ = sampler.sample(
-                        S=2,
-                        conditioning=c_dict_batch,
-                        batch_size=batch_size * 7,
-                        shape=[3, 64, 64],
-                        verbose=False,
-                        unconditional_guidance_scale=5.0,
-                        unconditional_conditioning=uc_dict_batch,
-                        eta=0
-                    )
-                    # Process samples
-                    x_samples_ddim = self.decode_first_stage(samples_ddim)
-                    x_samples_ddim = torch.clamp(x_samples_ddim, min=-1.0, max=1.0)
-                    z_samples = self.encode_first_stage(x_samples_ddim)
-                    # Create mask for scheduled sampling
-                    mask = torch.rand(batch_size * 7, 1, 1, 1, device=c[hkey].device) < self.scheduler_sampling_rate
-
-                    # Replace the corresponding frames in c[hkey]
+                    
                     for j in range(6, -1, -1):
-                        c[hkey][:, 7*3+j*3:7*3+j*3+3] = torch.where(
-                            mask[j*batch_size:(j+1)*batch_size],
-                            z_samples[j*batch_size:(j+1)*batch_size],
-                            c[hkey][:, 7*3+j*3:7*3+j*3+3]
-                        )
+                        c_prev = c[hkey][:, 3*j:3*j+21]
+                        c_dict = {'c_crossattn': batch[f"action_{j}"], 'c_concat': c_prev}
+                        c_dict = self.get_learned_conditioning(c_dict)
+                        batch_size = c_prev.shape[0]
+                        uc_dict = {'c_crossattn': ['']*batch_size, 'c_concat': c_prev}
+                        uc_dict = self.get_learned_conditioning(uc_dict)
+                        sampler = DDIMSampler(self)
+                        samples_ddim, _ = sampler.sample(S=2,
+                                         conditioning=c_dict,
+                                         batch_size=batch_size,
+                                         shape=[3, 64, 64],
+                                         verbose=False,
+                                         unconditional_guidance_scale=5.0,
+                                         unconditional_conditioning=uc_dict,
+                                         eta=0)
+        
+                        x_samples_ddim = self.decode_first_stage(samples_ddim)
+                        #x_samples_ddim = torch.clamp((x_samples_ddim + 1.0) / 2.0, min=0.0, max=1.0)
+                        x_samples_ddim = torch.clamp((x_samples_ddim), min=-1.0, max=1.0)
+                        # Encode the generated samples back to latent space
+                        z_samples = self.encode_first_stage(x_samples_ddim)
+                        
+                        # Replace the corresponding frames in c[hkey]
+                        mask = torch.rand(batch_size, 1, 1, 1, device=c[hkey].device) < self.scheduler_sampling_rate
+                        c[hkey][:, 7*3+j*3:7*3+j*3+3] = torch.where(mask, z_samples, c[hkey][:, 7*3+j*3:7*3+j*3+3])
+
             c[hkey] = c[hkey][:, 3*7:]
             assert c[hkey].shape[1] == 3*7
         else:

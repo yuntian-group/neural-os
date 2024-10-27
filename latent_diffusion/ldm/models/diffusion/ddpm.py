@@ -429,6 +429,7 @@ class LatentDiffusion(DDPM):
                  first_stage_config,
                  cond_stage_config,
                  num_timesteps_cond=None,
+                 scheduler_sampling_rate=0,
                  cond_stage_key="image",
                  cond_stage_trainable=False,
                  concat_mode=True,
@@ -439,6 +440,7 @@ class LatentDiffusion(DDPM):
                  hybrid_key=None, #for csllm
                  *args, **kwargs):
         self.num_timesteps_cond = default(num_timesteps_cond, 1)
+        self.scheduler_sampling_rate = scheduler_sampling_rate
         self.scale_by_std = scale_by_std
         assert self.num_timesteps_cond <= kwargs['timesteps']
         # for backwards compatibility after implementation of DiffusionWrapper
@@ -705,7 +707,7 @@ class LatentDiffusion(DDPM):
                 cond_key = self.cond_stage_key
             cond_key = 'action_7'
             if cond_key != self.first_stage_key:
-                if cond_key in ['caption', 'coordinates_bbox']:
+                if cond_key in ['caption', 'coordinates_bbox', 'action_7']:
                     xc = batch[cond_key]
 
                 elif cond_key == 'class_label':
@@ -746,19 +748,21 @@ class LatentDiffusion(DDPM):
             c = self.enc_concat_seq(c, batch, hkey)
 
             if self.scheduler_sampling_rate > 0:
+                #import pdb; pdb.set_trace()
                 with torch.no_grad():
                     
                     assert cond_key == 'action_7', "Only action conditioning is supported for now"
                     
-                    for j in range(7):
-                        c_prev = c[hkey][:, j:j+7]
+                    for j in range(6, -1, -1):
+                        c_prev = c[hkey][:, 3*j:3*j+21]
                         c_dict = {'c_crossattn': batch[f"action_{j}"], 'c_concat': c_prev}
                         c_dict = self.get_learned_conditioning(c_dict)
                         batch_size = c_prev.shape[0]
-                        uc_dict = {'c_crossattn': self.get_learned_conditioning(['']*c_prev.shape[0]), 'c_concat': c_prev}
+                        uc_dict = {'c_crossattn': ['']*batch_size, 'c_concat': c_prev}
+                        uc_dict = self.get_learned_conditioning(uc_dict)
                         sampler = DDIMSampler(self)
                         samples_ddim, _ = sampler.sample(S=2,
-                                         conditioning=c,
+                                         conditioning=c_dict,
                                          batch_size=batch_size,
                                          shape=[3, 64, 64],
                                          verbose=False,
@@ -773,11 +777,11 @@ class LatentDiffusion(DDPM):
                         z_samples = self.encode_first_stage(x_samples_ddim)
                         
                         # Replace the corresponding frames in c[hkey]
-                        mask = torch.rand(c[hkey].shape[0], 1, 1, 1, device=c[hkey].device) < self.scheduler_sampling_rate
-                        c[hkey][:, 7+j:7+j+1] = torch.where(mask, z_samples, c[hkey][:, 7+j:7+j+1])
+                        mask = torch.rand(batch_size, 1, 1, 1, device=c[hkey].device) < self.scheduler_sampling_rate
+                        c[hkey][:, 7*3+j*3:7*3+j*3+3] = torch.where(mask, z_samples, c[hkey][:, 7*3+j*3:7*3+j*3+3])
 
-            c[hkey] = c[hkey][:, 7:]
-            assert c[hkey].shape[1] == 7
+            c[hkey] = c[hkey][:, 3*7:]
+            assert c[hkey].shape[1] == 3*7
         else:
             assert False, "Only concat conditioning is supported for now"
         out = [z, c]
@@ -975,6 +979,7 @@ class LatentDiffusion(DDPM):
         return [rescale_bbox(b) for b in bboxes]
 
     def apply_model(self, x_noisy, t, cond, return_ids=False):
+        #import pdb; pdb.set_trace()
 
         if isinstance(cond, dict):
             # hybrid case, cond is exptected to be a dict <---------------
@@ -1563,7 +1568,8 @@ class DiffusionWrapper(pl.LightningModule):
             # print("HYBRID CALLED", xc.shape)
             # print(c_crossattn[0].shape)
             # print(c_crossattn.__class__)
-            cc = torch.tensor(c_crossattn) # torch.cat(c_crossattn, 1)
+            #cc = torch.tensor(c_crossattn) # torch.cat(c_crossattn, 1)
+            cc = c_crossattn # torch.cat(c_crossattn, 1)
             # print("yeye ", cc.shape)
             out = self.diffusion_model(xc, t, context=cc)
         elif self.conditioning_key == 'adm':

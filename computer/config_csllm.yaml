@@ -9,6 +9,7 @@ model:
     timesteps: 1000
     first_stage_key: image
     cond_stage_key: action_
+    scheduler_sampling_rate: 0.2
     hybrid_key: c_concat
     image_size: 64
     channels: 3
@@ -75,7 +76,7 @@ data:
   target: data.data_processing.datasets.DataModule
   params:
     batch_size: 32
-    num_workers: 16
+    num_workers: 1
     wrap: false
     shuffle: True
     drop_last: True
@@ -85,11 +86,11 @@ data:
     train:
       target: data.data_processing.datasets.ActionsData
       params:
-        data_csv_path: train_dataset/train_dataset.csv
+        data_csv_path: train_dataset/train_dataset_14frames.csv
     validation:
       target: data.data_processing.datasets.ActionsData
       params:
-        data_csv_path: train_dataset/train_dataset.csv
+        data_csv_path: train_dataset/train_dataset_14frames.csv
 
 lightning:
   trainer:

@@ -114,7 +114,14 @@ class ActionsData(Dataset):
 
         #single sample overfit
         example["image"] = normalize_image(self.targets[i]) # torch.stack(image_target) # n b w h c
-        example["caption"] = ' '.join(self.actions_seq[i]) # actions_cond #untokenized actions
+        action_seq = self.actions_seq[i]
+        assert len(action_seq) == 15, "Action sequence must be 15 actions long"
+        for j in range(8):
+            example[f"action_{j}"] = action_seq[j:j+8]
+            assert len(example[f"action_{j}"]) == 8, f"Action sequence {j} must be 8 actions long"
+            example[f"action_{j}"] = ' '.join(example[f"action_{j}"])
+        #example["caption"] = ' '.join(self.actions_seq[i]) # actions_cond #untokenized actions
+
         example['c_concat'] = torch.stack([normalize_image(image_path) for image_path in self.image_seq_paths[i]]) # sequence of images
 
         return example 

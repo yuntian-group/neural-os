@@ -699,9 +699,11 @@ class LatentDiffusion(DDPM):
         encoder_posterior = self.encode_first_stage(x)
         z = self.get_first_stage_encoding(encoder_posterior).detach()
 
+        
         if self.model.conditioning_key is not None:
             if cond_key is None:
                 cond_key = self.cond_stage_key
+            cond_key = 'action_7'
             if cond_key != self.first_stage_key:
                 if cond_key in ['caption', 'coordinates_bbox']:
                     xc = batch[cond_key]
@@ -743,7 +745,41 @@ class LatentDiffusion(DDPM):
             #return the dict of conds with cattn for the learnable cond. and cconcat for latent cond.
             c = self.enc_concat_seq(c, batch, hkey)
 
+            if self.scheduler_sampling_rate > 0:
+                with torch.no_grad():
+                    
+                    assert cond_key == 'action_7', "Only action conditioning is supported for now"
+                    
+                    for j in range(7):
+                        c_prev = c[hkey][:, j:j+7]
+                        c_dict = {'c_crossattn': batch[f"action_{j}"], 'c_concat': c_prev}
+                        c_dict = self.get_learned_conditioning(c_dict)
+                        batch_size = c_prev.shape[0]
+                        uc_dict = {'c_crossattn': self.get_learned_conditioning(['']*c_prev.shape[0]), 'c_concat': c_prev}
+                        sampler = DDIMSampler(self)
+                        samples_ddim, _ = sampler.sample(S=2,
+                                         conditioning=c,
+                                         batch_size=batch_size,
+                                         shape=[3, 64, 64],
+                                         verbose=False,
+                                         unconditional_guidance_scale=5.0,
+                                         unconditional_conditioning=uc_dict,
+                                         eta=0)
+        
+                        x_samples_ddim = self.decode_first_stage(samples_ddim)
+                        #x_samples_ddim = torch.clamp((x_samples_ddim + 1.0) / 2.0, min=0.0, max=1.0)
+                        x_samples_ddim = torch.clamp((x_samples_ddim), min=-1.0, max=1.0)
+                        # Encode the generated samples back to latent space
+                        z_samples = self.encode_first_stage(x_samples_ddim)
+                        
+                        # Replace the corresponding frames in c[hkey]
+                        mask = torch.rand(c[hkey].shape[0], 1, 1, 1, device=c[hkey].device) < self.scheduler_sampling_rate
+                        c[hkey][:, 7+j:7+j+1] = torch.where(mask, z_samples, c[hkey][:, 7+j:7+j+1])
 
+            c[hkey] = c[hkey][:, 7:]
+            assert c[hkey].shape[1] == 7
+        else:
+            assert False, "Only concat conditioning is supported for now"
         out = [z, c]
         if return_first_stage_outputs:
             xrec = self.decode_first_stage(z)

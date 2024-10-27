@@ -11,23 +11,29 @@ from torch.utils.data import DataLoader
 from pytorch_lightning.callbacks import ModelCheckpoint
 
 def train_model(model: LatentDiffusion, data: DataModule, save_path: str, config) -> LatentDiffusion:
-
     """
     Trains the model on specified dataset in the config.
     """
 
-     # configure learning rate
+    # configure learning rate
     base_lr = config.model.base_learning_rate
-
     model.learning_rate = base_lr
 
     lightning_config = config.pop("lightning", OmegaConf.create())
     # merge trainer cli with config
     trainer_config = lightning_config.get("trainer", OmegaConf.create())
-
     trainer_opt = argparse.Namespace(**trainer_config)
 
-    trainer: Trainer = Trainer.from_argparse_args(trainer_opt)
+    # Create ModelCheckpoint callback
+    checkpoint_callback = ModelCheckpoint(
+        every_n_train_steps=1000,
+        save_top_k=-1,  # Save all checkpoints
+        dirpath='checkpoints',  # Directory to save checkpoints
+        filename='model-{step:06d}'  # Checkpoint filename format
+    )
+
+    # Create Trainer with the checkpoint callback
+    trainer: Trainer = Trainer.from_argparse_args(trainer_opt, callbacks=[checkpoint_callback])
 
     trainer.fit(model, data)
     

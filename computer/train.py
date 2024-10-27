@@ -26,7 +26,7 @@ def train_model(model: LatentDiffusion, data: DataModule, save_path: str, config
 
     # Create ModelCheckpoint callback
     checkpoint_callback = ModelCheckpoint(
-        every_n_train_steps=1000,
+        every_n_train_steps=500,
         save_top_k=-1,  # Save all checkpoints
         dirpath='checkpoints',  # Directory to save checkpoints
         filename='model-{step:06d}'  # Checkpoint filename format

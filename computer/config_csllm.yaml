@@ -102,10 +102,3 @@ lightning:
     accumulate_grad_batches: 4
     gradient_clip_val: 1
     checkpoint_callback: True
-    callbacks:
-      - class_path: pytorch_lightning.callbacks.ModelCheckpoint
-        init_args:
-          every_n_train_steps: 1000
-          save_top_k: -1  # Save all checkpoints
-          dirpath: 'checkpoints'  # Directory to save checkpoints
-          filename: 'model-{step:06d}'  # Checkpoint filename format

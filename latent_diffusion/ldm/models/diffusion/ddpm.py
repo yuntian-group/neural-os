@@ -5,7 +5,7 @@ https://github.com/openai/improved-diffusion/blob/e94489283bb876ac1477d5dd7709bb
 https://github.com/CompVis/taming-transformers
 -- merci
 """
-
+import os
 import torch
 import random
 import torch.nn as nn
@@ -754,7 +754,8 @@ class LatentDiffusion(DDPM):
                     
                     assert cond_key == 'action_7', "Only action conditioning is supported for now"
                     
-                    for j in range(6, -1, -1):
+                    #for j in range(6, -1, -1):
+                    for j in range(7):
                         c_prev = c[hkey][:, 3*j:3*j+21]
                         c_dict = {'c_crossattn': batch[f"action_{j}"], 'c_concat': c_prev}
                         c_dict = self.get_learned_conditioning(c_dict)
@@ -778,7 +779,7 @@ class LatentDiffusion(DDPM):
                         z_samples = self.encode_first_stage(x_samples_ddim)
                         
                         # Replace the corresponding frames in c[hkey]
-                        mask = torch.rand(batch_size, 1, 1, 1, device=c[hkey].device) < 0.5 #self.scheduler_sampling_rate
+                        mask = torch.rand(batch_size, 1, 1, 1, device=c[hkey].device) < 1.5 #self.scheduler_sampling_rate
                         c[hkey][:, 7*3+j*3:7*3+j*3+3] = torch.where(mask, z_samples, c[hkey][:, 7*3+j*3:7*3+j*3+3])
 
             c[hkey] = c[hkey][:, 3*7:]

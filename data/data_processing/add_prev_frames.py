@@ -21,11 +21,14 @@ def convert_to_14_frames(input_file, output_file):
     def get_prev_image(image_name):
         if image_name == 'train_dataset/padding.png':
             return 'train_dataset/padding.png'
-        parts = image_name.split('_')
-        num = int(parts[-1].split('.')[0])
+        parts = image_name.rsplit('_', 1)
+        if len(parts) < 2:
+            return 'train_dataset/padding.png'
+        base, num = parts
+        num = int(num.split('.')[0])
         if num == 0:
             return 'train_dataset/padding.png'
-        return f"{parts[0]}_{parts[1]}_{num-1}.png"
+        return f"{base}_{num-1}.png"
     
     # Function to extend the image sequence
     def extend_image_seq(seq):

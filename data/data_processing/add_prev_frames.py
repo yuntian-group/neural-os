@@ -28,6 +28,7 @@ def convert_to_14_frames(input_file, output_file):
         num = int(num.split('.')[0])
         if num == 0:
             return 'train_dataset/padding.png'
+        #import pdb; pdb.set_trace()
         return f"{base}_{num-1}.png"
     
     # Function to extend the image sequence

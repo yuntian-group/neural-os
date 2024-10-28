@@ -3,14 +3,14 @@ import cv2
 import numpy as np
 import os
 import asyncio
-from dotenv import load_dotenv
+#from dotenv import load_dotenv
 import time
 from pynput.mouse import Controller, Listener, Button
 import pandas as pd
 import pyautogui
 
 # Load environment variables
-load_dotenv()
+#load_dotenv()
 current_directory = os.path.dirname(os.path.abspath(__file__)) #for obs video paths
 parent_directory = os.path.dirname(current_directory)
 

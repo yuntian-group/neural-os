@@ -1,8 +1,8 @@
-from data.data_collection.record_script import record
+from record_script import record
 import asyncio
 import time
 import pyautogui
-from data.data_collection.synthetic_mouse_path import generate_multiple_trajectories, move_mouse_through_trajectory
+from synthetic_mouse_path import generate_multiple_trajectories, move_mouse_through_trajectory
 import random
 import numpy as np
 

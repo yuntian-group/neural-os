@@ -45,11 +45,11 @@ async def record(save_dir: str = 'raw_data', save_name: str = 'record_0',
                 fn_args: tuple = ()):
     """
     Records mouse positions, clicks, and screen at 15 fps.
-    Frames are resized to 256x256 for storage efficiency.
+    Frames are resized to 512x512 for storage efficiency.
     """
     fps = 15
     interval = 1.0 / fps
-    output_size = (256, 256)  # Target size for video frames
+    output_size = (512, 512)  # Target size for video frames
     
     # Ensure directories exist with parent_directory
     os.makedirs(f'{parent_directory}/{save_dir}/videos', exist_ok=True)
@@ -62,7 +62,7 @@ async def record(save_dir: str = 'raw_data', save_name: str = 'record_0',
     listener = Listener(on_click=on_click)
     listener.start()
 
-    with mss.mss() as sct:
+    with mss.mss(with_cursor=True) as sct:
         monitor = sct.monitors[1]
         scaling_factor = 1
         
@@ -112,7 +112,7 @@ async def record(save_dir: str = 'raw_data', save_name: str = 'record_0',
                 
                 # Draw cursor before resizing
                 x, y = mouse.position
-                frame = draw_cursor(frame, x, y, left_click, right_click, scaling_factor)
+                #frame = draw_cursor(frame, x, y, left_click, right_click, scaling_factor)
                 
                 # Resize frame
                 frame = cv2.resize(frame, output_size, interpolation=cv2.INTER_AREA)

@@ -20,4 +20,4 @@ async def create_synthetic_dataset(n=1):
         time.sleep(2)
 
 if __name__ == "__main__":
-    asyncio.run(create_synthetic_dataset(1000))
+    asyncio.run(create_synthetic_dataset(4000))

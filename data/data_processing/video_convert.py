@@ -70,7 +70,7 @@ def video_to_frames(video_path: str = '../raw_data/custom/videos/record_custom.m
             elif action_row['Left Click']:
                 action = 'left_click'
             else:
-                action = f"{action_row['X']}~{action_row['Y']}"
+                action = f"{int(action_row['X'])}~{int(action_row['Y'])}"
             
             # Get the frame at the specified time
             frame = video.get_frame(frame_number / fps)

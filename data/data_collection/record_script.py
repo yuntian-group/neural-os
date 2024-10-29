@@ -10,6 +10,8 @@ import pandas as pd
 import pyautogui
 import pkg_resources
 from PIL import Image, ImageDraw
+from cairosvg import svg2png
+from io import BytesIO
 
 # Load environment variables
 #load_dotenv()
@@ -27,26 +29,46 @@ def on_click(x, y, button, pressed):
     elif button == Button.left: left_click = pressed
 
 def get_cursor_image():
-    """Get the system cursor image for macOS"""
-    # Default arrow cursor size
-    cursor_width = 24
-    cursor_height = 24
+    """Get cursor image from SVG"""
+    cursor_svg = '''<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+     viewBox="0 0 28 28" enable-background="new 0 0 28 28" xml:space="preserve">
+<polygon fill="#FFFFFF" points="8.2,20.9 8.2,4.9 19.8,16.5 13,16.5 12.6,16.6 "/>
+<polygon fill="#FFFFFF" points="17.3,21.6 13.7,23.1 9,12 12.7,10.5 "/>
+<rect x="12.5" y="13.6" transform="matrix(0.9221 -0.3871 0.3871 0.9221 -5.7605 6.5909)" width="2" height="8"/>
+<polygon points="9.2,7.3 9.2,18.5 12.2,15.6 12.6,15.5 17.4,15.5 "/>
+</svg>'''
     
-    # Create a new image with transparency
-    cursor = Image.new('RGBA', (cursor_width, cursor_height), (0, 0, 0, 0))
-    draw = ImageDraw.Draw(cursor)
+    # Convert SVG to PNG in memory
+    png_data = svg2png(bytestring=cursor_svg.encode('utf-8'), 
+                      output_width=28, 
+                      output_height=28)
     
-    # Draw white arrow with black border
-    points = [(0, 0), (16, 12), (7, 13), (11, 21), (8, 22), (4, 14), (2, 16)]
-    # Black border
-    draw.polygon(points, fill='black')
-    # White inner arrow (slightly smaller)
-    inner_points = [(1, 2), (14, 12), (7, 13), (10, 19), (8, 20), (5, 14), (3, 15)]
-    draw.polygon(inner_points, fill='white')
-    
-    # Convert to numpy array
+    # Convert PNG to numpy array
+    cursor = Image.open(BytesIO(png_data))
     cursor_array = np.array(cursor)
-    return cursor_array
+    
+    # Add black outline
+    cursor_with_outline = Image.new('RGBA', cursor.size, (0, 0, 0, 0))
+    draw = ImageDraw.Draw(cursor_with_outline)
+    
+    # Convert the white cursor to black outline
+    black_mask = np.all(cursor_array == [255, 255, 255, 255], axis=-1)
+    outline_positions = np.where(black_mask)
+    
+    # Draw black outline around white areas
+    for y, x in zip(*outline_positions):
+        for dx, dy in [(-1,0), (1,0), (0,-1), (0,1)]:
+            new_x, new_y = x + dx, y + dy
+            if 0 <= new_x < cursor.width and 0 <= new_y < cursor.height:
+                if not black_mask[new_y, new_x]:
+                    cursor_with_outline.putpixel((new_x, new_y), (0, 0, 0, 255))
+    
+    # Combine outline and original cursor
+    cursor_with_outline.alpha_composite(cursor)
+    
+    return np.array(cursor_with_outline)
 
 def draw_cursor(frame, x, y, left_click=False, right_click=False, scaling_factor=1):
     """Draw a cursor on the frame at the given position"""

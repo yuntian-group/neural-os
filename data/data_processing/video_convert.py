@@ -58,32 +58,27 @@ def video_to_frames(video_path: str = '../raw_data/custom/videos/record_custom.m
     with VideoFileClip(video_path) as video:
         duration = int(video.duration)  # Total duration in seconds
         fps = video.fps  # Frames per second
-        assert fps == 30, fps
-        subsample_factor = 2  # Take every other frame
+        assert fps == 15, fps
         
-        # Iterate through each frame, subsampling by factor of 2
-        for frame_number in range(0, int(fps * duration), subsample_factor):
-            # Calculate the time in seconds for the current frame
-            time = frame_number / fps
+        # Iterate through each frame
+        for frame_number in range(0, int(fps * duration)):
+            # Get the corresponding action directly using frame_number
+            action_row = mouse_data.iloc[frame_number]
 
-            #Map actions to frames
-            closest_idx = mouse_data['Timestamp'].sub(time).abs().idxmin()
-            closest_action = mouse_data.iloc[closest_idx]
-
-            if closest_action['Right Click']:
+            if action_row['Right Click']:
                 action = 'right_click'
-            elif closest_action['Left Click']:
+            elif action_row['Left Click']:
                 action = 'left_click'
-            else: #Its a move.
-                action = f"{closest_action['X']}~{closest_action['Y']}"
+            else:
+                action = f"{action_row['X']}~{action_row['Y']}"
             
             # Get the frame at the specified time
-            frame = video.get_frame(time)
+            frame = video.get_frame(frame_number / fps)
             
             frame_rgb = frame #cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             save_dir = f'{save_path}/record_{video_num}'
             os.makedirs(save_dir, exist_ok=True)
-            path = f'{save_dir}/image_{frame_number//subsample_factor}.png'
+            path = f'{save_dir}/image_{frame_number}.png'
             Image.fromarray(frame_rgb).save(path)  # Saves in the correct format
 
             #append the path and labels

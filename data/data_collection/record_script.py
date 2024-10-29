@@ -8,6 +8,8 @@ import time
 from pynput.mouse import Controller, Listener, Button
 import pandas as pd
 import pyautogui
+import pkg_resources
+from PIL import Image, ImageDraw
 
 # Load environment variables
 #load_dotenv()
@@ -24,20 +26,70 @@ def on_click(x, y, button, pressed):
     if button == Button.right: right_click = pressed
     elif button == Button.left: left_click = pressed
 
+def get_cursor_image():
+    """Get the system cursor image for macOS"""
+    # Default arrow cursor size
+    cursor_width = 24
+    cursor_height = 24
+    
+    # Create a new image with transparency
+    cursor = Image.new('RGBA', (cursor_width, cursor_height), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(cursor)
+    
+    # Draw white arrow with black border
+    points = [(0, 0), (16, 12), (7, 13), (11, 21), (8, 22), (4, 14), (2, 16)]
+    # Black border
+    draw.polygon(points, fill='black')
+    # White inner arrow (slightly smaller)
+    inner_points = [(1, 2), (14, 12), (7, 13), (10, 19), (8, 20), (5, 14), (3, 15)]
+    draw.polygon(inner_points, fill='white')
+    
+    # Convert to numpy array
+    cursor_array = np.array(cursor)
+    return cursor_array
+
 def draw_cursor(frame, x, y, left_click=False, right_click=False, scaling_factor=1):
     """Draw a cursor on the frame at the given position"""
     # Convert coordinates to integers and apply scaling
     x, y = int(x * scaling_factor), int(y * scaling_factor)
     
-    # Draw cursor (white with black border for visibility)
-    cursor_size = 50
-    # Outer black circle
-    cv2.circle(frame, (x, y), cursor_size + 1, (0, 0, 0), 2)
-    # Inner white circle, filled if clicked
-    if left_click or right_click:
-        cv2.circle(frame, (x, y), cursor_size, (255, 255, 255), -1)
-    else:
-        cv2.circle(frame, (x, y), cursor_size, (255, 255, 255), 2)
+    # Get cursor image
+    cursor = get_cursor_image()
+    
+    # Calculate cursor placement bounds
+    h, w = cursor.shape[:2]
+    
+    # Ensure cursor stays within frame bounds
+    frame_h, frame_w = frame.shape[:2]
+    x_start = max(0, x)
+    y_start = max(0, y)
+    x_end = min(frame_w, x + w)
+    y_end = min(frame_h, y + h)
+    
+    # Calculate cursor image bounds
+    cursor_x_start = max(0, -x)
+    cursor_y_start = max(0, -y)
+    cursor_x_end = cursor_x_start + (x_end - x_start)
+    cursor_y_end = cursor_y_start + (y_end - y_start)
+    
+    # Only proceed if we have valid dimensions
+    if x_end > x_start and y_end > y_start:
+        # Get alpha channel
+        alpha = cursor[cursor_y_start:cursor_y_end, cursor_x_start:cursor_x_end, 3] / 255.0
+        alpha = alpha[..., np.newaxis]
+        
+        # Blend cursor with frame using alpha compositing
+        cursor_part = cursor[cursor_y_start:cursor_y_end, cursor_x_start:cursor_x_end, :3]
+        frame_part = frame[y_start:y_end, x_start:x_end]
+        blended = (cursor_part * alpha + frame_part * (1 - alpha)).astype(np.uint8)
+        frame[y_start:y_end, x_start:x_end] = blended
+        
+        # Optional: Add click indication
+        if left_click or right_click:
+            click_radius = 4
+            click_color = (0, 255, 255) if left_click else (255, 255, 0)  # Cyan for left, yellow for right
+            cv2.circle(frame, (x + 8, y + 8), click_radius, click_color, -1)
+    
     return frame
 
 async def record(save_dir: str = 'raw_data', save_name: str = 'record_0', 

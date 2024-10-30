@@ -766,7 +766,7 @@ class LatentDiffusion(DDPM):
                         uc_dict = {'c_crossattn': ['']*batch_size, 'c_concat': c_prev}
                         uc_dict = self.get_learned_conditioning(uc_dict)
                         sampler = DDIMSampler(self)
-                        samples_ddim, _ = sampler.sample(S=2,
+                        samples_ddim, _ = sampler.sample(S=4,
                                          conditioning=c_dict,
                                          batch_size=batch_size,
                                          shape=[3, 64, 64],
@@ -785,8 +785,8 @@ class LatentDiffusion(DDPM):
                         sampling_mask = torch.rand(batch_size, 1, 1, 1, device=c[hkey].device) < 1.5 #self.scheduler_sampling_rate
                         # Only apply sampling mask where is_padding is False
                         mask = sampling_mask & (~is_padding[:, j+7].view(-1, 1, 1, 1))
-                        if is_padding[:, j+7].any():
-                            import pdb; pdb.set_trace()
+                        #if is_padding[:, j+7].any():
+                        #    import pdb; pdb.set_trace()
                         c[hkey][:, 7*3+j*3:7*3+j*3+3] = torch.where(mask, z_samples, c[hkey][:, 7*3+j*3:7*3+j*3+3])
 
             c[hkey] = c[hkey][:, 3*7:]

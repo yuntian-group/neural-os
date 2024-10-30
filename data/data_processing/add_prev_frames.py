@@ -77,6 +77,6 @@ def convert_to_14_frames(input_file, output_file):
     print(f"Converted data saved to {output_file}")
 
 # Usage
-input_file = '../../computer/train_dataset/train_dataset.csv.backup'
+input_file = '../../computer/train_dataset/train_dataset.csv'
 output_file = '../../computer/train_dataset/train_dataset_14frames.csv'
 convert_to_14_frames(input_file, output_file)

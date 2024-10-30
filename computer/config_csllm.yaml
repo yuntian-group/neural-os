@@ -9,7 +9,7 @@ model:
     timesteps: 1000
     first_stage_key: image
     cond_stage_key: action_
-    scheduler_sampling_rate: 0.2
+    scheduler_sampling_rate: 0.1
     hybrid_key: c_concat
     image_size: 64
     channels: 3
@@ -95,7 +95,7 @@ data:
 lightning:
   trainer:
     benchmark: False
-    max_epochs: 1
+    max_epochs: 2
     limit_val_batches: 0
     accelerator: gpu
     gpus: 1

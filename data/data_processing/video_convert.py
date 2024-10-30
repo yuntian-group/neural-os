@@ -56,8 +56,11 @@ def video_to_frames(video_path: str = '../raw_data/custom/videos/record_custom.m
 
     # Open the video file
     with VideoFileClip(video_path) as video:
-        duration = int(video.duration)  # Total duration in seconds
+        #print (video.duration, video.fps)
+        duration = video.duration  # Total duration in seconds
         fps = video.fps  # Frames per second
+        #print (duration, int(fps * duration), len(mouse_data))
+        #assert int(fps * duration) == len(mouse_data), (int(fps * duration), len(mouse_data))
         assert fps == 15, fps
         
         # Iterate through each frame

@@ -1,7 +1,7 @@
-save_path: saved_fixcursor_lr8e5
+save_path: saved_fixcursor_lr1e4
 
 model:
-  base_learning_rate: 8.0e-05
+  base_learning_rate: 1.0e-04
   target: latent_diffusion.ldm.models.diffusion.ddpm.LatentDiffusion
   params:
     linear_start: 0.0015

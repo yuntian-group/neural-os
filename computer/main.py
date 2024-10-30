@@ -6,6 +6,7 @@ from omegaconf import OmegaConf
 from latent_diffusion.ldm.util import instantiate_from_config
 import torch
 import os
+import argparse
 
 
 #save_path = 'test_15_no_deltas_1000_paths'
@@ -18,7 +19,12 @@ if __name__ == "__main__":
     Trains a model and samples it.
     """
 
-    config = OmegaConf.load("config_csllm.yaml")  # TODO: Optionally download from same location as ckpt and chnage this logic
+    parser = argparse.ArgumentParser(description='Train and sample a model using a config file')
+    parser.add_argument('--config', type=str, default="config_csllm.yaml",
+                       help='Path to the configuration file (default: config_csllm.yaml)')
+    args = parser.parse_args()
+
+    config = OmegaConf.load(args.config)
     save_path = config.save_path
     print ('='*10)
     print (save_path)

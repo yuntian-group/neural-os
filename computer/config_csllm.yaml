@@ -95,7 +95,7 @@ data:
 lightning:
   trainer:
     benchmark: False
-    max_epochs: 2
+    max_epochs: 3
     limit_val_batches: 0
     accelerator: gpu
     gpus: 1

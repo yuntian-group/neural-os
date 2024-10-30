@@ -664,31 +664,32 @@ class LatentDiffusion(DDPM):
         return fold, unfold, normalization, weighting
 
     @torch.no_grad()
-    def enc_concat_seq(self, c: dict, batch, k) -> dict:
+    def enc_concat_seq(self, c: dict, batch, k) -> tuple:
         """
         encodes a sequence of images from a batch for conditioning. used with c_concat and hybrid conditioning.
         Returns:
-            dict: condition dictionary.
+            tuple: (updated condition dictionary, padding mask)
         """
-
         image_sequence = torch.as_tensor(batch[k])
         enc_sequence = []
 
         if len(image_sequence.shape) == 4:
-            image_sequence = image_sequence.unsqueeze(0) #add batch dimension of missing
+            image_sequence = image_sequence.unsqueeze(0) #add batch dimension if missing
 
         input = rearrange(image_sequence, 'b l h w c -> l b c h w')
+
+        # Create padding mask based on input sequence
+        is_padding = (image_sequence.abs().sum(dim=(2,3,4)) == 0)  # shape: [batch_size, sequence_length]
 
         #we need to encode each image in the sequence l before concat.
         for img in input:
             img = img.to(self.device) # b c h w
-
             img = img.to(memory_format=torch.contiguous_format).float()
             img = self.encode_first_stage(img)
             enc_sequence.append(img)
 
         c[k] = torch.cat(enc_sequence, dim=1) #concat all the latents together on the channel dim
-        return c
+        return c, is_padding
 
         
     @torch.no_grad()
@@ -746,7 +747,7 @@ class LatentDiffusion(DDPM):
 
             c = {'c_crossattn': batch[cond_key]} #cond_key is converted to cross attention.
             #return the dict of conds with cattn for the learnable cond. and cconcat for latent cond.
-            c = self.enc_concat_seq(c, batch, hkey)
+            c, is_padding = self.enc_concat_seq(c, batch, hkey)
             
             if random.random() < self.scheduler_sampling_rate:
                 #import pdb; pdb.set_trace()
@@ -779,11 +780,10 @@ class LatentDiffusion(DDPM):
                         z_samples = self.encode_first_stage(x_samples_ddim)
                         
                         # Replace the corresponding frames in c[hkey]
-                        is_padding = (x[:, (7*3+j*3):(7*3+j*3+3)].abs().sum(dim=(1,2,3)) == 0).view(-1, 1, 1, 1)
                         sampling_mask = torch.rand(batch_size, 1, 1, 1, device=c[hkey].device) < 1.5 #self.scheduler_sampling_rate
                         # Only apply sampling mask where is_padding is False
-                        mask = sampling_mask & (~is_padding)
-                        if is_padding.any():
+                        mask = sampling_mask & (~is_padding[:, j+7].view(-1, 1, 1, 1))
+                        if is_padding[:, j+7].any():
                             import pdb; pdb.set_trace()
                         c[hkey][:, 7*3+j*3:7*3+j*3+3] = torch.where(mask, z_samples, c[hkey][:, 7*3+j*3:7*3+j*3+3])
 

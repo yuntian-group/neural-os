@@ -679,7 +679,9 @@ class LatentDiffusion(DDPM):
         input = rearrange(image_sequence, 'b l h w c -> l b c h w')
 
         # Create padding mask based on input sequence
-        is_padding = (image_sequence.abs().sum(dim=(2,3,4)) == 0)  # shape: [batch_size, sequence_length]
+        # Check if all values are close to -1 (with epsilon for floating point precision)
+        eps = 1e-6
+        is_padding = ((image_sequence + 1).abs() < eps).all(dim=(2,3,4))  # shape: [batch_size, sequence_length]
 
         #we need to encode each image in the sequence l before concat.
         for img in input:

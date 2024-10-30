@@ -8,7 +8,7 @@ import torch
 import os
 
 
-save_path = 'test_15_no_deltas_1000_paths'
+#save_path = 'test_15_no_deltas_1000_paths'
 
 ##Parse args here
 
@@ -19,6 +19,10 @@ if __name__ == "__main__":
     """
 
     config = OmegaConf.load("config_csllm.yaml")  # TODO: Optionally download from same location as ckpt and chnage this logic
+    save_path = config.save_path
+    print ('='*10)
+    print (save_path)
+    print ('='*10)
     # model = load_model_from_config(config, "model.ckpt")  # TODO: check path
 
     # model: LatentDiffusion = load_model_from_config(config, 'model.ckpt')

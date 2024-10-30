@@ -28,6 +28,8 @@ if __name__ == "__main__":
     save_path = config.save_path
     print ('='*10)
     print (save_path)
+    print (args.config)
+    #print (config.model.scheduler_sampling_rate)
     print ('='*10)
     # model = load_model_from_config(config, "model.ckpt")  # TODO: check path
 

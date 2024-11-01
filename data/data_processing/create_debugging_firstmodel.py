@@ -18,5 +18,5 @@ def repeat_first_video(input_file, output_file, repeat_count=1000):
 
 # Usage
 input_file = '../../computer/train_dataset/train_dataset_14frames.csv'
-output_file = '../../computer/train_dataset/train_dataset_debugging.csv'
+output_file = '../../computer/train_dataset/train_dataset_14frames_debugging.csv'
 repeat_first_video(input_file, output_file) 

@@ -118,7 +118,7 @@ class GPTTokenizer(AbstractEncoder):
         self.max_length = max_length
 
     def forward(self, text):
-        import pdb; pdb.set_trace()
+        #import pdb; pdb.set_trace()
         batch_encoding = self.tokenizer(text, truncation=True, max_length=self.max_length, 
                                       return_length=True, return_overflowing_tokens=False, 
                                       return_tensors="pt")

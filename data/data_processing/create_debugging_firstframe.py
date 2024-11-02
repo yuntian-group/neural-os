@@ -40,11 +40,14 @@ def filter_first_frames(input_file, output_file):
     first_frame_df['Action_seq'] = first_frame_df['Action_seq'].apply(str)
     first_frame_df['Image_seq_cond_path'] = first_frame_df['Image_seq_cond_path'].apply(str)
     
+    # Repeat each row 100 times
+    repeated_df = pd.concat([first_frame_df] * 100, ignore_index=True)
+    
     # Save the filtered DataFrame to a new CSV file
-    first_frame_df.to_csv(output_file, index=False)
+    repeated_df.to_csv(output_file, index=False)
     print(f"First frame data saved to {output_file}")
 
 # Usage
 input_file = '../../computer/train_dataset/train_dataset_14frames.csv'
 output_file = '../../computer/train_dataset/train_dataset_14frames_firstframe.csv'
-filter_first_frames(input_file, output_file) 
+filter_first_frames(input_file, output_file)

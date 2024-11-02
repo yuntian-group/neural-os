@@ -64,6 +64,7 @@ class BERTTokenizer(AbstractEncoder):
         self.max_length = max_length
 
     def forward(self, text):
+        import pdb; pdb.set_trace()
         batch_encoding = self.tokenizer(text, truncation=True, max_length=self.max_length, return_length=True,
                                         return_overflowing_tokens=False, padding="max_length", return_tensors="pt")
         tokens = batch_encoding["input_ids"].to(self.device)

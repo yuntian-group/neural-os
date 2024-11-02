@@ -1,4 +1,4 @@
-save_path: saved_fixcursor_lr2e5_debug_gpt
+save_path: saved_fixcursor_lr2e5_debug_gpt_firstframe
 
 model:
   base_learning_rate: 2.0e-05
@@ -84,11 +84,11 @@ data:
     train:
       target: data.data_processing.datasets.ActionsData
       params:
-        data_csv_path: train_dataset/train_dataset_14frames_debugging.csv
+        data_csv_path: train_dataset/train_dataset_14frames_firstframe.csv
     validation:
       target: data.data_processing.datasets.ActionsData
       params:
-        data_csv_path: train_dataset/train_dataset_14frames_debugging.csv
+        data_csv_path: train_dataset/train_dataset_14frames_firstframe.csv
 
 lightning:
   trainer:

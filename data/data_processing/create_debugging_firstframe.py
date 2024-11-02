@@ -26,19 +26,19 @@ def filter_first_frames(input_file, output_file):
     first_frame_df = df[df['Target_image'].str.endswith('image_0.png')]
     
     # Convert string representations of lists to actual lists
-    first_frame_df['Image_list'] = first_frame_df['Image_list'].apply(ast.literal_eval)
-    first_frame_df['Action_list'] = first_frame_df['Action_list'].apply(ast.literal_eval)
+    first_frame_df['Image_seq_cond_path'] = first_frame_df['Image_seq_cond_path'].apply(ast.literal_eval)
+    first_frame_df['Action_seq'] = first_frame_df['Action_seq'].apply(ast.literal_eval)
     
-    # Format each action in the Action_list
-    first_frame_df['Action_list'] = first_frame_df.apply(
+    # Format each action in the Action_seq
+    first_frame_df['Action_seq'] = first_frame_df.apply(
         lambda row: [format_action(action, 'padding.png' in img) 
-                    for action, img in zip(row['Action_list'], row['Image_list'])],
+                    for action, img in zip(row['Action_seq'], row['Image_seq_cond_path'] + [row['Target_image']])],
         axis=1
     )
     
     # Convert back to string representation
-    first_frame_df['Action_list'] = first_frame_df['Action_list'].apply(str)
-    first_frame_df['Image_list'] = first_frame_df['Image_list'].apply(str)
+    first_frame_df['Action_seq'] = first_frame_df['Action_seq'].apply(str)
+    first_frame_df['Image_seq_cond_path'] = first_frame_df['Image_seq_cond_path'].apply(str)
     
     # Save the filtered DataFrame to a new CSV file
     first_frame_df.to_csv(output_file, index=False)

@@ -1,0 +1,106 @@
+save_path: saved_fixcursor_lr2e5_debug
+
+model:
+  base_learning_rate: 2.0e-05
+  target: latent_diffusion.ldm.models.diffusion.ddpm.LatentDiffusion
+  params:
+    linear_start: 0.0015
+    linear_end: 0.0195
+    num_timesteps_cond: 1
+    log_every_t: 200
+    timesteps: 1000
+    first_stage_key: image
+    cond_stage_key: action_
+    scheduler_sampling_rate: 0.0
+    hybrid_key: c_concat
+    image_size: 64
+    channels: 3
+    cond_stage_trainable: true
+    conditioning_key: hybrid
+    monitor: val/loss_simple_ema
+    # scale_factor: 0.18215
+    # use_ema: False
+    #cond_stage_key: caption
+
+
+    unet_config:
+      target: latent_diffusion.ldm.modules.diffusionmodules.openaimodel.UNetModel
+      params:
+        image_size: 64
+        in_channels: 24
+        out_channels: 3
+        model_channels: 192
+        attention_resolutions:
+        - 8
+        - 4
+        - 2
+        num_res_blocks: 2
+        channel_mult:
+        - 1
+        - 2
+        - 3
+        - 5
+        num_head_channels: 32
+        use_spatial_transformer: true
+        transformer_depth: 1
+        context_dim: 640
+    first_stage_config:
+      target: latent_diffusion.ldm.models.autoencoder.VQModelInterface
+      params:
+        embed_dim: 3
+        n_embed: 8192
+        monitor: val/rec_loss
+
+        ddconfig:
+          double_z: false
+          z_channels: 3
+          resolution: 256
+          in_channels: 3
+          out_ch: 3
+          ch: 128
+          ch_mult:
+          - 1
+          - 2
+          - 4
+          num_res_blocks: 2
+          attn_resolutions: []
+          dropout: 0.0
+        lossconfig:
+          target: torch.nn.Identity
+
+    cond_stage_config:
+      target: latent_diffusion.ldm.modules.encoders.modules.BERTEmbedder
+      params:
+        n_embed: 640
+        n_layer: 32
+
+data:
+  target: data.data_processing.datasets.DataModule
+  params:
+    batch_size: 32
+    num_workers: 1
+    wrap: false
+    shuffle: True
+    drop_last: True
+    pin_memory: True
+    prefetch_factor: 2
+    persistent_workers: True
+    train:
+      target: data.data_processing.datasets.ActionsData
+      params:
+        data_csv_path: train_dataset/train_dataset_14frames_debugging.csv
+    validation:
+      target: data.data_processing.datasets.ActionsData
+      params:
+        data_csv_path: train_dataset/train_dataset_14frames_debugging.csv
+
+lightning:
+  trainer:
+    benchmark: False
+    max_epochs: 4
+    limit_val_batches: 0
+    accelerator: gpu
+    gpus: 1
+    accumulate_grad_batches: 4
+    gradient_clip_val: 1
+    checkpoint_callback: True

@@ -153,7 +153,7 @@ class GPTEmbedder(AbstractEncoder):
             
 
     def forward(self, text):
-        import pdb; pdb.set_trace()
+        #import pdb; pdb.set_trace()
         if self.use_tknz_fn:
             tokens = self.tknz_fn(text)
         else:

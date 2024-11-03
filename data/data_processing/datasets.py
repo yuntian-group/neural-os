@@ -39,7 +39,7 @@ def parse_action_string(action_str):
     
     return (x, y)
 
-def create_position_map(x, y, image_size=64, original_width=1024, original_height=640):
+def create_position_map(pos, image_size=64, original_width=1024, original_height=640):
     """Convert cursor position to a binary position map
     Args:
         x, y: Original cursor positions
@@ -49,6 +49,7 @@ def create_position_map(x, y, image_size=64, original_width=1024, original_heigh
     Returns:
         torch.Tensor: Binary position map of shape (1, image_size, image_size)
     """
+    x, y = pos
     if x is None:
         return torch.zeros((1, image_size, image_size))
     # Scale the positions to new size

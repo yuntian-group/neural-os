@@ -766,6 +766,9 @@ class LatentDiffusion(DDPM):
                         uc_dict = {'c_crossattn': ['']*batch_size, 'c_concat': c_prev}
                         uc_dict = self.get_learned_conditioning(uc_dict)
                         sampler = DDIMSampler(self)
+                        position_map = batch[f'position_map_{j}']
+                        c_dict['c_concat'] = torch.cat([c_dict['c_concat'], position_map], dim=1)
+                        uc_dict['c_concat'] = torch.cat([uc_dict['c_concat'], position_map], dim=1)
                         samples_ddim, _ = sampler.sample(S=4,
                                          conditioning=c_dict,
                                          batch_size=batch_size,
@@ -790,7 +793,11 @@ class LatentDiffusion(DDPM):
                         c[hkey][:, 7*3+j*3:7*3+j*3+3] = torch.where(mask, z_samples, c[hkey][:, 7*3+j*3:7*3+j*3+3])
 
             c[hkey] = c[hkey][:, 3*7:]
-            assert c[hkey].shape[1] == 3*7
+            import pdb; pdb.set_trace()
+            pos_map = batch['position_map_7']
+            c[hkey] = torch.cat([c[hkey], pos_map], dim=1)
+            # concatenate with the position map.
+            assert c[hkey].shape[1] == 3*7 + 1
         else:
             assert False, "Only concat conditioning is supported for now"
         out = [z, c]

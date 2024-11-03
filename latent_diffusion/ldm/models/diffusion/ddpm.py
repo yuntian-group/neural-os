@@ -793,7 +793,7 @@ class LatentDiffusion(DDPM):
                         c[hkey][:, 7*3+j*3:7*3+j*3+3] = torch.where(mask, z_samples, c[hkey][:, 7*3+j*3:7*3+j*3+3])
 
             c[hkey] = c[hkey][:, 3*7:]
-            import pdb; pdb.set_trace()
+            #import pdb; pdb.set_trace()
             pos_map = batch['position_map_7']
             c[hkey] = torch.cat([c[hkey], pos_map], dim=1)
             # concatenate with the position map.

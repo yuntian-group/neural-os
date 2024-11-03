@@ -2,7 +2,7 @@ import torch
 from huggingface_hub import HfApi, create_repo
 import os
 from omegaconf import OmegaConf
-from ldm.util import instantiate_from_config
+from latent_diffusion.ldm.util import instantiate_from_config
 import json
 
 # Set your Hugging Face token here
@@ -15,7 +15,10 @@ LOCAL_CHECKPOINT_PATH = "test_15_no_deltas_1000_paths/model_test_15_no_deltas_10
 LOCAL_CHECKPOINT_PATH = "test_15_no_deltas_1000_paths/model_test_15_no_deltas_1000_paths.ckpt"
 LOCAL_CHECKPOINT_PATH = "saved_fixcursor_lr2e5/model_saved_fixcursor_lr2e5.ckpt"
 LOCAL_CHECKPOINT_PATH = "saved_fixcursor_lr2e5_debug/model-step=004000.ckpt"
+LOCAL_CHECKPOINT_PATH = "saved_fixcursor_lr2e5_debug_gpt_firstframe/model-step=002000.ckpt"
+LOCAL_CHECKPOINT_PATH = "saved_fixcursor_lr2e5_debug_gpt_firstframe/model-step=005000.ckpt"
 CONFIG_PATH = "config_csllm.yaml"
+CONFIG_PATH = "configs/2e5_debug_gpt_firstframe.yaml"
 
 def upload_model_to_hub():
     # Load the configuration

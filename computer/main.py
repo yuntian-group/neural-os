@@ -38,6 +38,7 @@ if __name__ == "__main__":
     # model = load_cond_from_config(model, "model_bert.ckpt")
 
     model = load_model_from_config(config, 'oct29_fixcursor_test_15_no_deltas_1000_paths/model_test_15_no_deltas_1000_paths.ckpt')
+    import pdb; pdb.set_trace()
 
     #model = load_model_from_config(config, 'test_12_600_epoch_no_deltas/model_test_12_600_epoch_no_deltas.ckpt')
     #model = init_model(config) #initializes the all model modules.

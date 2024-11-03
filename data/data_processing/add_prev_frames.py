@@ -58,8 +58,9 @@ def convert_to_14_frames(input_file, output_file):
             a11, a12, a21, a22 = int(a11), int(a12), int(a21), int(a22)
             return f'{a11-a21}~{a12-a22}'
         #import pdb; pdb.set_trace()
-        extended_actions = [diff(image_to_action[img], image_to_action[get_prev_image(img)]) for img in extended_images]
-        
+        #extended_actions = [diff(image_to_action[img], image_to_action[get_prev_image(img)]) for img in extended_images]
+        extended_actions = [image_to_action[img] for img in extended_images]
+
         return extended_actions
     
     # Create new columns for the extended action sequences

@@ -16,72 +16,54 @@ from latent_diffusion.ldm.util import instantiate_from_config
 
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
-class Personalize0(Dataset):
+def parse_action_string(action_str):
+    """Convert formatted action string to x, y coordinates
+    Args:
+        action_str: String like 'N N N N N : N N N N N' or '+ 0 2 1 3 : + 0 3 8 3'
+    Returns:
+        tuple: (x, y) coordinates or None if action is padding
     """
-    class dataset for imagenet.
-    """
-    def __init__(self,
-                 data_csv_path,
-                 size=512,
-                 interpolation="bicubic",
-                 flip_p=0.5,
-                 val=False
-                 ):
-        self.data_path = data_csv_path
+    if 'N' in action_str:
+        return (None, None)
         
-        data = pd.read_csv(data_csv_path)
-        self.image_paths = data["Image_path"]
-        self.labels = data['Label']
+    # Split into x and y parts
+    action_str = action_str.replace(' ', '')
+    x_part, y_part = action_str.split(':')
     
-        if val:
-            self.image_paths=self.image_paths[:1024]
-            self.labels=self.lables[:1024]
+    # Parse x: remove sign, join digits, convert to int, apply sign
+    
+    x = int(x_part)
+    
+    # Parse y: remove sign, join digits, convert to int, apply sign
+    y = int(y_part)
+    
+    return (x, y)
 
-        self._length = len(self.image_paths)
-        self.size = size
-        # self.interpolation = {"linear": PIL.Image.LINEAR,
-        #                       "bilinear": PIL.Image.BILINEAR,
-        #                       "bicubic": PIL.Image.BICUBIC,
-        #                       "lanczos": PIL.Image.LANCZOS,
-        #                       }[interpolation]
-        self.flip = transforms.RandomHorizontalFlip(p=flip_p)
-
-    def __len__(self):
-        return self._length
-
-    def __getitem__(self, i):
-        example = dict()
-        image = Image.open(self.image_paths[i])
-        if not image.mode == "RGB":
-            image = image.convert("RGB")
-
-        # default to score-sde preprocessing
-        # img = np.array(image).astype(np.uint8)
-        # crop = min(img.shape[0], img.shape[1])
-        # h, w, = img.shape[0], img.shape[1]
-        # img = img[(h - crop) // 2:(h + crop) // 2,
-        #       (w - crop) // 2:(w + crop) // 2]
-
-        # image = Image.fromarray(img)
-        # if self.size is not None:
-        #     image = image.resize((self.size, self.size), resample=self.interpolation)
-
-        # image = self.flip(image)
-        # image = np.array(image).astype(np.uint8)
-
-        images, labels = get_all_images(self.image_paths, self.labels)
-
-        image = np.array(image).astype(np.float32)
-
-        device = 'cpu'
-
-        # example["image"] = images.to(device).repeat(5,1,1,1,1) 
-        # example["label"] = labels.to(device).repeat(5,1) 
-
-        example["image"] = torch.tensor((image / 127.5 - 1.0).astype(np.float32), device=device).unsqueeze(0).unsqueeze(0).repeat(800,1,1,1,1) # n b w h c
-        example["class_label"] = torch.tensor(self.labels[i], device=device).unsqueeze(0).unsqueeze(0).repeat(800,1)
-
-        return example
+def create_position_map(x, y, image_size=64, original_width=1024, original_height=640):
+    """Convert cursor position to a binary position map
+    Args:
+        x, y: Original cursor positions
+        image_size: Size of the output position map (square)
+        original_width: Original screen width (1024)
+        original_height: Original screen height (640)
+    Returns:
+        torch.Tensor: Binary position map of shape (1, image_size, image_size)
+    """
+    if x is None:
+        return torch.zeros((1, image_size, image_size))
+    # Scale the positions to new size
+    x_scaled = int((x / original_width) * image_size)
+    y_scaled = int((y / original_height) * image_size)
+    
+    # Clamp values to ensure they're within bounds
+    x_scaled = max(0, min(x_scaled, image_size - 1))
+    y_scaled = max(0, min(y_scaled, image_size - 1))
+    
+    # Create binary position map
+    pos_map = torch.zeros((1, image_size, image_size))
+    pos_map[0, y_scaled, x_scaled] = 1.0
+    
+    return pos_map
 
 class ActionsData(Dataset):
     """
@@ -120,6 +102,7 @@ class ActionsData(Dataset):
             example[f"action_{j}"] = action_seq[j:j+8]
             assert len(example[f"action_{j}"]) == 8, f"Action sequence {j} must be 8 actions long"
             example[f"action_{j}"] = ' '.join(example[f"action_{j}"])
+            example[f"position_map_{j}"] = create_position_map(parse_action_string(action_seq[j+7]))
         #example["caption"] = ' '.join(self.actions_seq[i]) # actions_cond #untokenized actions
 
         example['c_concat'] = torch.stack([normalize_image(image_path) for image_path in self.image_seq_paths[i]]) # sequence of images
@@ -219,13 +202,3 @@ class DataModule(pl.LightningDataModule):
                           persistent_workers=self.persistent_workers,
                           drop_last=True)
         
-
-        
-
-#class label testing stuff
-class PersonalizeTrain0(Personalize0):
-    def __init__(self, **kwargs):
-        super().__init__(data_csv_path='/u4/jlrivard/latent-diffusion/data/train_256x256/train_info.csv')
-
-
-# 'C:/Users/Luke/latent-diffusion/data/train_256x256_w_actions_seq_2/train_sequence_info.csv'

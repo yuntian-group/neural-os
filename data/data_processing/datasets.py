@@ -62,7 +62,9 @@ def create_position_map(pos, image_size=64, original_width=1024, original_height
     
     # Create binary position map
     pos_map = torch.zeros((1, image_size, image_size))
-    pos_map[0, y_scaled, x_scaled] = 1.0
+    #pos_map[0, y_scaled, x_scaled] = 1.0
+    pos_map[0, x_scaled, y_scaled] = 1.0
+    
     
     return pos_map
 

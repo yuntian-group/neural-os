@@ -707,7 +707,7 @@ class LatentDiffusion(DDPM):
 
         import pdb; pdb.set_trace()
         from PIL import Image, ImageDraw
-        image = Image.fromarray(z[-1].transpose(0, 1).transpose(1, 2).cpu().numpy())
+        #image = Image.fromarray(z[-1].transpose(0, 1).transpose(1, 2).cpu().numpy())
         for kkk in range(32):
             image = Image.fromarray(((z[kkk].transpose(0, 1).transpose(1, 2).cpu().float().numpy()+1)*255/2).astype(np.uint8))
             a = batch['action_7'][kkk].replace(' ','').replace(':', '').split('+')

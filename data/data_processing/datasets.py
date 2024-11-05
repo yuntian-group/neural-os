@@ -14,6 +14,12 @@ from PIL import Image
 
 from latent_diffusion.ldm.util import instantiate_from_config
 
+import cv2
+import numpy as np
+from PIL import Image, ImageDraw
+from io import BytesIO
+from cairosvg import svg2png  # You might need to pip install cairosvg
+
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
 def parse_action_string(action_str):
@@ -62,11 +68,79 @@ def create_position_map(pos, image_size=64, original_width=1024, original_height
     
     # Create binary position map
     pos_map = torch.zeros((1, image_size, image_size))
-    #pos_map[0, y_scaled, x_scaled] = 1.0
-    pos_map[0, x_scaled, y_scaled] = 1.0
+    pos_map[0, y_scaled, x_scaled] = 1.0
     
     
     return pos_map
+
+def get_cursor_image():
+    """Get cursor image from SVG"""
+    cursor_svg = '''<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+     viewBox="8 4 12 20" enable-background="new 8 4 12 20" xml:space="preserve">
+<polygon fill="#FFFFFF" points="8.2,20.9 8.2,4.9 19.8,16.5 13,16.5 12.6,16.6 "/>
+<polygon fill="#FFFFFF" points="17.3,21.6 13.7,23.1 9,12 12.7,10.5 "/>
+<rect x="12.5" y="13.6" transform="matrix(0.9221 -0.3871 0.3871 0.9221 -5.7605 6.5909)" width="2" height="8"/>
+<polygon points="9.2,7.3 9.2,18.5 12.2,15.6 12.6,15.5 17.4,15.5 "/>
+</svg>'''
+    
+    png_data = svg2png(bytestring=cursor_svg.encode('utf-8'), 
+                      output_width=12, 
+                      output_height=20)
+    
+    cursor = Image.open(BytesIO(png_data))
+    cursor_array = np.array(cursor)
+    
+    cursor_with_outline = Image.new('RGBA', cursor.size, (0, 0, 0, 0))
+    draw = ImageDraw.Draw(cursor_with_outline)
+    
+    black_mask = np.all(cursor_array == [255, 255, 255, 255], axis=-1)
+    outline_positions = np.where(black_mask)
+    
+    for y, x in zip(*outline_positions):
+        for dx, dy in [(-1,0), (1,0), (0,-1), (0,1)]:
+            new_x, new_y = x + dx, y + dy
+            if 0 <= new_x < cursor.width and 0 <= new_y < cursor.height:
+                if not black_mask[new_y, new_x]:
+                    cursor_with_outline.putpixel((new_x, new_y), (0, 0, 0, 255))
+    
+    cursor_with_outline.alpha_composite(cursor)
+    return np.array(cursor_with_outline)
+
+def draw_cursor(frame, x, y, left_click=False, right_click=False, scaling_factor=1):
+    """Draw a cursor on the frame at the given position"""
+    x, y = int(x * scaling_factor), int(y * scaling_factor)
+    
+    cursor = get_cursor_image()
+    h, w = cursor.shape[:2]
+    
+    frame_h, frame_w = frame.shape[:2]
+    x_start = max(0, x)
+    y_start = max(0, y)
+    x_end = min(frame_w, x + w)
+    y_end = min(frame_h, y + h)
+    
+    cursor_x_start = max(0, -x)
+    cursor_y_start = max(0, -y)
+    cursor_x_end = cursor_x_start + (x_end - x_start)
+    cursor_y_end = cursor_y_start + (y_end - y_start)
+    
+    if x_end > x_start and y_end > y_start:
+        alpha = cursor[cursor_y_start:cursor_y_end, cursor_x_start:cursor_x_end, 3] / 255.0
+        alpha = alpha[..., np.newaxis]
+        
+        cursor_part = cursor[cursor_y_start:cursor_y_end, cursor_x_start:cursor_x_end, :3]
+        frame_part = frame[y_start:y_end, x_start:x_end]
+        blended = (cursor_part * alpha + frame_part * (1 - alpha)).astype(np.uint8)
+        frame[y_start:y_end, x_start:x_end] = blended
+        
+        if left_click or right_click:
+            click_radius = 4
+            click_color = (0, 255, 255) if left_click else (255, 255, 0)
+            cv2.circle(frame, (x + 8, y + 8), click_radius, click_color, -1)
+    
+    return frame
 
 class ActionsData(Dataset):
     """
@@ -74,8 +148,10 @@ class ActionsData(Dataset):
     """
     def __init__(self,
                  data_csv_path,
+                 debug_mode=True
                  ):
         self.data_path = data_csv_path
+        self.debug_mode = debug_mode
         
         data = pd.read_csv(data_csv_path)
         self.image_seq_paths = data["Image_seq_cond_path"].apply(ast.literal_eval).to_list()
@@ -94,18 +170,38 @@ class ActionsData(Dataset):
         """
         example = dict()
         i = i % self._length
-        # i = 0 if i % 2 == 0 else 50
-
-
-        #single sample overfit
-        example["image"] = normalize_image(self.targets[i]) # torch.stack(image_target) # n b w h c
+        
+        if self.debug_mode:
+            # Create a blank 64x64 image
+            image = np.ones((64, 64, 3), dtype=np.uint8) * 255
+            
+            # Get the last action (current position)
+            action = self.actions_seq[i][-1]
+            coords = parse_action_string(action)
+            
+            if coords is not None:
+                x, y = coords
+                # Scale coordinates from 1024x640 to 64x64
+                x_scaled = int((x / 1024) * 64)
+                y_scaled = int((y / 640) * 64)
+                # Draw cursor at scaled position
+                image = draw_cursor(image, x_scaled, y_scaled, scaling_factor=1)
+            
+            # Convert to tensor
+            example["image"] = torch.tensor(image).permute(2, 0, 1).float() / 127.5 - 1.0
+        else:
+            # Original code
+            example["image"] = normalize_image(self.targets[i])
+            
+        # Rest of the original code...
         action_seq = self.actions_seq[i]
         assert len(action_seq) == 15, "Action sequence must be 15 actions long"
         for j in range(8):
             example[f"action_{j}"] = action_seq[j:j+8]
             assert len(example[f"action_{j}"]) == 8, f"Action sequence {j} must be 8 actions long"
             example[f"action_{j}"] = ' '.join(example[f"action_{j}"])
-            example[f"position_map_{j}"] = create_position_map(parse_action_string(action_seq[j+7]))
+            x, y = parse_action_string(action_seq[j+7])
+            example[f"position_map_{j}"] = create_position_map((x,y)))
         #example["caption"] = ' '.join(self.actions_seq[i]) # actions_cond #untokenized actions
 
         example['c_concat'] = torch.stack([normalize_image(image_path) for image_path in self.image_seq_paths[i]]) # sequence of images

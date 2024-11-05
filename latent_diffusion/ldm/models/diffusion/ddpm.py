@@ -705,19 +705,19 @@ class LatentDiffusion(DDPM):
         encoder_posterior = self.encode_first_stage(x)
         z = self.get_first_stage_encoding(encoder_posterior).detach()
 
-        #import pdb; pdb.set_trace()
-        #from PIL import Image, ImageDraw
-        #image = Image.fromarray(z[-1].transpose(0, 1).transpose(1, 2).cpu().numpy())
-        #for kkk in range(32):
-        #    image = Image.fromarray(((z[kkk].transpose(0, 1).transpose(1, 2).cpu().float().numpy()+1)*255/2).astype(np.uint8))
-        #    a = batch['action_7'][kkk].replace(' ','').replace(':', '').split('+')
-        #    x, y = int(a[-2]), int(a[-1])
-        #    x_scaled = int(x / 1024 * 64)
-        #    y_scaled = int(y / 640 * 64)
-        #    draw = ImageDraw.Draw(image)
-        #    draw.ellipse([x_scaled-2, y_scaled-2, x_scaled+2, y_scaled+2], fill=(255, 0, 0))
-        #    image.save(f'debug_{kkk}.png')
-        #import pdb; pdb.set_trace()
+        import pdb; pdb.set_trace()
+        from PIL import Image, ImageDraw
+        image = Image.fromarray(z[-1].transpose(0, 1).transpose(1, 2).cpu().numpy())
+        for kkk in range(32):
+            image = Image.fromarray(((z[kkk].transpose(0, 1).transpose(1, 2).cpu().float().numpy()+1)*255/2).astype(np.uint8))
+            a = batch['action_7'][kkk].replace(' ','').replace(':', '').split('+')
+            x, y = int(a[-2]), int(a[-1])
+            x_scaled = int(x / 1024 * 256)
+            y_scaled = int(y / 640 * 256)
+            draw = ImageDraw.Draw(image)
+            draw.ellipse([x_scaled-2, y_scaled-2, x_scaled+2, y_scaled+2], fill=(255, 0, 0))
+            image.save(f'256debug_{kkk}.png')
+        import pdb; pdb.set_trace()
         #z = x
 
         
@@ -811,7 +811,7 @@ class LatentDiffusion(DDPM):
             #import pdb; pdb.set_trace()
             pos_map = batch['position_map_7']
             #c[hkey] = torch.cat([c[hkey], pos_map], dim=1)
-            c[hkey] = torch.cat([c[hkey][:, :, :64, :64], pos_map], dim=1)
+            c[hkey] = torch.cat([c[hkey][:, :, :256, :256], pos_map], dim=1)
             # concatenate with the position map.
             assert c[hkey].shape[1] == 3*7 + 1
         else:

@@ -45,7 +45,7 @@ def parse_action_string(action_str):
     
     return (x, y)
 
-def create_position_map(pos, image_size=64, original_width=1024, original_height=640):
+def create_position_map(pos, image_size=256, original_width=1024, original_height=640):
     """Convert cursor position to a binary position map
     Args:
         x, y: Original cursor positions
@@ -148,7 +148,7 @@ class ActionsData(Dataset):
     """
     def __init__(self,
                  data_csv_path,
-                 debug_mode=True
+                 debug_mode=False
                  ):
         self.data_path = data_csv_path
         self.debug_mode = debug_mode

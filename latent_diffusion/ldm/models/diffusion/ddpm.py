@@ -705,6 +705,9 @@ class LatentDiffusion(DDPM):
         encoder_posterior = self.encode_first_stage(x)
         z = self.get_first_stage_encoding(encoder_posterior).detach()
 
+        import pdb; pdb.set_trace()
+        #z = x
+
         
         if self.model.conditioning_key is not None:
             if cond_key is None:

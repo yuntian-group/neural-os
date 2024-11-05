@@ -188,7 +188,8 @@ class ActionsData(Dataset):
                 image = draw_cursor(image, x_scaled, y_scaled, scaling_factor=1)
             
             # Convert to tensor
-            example["image"] = torch.tensor(image).permute(2, 0, 1).float() / 127.5 - 1.0
+            #example["image"] = torch.tensor(image).permute(2, 0, 1).float() / 127.5 - 1.0
+            example["image"] = normalize_image(Image.fromarray(image)) #.permute(2, 0, 1).float() / 127.5 - 1.0
         else:
             # Original code
             example["image"] = normalize_image(self.targets[i])
@@ -201,7 +202,7 @@ class ActionsData(Dataset):
             assert len(example[f"action_{j}"]) == 8, f"Action sequence {j} must be 8 actions long"
             example[f"action_{j}"] = ' '.join(example[f"action_{j}"])
             x, y = parse_action_string(action_seq[j+7])
-            example[f"position_map_{j}"] = create_position_map((x,y)))
+            example[f"position_map_{j}"] = create_position_map((x,y))
         #example["caption"] = ' '.join(self.actions_seq[i]) # actions_cond #untokenized actions
 
         example['c_concat'] = torch.stack([normalize_image(image_path) for image_path in self.image_seq_paths[i]]) # sequence of images

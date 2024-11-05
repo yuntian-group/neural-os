@@ -19,10 +19,14 @@ LOCAL_CHECKPOINT_PATH = "saved_fixcursor_lr2e5_debug_gpt_firstframe/model-step=0
 LOCAL_CHECKPOINT_PATH = "saved_fixcursor_lr2e5_debug_gpt_firstframe/model-step=005000.ckpt"
 LOCAL_CHECKPOINT_PATH = "saved_fixcursor_lr2e5_debug_gpt_firstframe_identity/model_saved_fixcursor_lr2e5_debug_gpt_firstframe_identity.ckpt"
 LOCAL_CHECKPOINT_PATH = "saved_fixcursor_lr2e5_debug_gpt_firstframe_posmap/model-step=001000.ckpt"
+LOCAL_CHECKPOINT_PATH = "saved_fixcursor_lr2e5_debug_gpt_firstframe_posmap/model-step=001000-v1.ckpt"
+#LOCAL_CHECKPOINT_PATH = "saved_fixcursor_lr2e5_debug_gpt_firstframe_posmap/model-step=005000.ckpt"
+LOCAL_CHECKPOINT_PATH = "saved_fixcursor_lr2e5_debug_gpt_firstframe_posmap/model_saved_fixcursor_lr2e5_debug_gpt_firstframe_posmap.ckpt"
+LOCAL_CHECKPOINT_PATH = "saved_fixcursor_lr2e5_debug_gpt_firstframe_posmap_debugidentity/model-step=009000.ckpt"
 CONFIG_PATH = "config_csllm.yaml"
 CONFIG_PATH = "configs/2e5_debug_gpt_firstframe.yaml"
 CONFIG_PATH = "configs/2e5_debug_gpt_firstframe_identity.yaml"
-CONFIG_PATH = "configs/2e5_debug_gpt_firstframe_posmap.yaml"
+CONFIG_PATH = "configs/2e5_debug_gpt_firstframe_posmap_debugidentity.yaml"
 
 def upload_model_to_hub():
     # Load the configuration

@@ -27,9 +27,9 @@ model:
         out_channels: 3
         model_channels: 192
         attention_resolutions:
+        - 32
         - 16
         - 8
-        - 4
         num_res_blocks: 2
         channel_mult:
         - 1

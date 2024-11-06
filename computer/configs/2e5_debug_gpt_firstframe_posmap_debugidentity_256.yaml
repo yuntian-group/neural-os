@@ -1,4 +1,4 @@
-save_path: saved_fixcursor_lr2e5_debug_gpt_firstframe_posmap_debugidentity_256
+save_path: saved_fixcursor_lr2e5_debug_gpt_firstframe_posmap_debugidentity_256_cont
 
 model:
   base_learning_rate: 2.0e-05
@@ -27,9 +27,9 @@ model:
         out_channels: 3
         model_channels: 192
         attention_resolutions:
+        - 32
         - 16
         - 8
-        - 4
         num_res_blocks: 2
         channel_mult:
         - 1
@@ -55,7 +55,7 @@ model:
 data:
   target: data.data_processing.datasets.DataModule
   params:
-    batch_size: 8
+    batch_size: 16
     num_workers: 1
     wrap: false
     shuffle: True
@@ -79,6 +79,6 @@ lightning:
     limit_val_batches: 0
     accelerator: gpu
     gpus: 1
-    accumulate_grad_batches: 16
+    accumulate_grad_batches: 8
     gradient_clip_val: 1
     checkpoint_callback: True 

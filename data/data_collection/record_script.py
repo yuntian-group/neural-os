@@ -41,9 +41,12 @@ def get_cursor_image():
 </svg>'''
     
     # Convert SVG to PNG in memory with larger size
+    #png_data = svg2png(bytestring=cursor_svg.encode('utf-8'), 
+    #                  output_width=48,  # Adjust size as needed
+    #                  output_height=80)  # Maintain aspect ratio
     png_data = svg2png(bytestring=cursor_svg.encode('utf-8'), 
-                      output_width=48,  # Adjust size as needed
-                      output_height=80)  # Maintain aspect ratio
+                      output_width=96,  # Adjust size as needed
+                      output_height=160)  # Maintain aspect ratio
     
     # Convert PNG to numpy array
     cursor = Image.open(BytesIO(png_data))

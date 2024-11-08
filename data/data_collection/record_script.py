@@ -119,11 +119,10 @@ async def record(save_dir: str = 'raw_data', save_name: str = 'record_0',
                 fn_args: tuple = ()):
     """
     Records mouse positions, clicks, and screen at 15 fps.
-    Frames are resized to 512x512 for storage efficiency.
+    Frames are stored at original resolution.
     """
     fps = 15
     interval = 1.0 / fps
-    output_size = (512, 512)  # Target size for video frames
     
     # Ensure directories exist with parent_directory
     os.makedirs(f'{parent_directory}/{save_dir}/videos', exist_ok=True)
@@ -150,14 +149,14 @@ async def record(save_dir: str = 'raw_data', save_name: str = 'record_0',
         scaling_factor = height / monitor['height']
         print(f"Detected scaling factor: {scaling_factor}")
         
-        # Initialize video writer with output_size
+        # Initialize video writer with original size
         codec = 'mp4v'
         fourcc = cv2.VideoWriter_fourcc(*codec)
         out = cv2.VideoWriter(
             f'{parent_directory}/{save_dir}/videos/{save_name}.mp4', 
             fourcc, 
             fps, 
-            output_size,  # Use smaller size
+            (width, height),  # Use original size
             isColor=True
         )
            
@@ -165,15 +164,13 @@ async def record(save_dir: str = 'raw_data', save_name: str = 'record_0',
             raise Exception("Could not open video writer")
         
         print(f"Monitor settings: {monitor}")
-        print(f"Original dimensions: width={width}, height={height}")
-        print(f"Output dimensions: {output_size}")
+        print(f"Recording at dimensions: width={width}, height={height}")
         
         frame_count = 0
         try:
             # Start function_to_record if provided
             if function_to_record:
                 function_task = asyncio.create_task(asyncio.to_thread(function_to_record, *fn_args))
-                # Wait for the function to start
                 await asyncio.sleep(0.1)  # Small delay to ensure function starts
 
             start_time = time.time()
@@ -184,14 +181,12 @@ async def record(save_dir: str = 'raw_data', save_name: str = 'record_0',
                 screen = np.array(sct.grab(monitor))
                 frame = cv2.cvtColor(screen, cv2.COLOR_BGRA2BGR)
                 
-                # Draw cursor before resizing
+                # Draw cursor before writing
                 x, y = mouse.position
                 #frame = draw_cursor(frame, x, y, left_click, right_click, scaling_factor)
                 
-                # Resize frame
-                frame = cv2.resize(frame, output_size, interpolation=cv2.INTER_AREA)
-                
-                # Write resized frame
+                # Write frame at original size
+                #frame = cv2.resize(frame, output_size, interpolation=cv2.INTER_AREA)
                 success = out.write(frame)
                 frame_count += 1
                 #if frame_count % 15 == 0:  # Print every second

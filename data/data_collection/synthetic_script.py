@@ -41,18 +41,18 @@ async def create_synthetic_dataset(n=1, batch_size=100):
             await asyncio.sleep(0.1)
         
         # Move files to final location and clean up batch directory
-        print(f"\nMoving files from {batch_dir} to raw_data/")
+        print(f"\nMoving files from ../{batch_dir} to ../raw_data/")
         
         # First, list all files to move
-        for root, dirs, files in os.walk(batch_dir):
+        for root, dirs, files in os.walk(f"../{batch_dir}"):
             print(f"\nExploring directory: {root}")
             print(f"Found directories: {dirs}")
             print(f"Found files: {files}")
             
             for file in files:
                 src = os.path.join(root, file)
-                rel_path = os.path.relpath(root, batch_dir)
-                dst = os.path.join('raw_data', rel_path, file)
+                rel_path = os.path.relpath(root, f"../{batch_dir}")
+                dst = os.path.join("../raw_data", rel_path, file)
                 
                 print(f"\nMoving file:")
                 print(f"From: {src}")
@@ -68,8 +68,8 @@ async def create_synthetic_dataset(n=1, batch_size=100):
                 except Exception as e:
                     print(f"Error moving {file}: {str(e)}")
         
-        print(f"\nCleaning up {batch_dir}")
-        shutil.rmtree(batch_dir)
+        print(f"\nCleaning up ../{batch_dir}")
+        shutil.rmtree(f"../{batch_dir}")
         
         # Additional cleanup
         gc.collect()

@@ -67,4 +67,4 @@ if __name__ == "__main__":
     os.makedirs('raw_data', exist_ok=True)
     
     # Run with batch size of 100
-    asyncio.run(create_synthetic_dataset(4, batch_size=2))
+    asyncio.run(create_synthetic_dataset(4000, batch_size=100))

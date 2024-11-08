@@ -183,7 +183,7 @@ async def record(save_dir: str = 'raw_data', save_name: str = 'record_0',
                 
                 # Draw cursor before writing
                 x, y = mouse.position
-                #frame = draw_cursor(frame, x, y, left_click, right_click, scaling_factor)
+                frame = draw_cursor(frame, x, y, left_click, right_click, scaling_factor)
                 
                 # Write frame at original size
                 #frame = cv2.resize(frame, output_size, interpolation=cv2.INTER_AREA)

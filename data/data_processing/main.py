@@ -73,6 +73,10 @@ if __name__ == "__main__":
     # Use all available CPU cores
     num_workers = multiprocessing.cpu_count()
 
+    num_workers = min(num_workers, 32)
+
+    print (f"Using {num_workers} workers.")
+
     # Create a multiprocessing pool
     with multiprocessing.Pool(num_workers) as pool:
         # Process videos in parallel

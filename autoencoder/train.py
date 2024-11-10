@@ -1,6 +1,6 @@
 from latent_diffusion.ldm.models.autoencoder import VQModel
 
-from data.processing.datasets import DataModule
+from data.data_processing.datasets import DataModule
 from latent_diffusion.ldm.models.diffusion.ddpm import LatentDiffusion, disabled_train
 from omegaconf import OmegaConf
 from typing import List
@@ -8,7 +8,7 @@ import argparse, os
 from pytorch_lightning.trainer import Trainer
 from pytorch_lightning.callbacks import ModelCheckpoint
 
-from computer.util import LoggingCallback
+#from computer.util import LoggingCallback
 
 def train_model(model: VQModel, data: DataModule, save_path: str, config: OmegaConf, ckpt_path: str) -> VQModel:
 
@@ -20,11 +20,11 @@ def train_model(model: VQModel, data: DataModule, save_path: str, config: OmegaC
 
     # Define a ModelCheckpoint callback
     checkpoint_callback = ModelCheckpoint(
+        every_n_train_steps=1000,
         dirpath=save_path,             # Directory to save checkpoints
-        filename='model_ae_{epoch}',  # Filename format
+        filename='model-{step:06d}',  # Checkpoint filename format
         save_top_k=-1,                 # Save all checkpoints, not just the best one
-        save_weights_only=False,       # Save full model (weights + optimizer state)
-        every_n_epochs=1,              # Save every epoch
+        #save_weights_only=False,       # Save full model (weights + optimizer state)
     )
 
     #Disables training for the encoder side.
@@ -44,11 +44,12 @@ def train_model(model: VQModel, data: DataModule, save_path: str, config: OmegaC
 
     print(trainer_opt)
 
-    trainer: Trainer = Trainer(**vars(trainer_opt), callbacks=[checkpoint_callback, LoggingCallback()])
+    trainer: Trainer = Trainer(**vars(trainer_opt), callbacks=[checkpoint_callback])
 
     print("\u2705 Fitting model...")
 
-    trainer.fit(model, data, ckpt_path=ckpt_path)
+    #trainer.fit(model, data, ckpt_path=ckpt_path)
+    trainer.fit(model, data)
     
     if trainer.is_global_zero: print(f"\u2705 Checkpoints saved at {save_path}")
     

@@ -1,7 +1,7 @@
-from computer.util import init_and_load_model, init_model, get_ground_truths
-from computer.autoencoder.train import train_model
-from computer.autoencoder.sample import sample_model_from_dataset
-from data.processing.datasets import DataModule
+from computer.util import init_model, get_ground_truths
+from train import train_model
+#from sample import sample_model_from_dataset
+from data.data_processing.datasets import DataModule
 from latent_diffusion.ldm.models.autoencoder import VQModel
 from omegaconf import OmegaConf
 from latent_diffusion.ldm.util import instantiate_from_config
@@ -12,16 +12,16 @@ from latent_diffusion.ldm.models.diffusion.ddpm import LatentDiffusion
 def parse_args():
     parser = argparse.ArgumentParser(description="Runs the finetuning and inference script.")
 
-    parser.add_argument("--save_path", type=str, default=os.path.join('autoencoder', 'ae_finetune_0'),
+    parser.add_argument("--save_path", type=str, default=os.path.join('autoencoder_vq8', 'ae_finetune_0'),
                         help="where to save the ckpt and resulting samples.")
     
-    parser.add_argument("--from_ckpt", type=str, required=True,
+    parser.add_argument("--from_ckpt", type=str, default='autoencoder.ckpt',
                         help="initializes the model from an existing ckpt path.")
 
     parser.add_argument("--sample_model", action='store_true', default=True,
                         help="Runs some samples on some training data.")
 
-    parser.add_argument("--config", type=str, default=os.path.join("autoencoder", "config.yaml"),
+    parser.add_argument("--config", type=str, default=os.path.join("config_vq8.yaml"),
                         help="specifies the model config to load.")
 
     return parser.parse_args()
@@ -49,15 +49,15 @@ if __name__ == "__main__":
 
     model, rank = train_model(model, data, args.save_path, config, ckpt_path=args.from_ckpt)
 
-    if args.sample_model and rank:
-        model = model.to(device)
-        model.eval()
-        # model = torch.compile(model, mode='max-autotune', fullgraph=True)
-        sample_model_from_dataset(
-            model, 
-            data.datasets['train'], 
-            idxs=[i for i in range(150)], 
-            save_path=os.path.join(args.save_path, "sample"), 
-            create_video=True,
-            targets=True
-        )
+    #if args.sample_model and rank:
+    #    model = model.to(device)
+    #    model.eval()
+    #    # model = torch.compile(model, mode='max-autotune', fullgraph=True)
+    #    sample_model_from_dataset(
+    #        model, 
+    #        data.datasets['train'], 
+    #        idxs=[i for i in range(150)], 
+    #        save_path=os.path.join(args.save_path, "sample"), 
+    #        create_video=True,
+    #        targets=True
+    #    )

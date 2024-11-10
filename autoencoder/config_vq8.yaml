@@ -34,7 +34,7 @@ model:
 data:
   target: data.data_processing.datasets.DataModule
   params:
-    batch_size: 16
+    batch_size: 2
     num_workers: 4
     wrap: false
     shuffle: true
@@ -45,7 +45,7 @@ data:
     train:
       target: data.data_processing.datasets.ActionsData
       params:
-        data_csv_path: /u4/jlrivard/CSLLM/computer/click_512/train_dataset.csv
+        data_csv_path: train_dataset/train_dataset_14frames_firstframe_allframes_ae.csv
     # validation:
     #   target: data.data_processing.datasets.ActionsData
     #   params:
@@ -53,10 +53,8 @@ data:
 
 lightning:
   trainer:
-    benchmark: false
+    benchmark: False
     max_epochs: 1
     limit_val_batches: 0
-    accelerator: cuda
-    devices: 1
-    strategy: ddp_find_unused_parameters_true
-    precision: 32-true
+    accelerator: gpu
+    gpus: 1

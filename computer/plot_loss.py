@@ -33,6 +33,14 @@ plt.figure(figsize=(12, 8))
 
 # Plot each log file
 for log_file in glob.glob("log.pssearch_*"):
+    if '4e4' in log_file:
+        continue
+    if '8e4' in log_file:
+        continue
+    if '2e4' in log_file:
+        continue
+    if '1e4' in log_file:
+        continue
     # Extract learning rate and accumulation from filename
     params = log_file.split('_')
     lr = params[-1]
@@ -41,6 +49,7 @@ for log_file in glob.glob("log.pssearch_*"):
     
     steps, losses = extract_losses(log_file)
     plt.plot(steps, losses, label=label, alpha=0.8)
+    plt.ylim(0, 0.05)
 
 plt.xlabel('Global Step')
 plt.ylabel('Average Loss')

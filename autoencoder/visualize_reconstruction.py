@@ -5,7 +5,8 @@ from PIL import Image
 import os
 from einops import rearrange
 from omegaconf import OmegaConf
-from computer.util import init_and_load_model, normalize_image
+from computer.util import load_model_from_config
+from data.data_processing.datasets import normalize_image
 
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
@@ -72,7 +73,7 @@ if __name__ == '__main__':
     
     # Load model
     config = OmegaConf.load(args.config)
-    model = init_and_load_model(config, args.ckpt_path)
+    model = load_model_from_config(config, args.ckpt_path)
     model = model.to(device)
     model.eval()
     

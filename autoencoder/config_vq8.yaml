@@ -1,7 +1,3 @@
-##########################################################################################################
-#Configure everything for the model here including the modules, lightning trainer and data characteristics
-##########################################################################################################
-
 model:
   base_learning_rate: 2.0e-06
   target: latent_diffusion.ldm.models.autoencoder.VQModel
@@ -9,6 +5,7 @@ model:
     embed_dim: 4
     n_embed: 16384
     monitor: val/rec_loss
+
     ddconfig:
       double_z: false
       z_channels: 4
@@ -37,7 +34,7 @@ model:
 data:
   target: data.data_processing.datasets.DataModule
   params:
-    batch_size: 4
+    batch_size: 16
     num_workers: 4
     wrap: false
     shuffle: true
@@ -57,10 +54,9 @@ data:
 lightning:
   trainer:
     benchmark: false
-    max_epochs: 6
+    max_epochs: 1
     limit_val_batches: 0
     accelerator: cuda
-    devices: 8
+    devices: 1
     strategy: ddp_find_unused_parameters_true
     precision: 32-true
-

@@ -53,16 +53,16 @@ def visualize_reconstruction(model, image_path, save_path):
 def parse_args():
     parser = argparse.ArgumentParser(description="Visualize autoencoder encoding and decoding.")
     
-    parser.add_argument("--ckpt_path", type=str, required=True,
+    parser.add_argument("--ckpt_path", type=str, default='autoencoder.ckpt',
                         help="Path to model checkpoint.")
     
-    parser.add_argument("--config", type=str, default="autoencoder/config.yaml",
+    parser.add_argument("--config", type=str, default="config_vq8.yaml",
                         help="Path to model config.")
     
     parser.add_argument("--image_path", type=str, required=True,
                         help="Path to input image.")
     
-    parser.add_argument("--save_path", type=str, default="autoencoder/visualization",
+    parser.add_argument("--save_path", type=str, default="visualization",
                         help="Where to save visualizations.")
     
     return parser.parse_args()

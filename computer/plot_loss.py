@@ -4,6 +4,15 @@ import glob
 import numpy as np
 import matplotlib.pyplot as plt
 from collections import defaultdict
+from scipy.ndimage import gaussian_filter1d
+
+def smooth_curve(y, sigma=2):
+    """Apply Gaussian smoothing to the curve"""
+    return gaussian_filter1d(y, sigma=sigma)
+
+def moving_average(y, window=100):
+    """Calculate moving average with given window size"""
+    return np.convolve(y, np.ones(window), 'valid') / window
 
 def extract_losses(filename):
     step_losses = defaultdict(list)
@@ -31,33 +40,48 @@ def extract_losses(filename):
 # Create the plot
 plt.figure(figsize=(12, 8))
 
+# Store final statistics
+final_stats = []
+
 # Plot each log file
 for log_file in glob.glob("log.pssearch_*"):
-    if '4e4' in log_file:
-        continue
-    if '8e4' in log_file:
-        continue
-    if '2e4' in log_file:
-        continue
-    if '1e4' in log_file:
-        continue
     # Extract learning rate and accumulation from filename
     params = log_file.split('_')
     lr = params[-1]
     acc = params[-2].replace('acc', '')
-    label = f'lr={lr}, acc={acc}'
     
     steps, losses = extract_losses(log_file)
-    plt.plot(steps, losses, label=label, alpha=0.8)
-    plt.ylim(0, 0.05)
+    
+    # Apply smoothing
+    smooth_losses = smooth_curve(losses)
+    
+    # Calculate moving average for final 1000 steps
+    final_ma = moving_average(losses[-1000:] if len(losses) > 1000 else losses)
+    final_stats.append({
+        'lr': lr,
+        'acc': acc,
+        'final_loss_ma': final_ma.mean(),
+        'min_loss': min(smooth_losses)
+    })
+    
+    label = f'lr={lr}, acc={acc}'
+    plt.plot(steps, smooth_losses, label=label, alpha=0.8)
 
 plt.xlabel('Global Step')
-plt.ylabel('Average Loss')
-plt.title('Training Loss Curves')
+plt.ylabel('Average Loss (Smoothed)')
+plt.title('Training Loss Curves (Gaussian Smoothed)')
 plt.grid(True)
 plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
-plt.tight_layout()  # Adjust layout to prevent legend cutoff
+plt.tight_layout()
 
 # Save plot
 plt.savefig('loss_curves_comparison.png', bbox_inches='tight')
 print(f"Plot saved to loss_curves_comparison.png")
+
+# Print statistics sorted by final moving average
+print("\nFinal Statistics (sorted by final moving average):")
+print("=" * 60)
+print(f"{'LR':<10} {'Acc':<6} {'Final MA':<12} {'Min Loss':<12}")
+print("-" * 60)
+for stat in sorted(final_stats, key=lambda x: x['final_loss_ma']):
+    print(f"{stat['lr']:<10} {stat['acc']:<6} {stat['final_loss_ma']:.6f} {stat['min_loss']:.6f}") 

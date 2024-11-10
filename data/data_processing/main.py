@@ -5,6 +5,7 @@ from tqdm import tqdm
 from data.data_processing.video_convert import create_padding_img, video_to_frames, sequence_creator
 import multiprocessing
 from functools import partial
+import cv2
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Converts a group of videos and their respective actions into one training dataset.")
@@ -55,16 +56,32 @@ if __name__ == "__main__":
     save_dir=args.save_dir
     os.makedirs(save_dir, exist_ok=True)
 
-    #Create a padding image (if needed)
-    black_image = create_padding_img()
+    # Determine the number of videos dynamically
+    video_files = [f for f in os.listdir(args.video_dir) if f.startswith('record_') and f.endswith('.mp4')]
+    if not video_files:
+        raise ValueError(f"No video files found in {args.video_dir}")
+    
+    # First get the size from a video file
+    video_file = next(iter(video_files))  # Get first video file
+    cap = cv2.VideoCapture(os.path.join(args.video_dir, video_file))
+    if not cap.isOpened():
+        raise ValueError(f"Could not open video file: {video_file}")
+    
+    # Read first frame to get size
+    ret, frame = cap.read()
+    if not ret:
+        raise ValueError(f"Could not read frame from video file: {video_file}")
+    
+    height, width = frame.shape[:2]
+    cap.release()
+    
+    # Create a padding image with the same size
+    black_image = create_padding_img(width, height)
     black_image.save(save_dir + '/padding.png')
 
     all_seqs = []
 
-    # Determine the number of videos dynamically
-    video_files = [f for f in os.listdir(args.video_dir) if f.startswith('record_') and f.endswith('.mp4')]
     n = len(video_files)
-
     print(f"Processing {n} videos.")
 
     # Create a partial function with fixed arguments

@@ -41,12 +41,24 @@ def overlay_mouse_actions(video_file, csv_file, output_file):
         x_pos = int(action['X'])
         y_pos = int(action['Y'])
         screen_width, screen_height = pyautogui.size()
-        x_pos = int(video_width / screen_width * x_pos)
-        y_pos = int(video_height / screen_height * y_pos)
-
-        # Overlay a red dot at the (X, Y) position
-        if 0 <= x_pos <= video.w and 0 <= y_pos <= video.h:
-            cv2.circle(frame, (x_pos, y_pos), 5, (0, 0, 255), -1)  # Red dot with radius 5
+        screen_width, screen_height = 1920, 1080
+        #x_pos = int(video_width / screen_width * x_pos)
+        #y_pos = int(video_height / screen_height * y_pos)
+        #print (screen_width, screen_height, video_width, video_height)
+        x_pos = x_pos - (screen_width / 2 - video_width / 2)
+        y_pos = y_pos - (screen_height / 2 - video_height / 2)
+        x_pos = int(x_pos)
+        y_pos = int(y_pos)
+        # Draw base red dot for cursor position
+        cv2.circle(frame, (x_pos, y_pos), 5, (0, 0, 255), -1)  # Red dot with radius 5
+        
+        # Add green circle effect for left clicks
+        if action['Left Click']:
+            # Draw outer circle with animation based on frame number
+            radius = 10 + int(5 * np.sin(frame_number * 0.2))  # Pulsing effect
+            cv2.circle(frame, (x_pos, y_pos), radius, (0, 255, 0), 2)  # Green circle outline
+            # Optional: Add inner filled circle
+            cv2.circle(frame, (x_pos, y_pos), 7, (0, 255, 0), -1)  # Smaller green dot
         
         return frame
 

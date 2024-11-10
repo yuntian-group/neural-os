@@ -8,8 +8,9 @@ import argparse
 from math import exp, floor
 
 #Creates the padding image for your model as a starting point for the generation process.
-def create_padding_img() -> Image.Image:
-    return Image.new('RGB', (256, 256), color=(0, 0, 0))
+def create_padding_img(width, height):
+    """Creates a black image for padding with specified dimensions"""
+    return Image.new('RGB', (width, height), color='black')
 
 def create_video_from_frames(frames: list, save_path: str, fps: int = 15):
 

@@ -12,8 +12,8 @@ from latent_diffusion.ldm.models.diffusion.ddpm import LatentDiffusion
 def parse_args():
     parser = argparse.ArgumentParser(description="Runs the finetuning and inference script.")
 
-    parser.add_argument("--save_path", type=str, default=os.path.join('autoencoder_vq8', 'ae_finetune_0'),
-                        help="where to save the ckpt and resulting samples.")
+    #parser.add_argument("--save_path", type=str, default=os.path.join('autoencoder_vq8', 'ae_finetune_0'),
+    #                    help="where to save the ckpt and resulting samples.")
     
     parser.add_argument("--from_ckpt", type=str, default='autoencoder.ckpt',
                         help="initializes the model from an existing ckpt path.")
@@ -37,6 +37,7 @@ if __name__ == "__main__":
     args=parse_args()
 
     config = OmegaConf.load(args.config)
+    save_path = config.save_path
 
     torch.cuda.empty_cache()
     model: VQModel = init_model(config) #initializes the model modules.
@@ -47,7 +48,7 @@ if __name__ == "__main__":
 
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
-    model, rank = train_model(model, data, args.save_path, config, ckpt_path=args.from_ckpt)
+    model, rank = train_model(model, data, save_path, config, ckpt_path=args.from_ckpt)
 
     #if args.sample_model and rank:
     #    model = model.to(device)

@@ -7,7 +7,7 @@ model:
     monitor: val/rec_loss
     embed_dim: 4
     lossconfig:
-      target: latent_diffusion.ldm.modules.losses.vqperceptual.LPIPSWithDiscriminator
+      target: latent_diffusion.ldm.modules.losses.contperceptual.LPIPSWithDiscriminator
       params:
         disc_start: 50001
         kl_weight: 0.000001

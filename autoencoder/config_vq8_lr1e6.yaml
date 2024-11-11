@@ -1,7 +1,7 @@
-save_path: saved_vq8_bsz8_acc1
+save_path: saved_vq8_bsz8_acc1_lr1e6
 
 model:
-  base_learning_rate: 2.0e-06
+  base_learning_rate: 1.0e-06
   target: latent_diffusion.ldm.models.autoencoder.VQModel
   params:
     embed_dim: 4

@@ -20,7 +20,7 @@ def train_model(model: VQModel, data: DataModule, save_path: str, config: OmegaC
 
     # Define a ModelCheckpoint callback
     checkpoint_callback = ModelCheckpoint(
-        every_n_train_steps=1000,
+        every_n_train_steps=3000,
         dirpath=save_path,             # Directory to save checkpoints
         filename='model-{step:06d}',  # Checkpoint filename format
         save_top_k=-1,                 # Save all checkpoints, not just the best one

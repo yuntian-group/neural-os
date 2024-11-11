@@ -1,7 +1,7 @@
-save_path: saved_vq8_bsz8_acc1
+save_path: saved_vq8_bsz8_acc1_lr1e6_loadtrainer
 
 model:
-  base_learning_rate: 2.0e-06
+  base_learning_rate: 1.0e-06
   target: latent_diffusion.ldm.models.autoencoder.VQModel
   params:
     embed_dim: 4
@@ -56,7 +56,7 @@ data:
 lightning:
   trainer:
     benchmark: False
-    max_epochs: 1
+    max_epochs: 3
     limit_val_batches: 0
     accelerator: gpu
     gpus: 1

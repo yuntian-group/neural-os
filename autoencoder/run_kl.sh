@@ -12,4 +12,4 @@ export BASE=/n/netscratch/shieber_lab/Lab/yuntian/computer/autoencoder
 cd $BASE
 conda activate /n/netscratch/shieber_lab/Lab/yuntian/main
 which python
-stdbuf -oL -eL python main_kl.py --config config_kl4_lr4.5e6.yaml > log.ae.kl.bsz12_acc2_lr4.5e6 2>&1
+stdbuf -oL -eL python main_kl.py --config config_kl4_lr4.5e6.yaml > log.ae.kl.bsz8_acc3_lr4.5e6 2>&1

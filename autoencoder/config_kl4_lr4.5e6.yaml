@@ -1,4 +1,4 @@
-save_path: saved_kl4_bsz12_acc2_lr4.5e6
+save_path: saved_kl4_bsz8_acc8_lr4.5e6
 
 model:
   base_learning_rate: 4.5e-06
@@ -32,7 +32,7 @@ model:
 data:
   target: data.data_processing.datasets.DataModule
   params:
-    batch_size: 12
+    batch_size: 8
     num_workers: 4
     wrap: false
     shuffle: true
@@ -56,4 +56,4 @@ lightning:
     limit_val_batches: 0
     accelerator: gpu
     devices: 1
-    accumulate_grad_batches: 2 
+    accumulate_grad_batches: 8

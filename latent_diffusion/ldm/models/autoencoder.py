@@ -395,19 +395,20 @@ class AutoencoderKL(pl.LightningModule):
         #import pdb; pdb.set_trace()
 
         opt_ae, opt_disc = self.optimizers()
-
+        print (str(int(self.global_step)))
+        # Manual checkpoint every 10 steps
+        if self.global_step % 10 == 0:
+            self.trainer.save_checkpoint(f"{self.trainer.default_root_dir}/model-{self.global_step:06d}.ckpt")
+        
         if optimizer_idx == 0:
             # train encoder+decoder+logvar
             aeloss, log_dict_ae = self.loss(inputs, reconstructions, posterior, optimizer_idx, self.global_step,
                                             last_layer=self.get_last_layer(), split="train")
             self.log("aeloss", aeloss, prog_bar=True, logger=True, on_step=True, on_epoch=True)
             #self.log("global_step_str", str(int(self.global_step)), prog_bar=True, logger=True, on_step=True, on_epoch=False)
-            print (str(int(self.global_step)))
+            
             self.log_dict(log_dict_ae, prog_bar=False, logger=True, on_step=True, on_epoch=False)
             
-            # Manual checkpoint every 10 steps
-            if self.global_step % 10 == 0:
-                self.trainer.save_checkpoint(f"{self.trainer.default_root_dir}/model-{self.global_step:06d}.ckpt")
             
             return aeloss
 

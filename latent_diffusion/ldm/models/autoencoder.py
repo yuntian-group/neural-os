@@ -400,6 +400,7 @@ class AutoencoderKL(pl.LightningModule):
         if self.global_step % 10 == 0:
             print ('saving checkpoint')
             self.trainer.save_checkpoint(f"{self.trainer.default_root_dir}/model-{self.global_step:06d}.ckpt")
+            print ('saved checkpoint to', f"{self.trainer.default_root_dir}/model-{self.global_step:06d}.ckpt")
         
         if optimizer_idx == 0:
             # train encoder+decoder+logvar

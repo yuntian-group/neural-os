@@ -398,6 +398,7 @@ class AutoencoderKL(pl.LightningModule):
         print (str(int(self.global_step)))
         # Manual checkpoint every 10 steps
         if self.global_step % 10 == 0:
+            print ('saving checkpoint')
             self.trainer.save_checkpoint(f"{self.trainer.default_root_dir}/model-{self.global_step:06d}.ckpt")
         
         if optimizer_idx == 0:

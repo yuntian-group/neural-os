@@ -58,6 +58,7 @@ def train_model(model: VQModel, data: DataModule, save_path: str, config: OmegaC
     print(trainer_opt)
 
     trainer: Trainer = Trainer(**vars(trainer_opt), callbacks=[checkpoint_callback])
+    trainer.save_dir = save_path
 
     print("\u2705 Fitting model...")
 

@@ -401,7 +401,8 @@ class AutoencoderKL(pl.LightningModule):
             aeloss, log_dict_ae = self.loss(inputs, reconstructions, posterior, optimizer_idx, self.global_step,
                                             last_layer=self.get_last_layer(), split="train")
             self.log("aeloss", aeloss, prog_bar=True, logger=True, on_step=True, on_epoch=True)
-            self.log("global_step", str(int(self.global_step)), prog_bar=True, logger=True, on_step=True, on_epoch=False)
+            #self.log("global_step_str", str(int(self.global_step)), prog_bar=True, logger=True, on_step=True, on_epoch=False)
+            print (str(int(self.global_step)))
             self.log_dict(log_dict_ae, prog_bar=False, logger=True, on_step=True, on_epoch=False)
             
             # Manual checkpoint every 10 steps

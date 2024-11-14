@@ -43,11 +43,6 @@ def process_folder(model, input_folder, output_folder, batch_size=16, debug_firs
         # Save each latent as numpy array
         for img_file, latent in zip(batch_files, latents):
             latent_path = os.path.join(output_folder, img_file.replace('.png', '.npy'))
-            
-            # Special handling for padding.png: set all values to 0
-            if os.path.basename(img_file) == 'padding.png':
-                latent = torch.zeros_like(latent)
-            
             np.save(latent_path, latent.cpu().numpy())
             
         # Debug first batch after saving
@@ -132,7 +127,24 @@ if __name__ == '__main__':
     # Create output directory
     os.makedirs(args.output_dir, exist_ok=True)
     
-    # Process each record folder
+    # First handle the root padding.png
+    root_padding = os.path.join(args.input_dir, 'padding.png')
+    if os.path.exists(root_padding):
+        print("Processing root padding.png...")
+        # Load and process padding image to get correct shape
+        image = normalize_image(root_padding)
+        image = torch.unsqueeze(image, dim=0)
+        image = rearrange(image, 'b h w c -> b c h w').to(device)
+        
+        # Get latent shape through encoder
+        posterior = model.encode(image)
+        latent = posterior.sample()
+        
+        # Set all values to 0 and save
+        latent = torch.zeros_like(latent)
+        np.save(os.path.join(args.output_dir, 'padding.npy'), latent.cpu().numpy())
+    
+    # Then process each record folder
     print("Processing dataset...")
     for folder in tqdm(sorted(os.listdir(args.input_dir))):
         if not folder.startswith('record_'):

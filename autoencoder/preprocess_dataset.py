@@ -45,7 +45,7 @@ def process_folder(model, input_folder, output_folder, batch_size=16, debug_firs
             latent_path = os.path.join(output_folder, img_file.replace('.png', '.npy'))
             
             # Special handling for padding.png: set all values to 0
-            if img_file == 'padding.png':
+            if os.path.basename(img_file) == 'padding.png':
                 latent = torch.zeros_like(latent)
             
             np.save(latent_path, latent.cpu().numpy())

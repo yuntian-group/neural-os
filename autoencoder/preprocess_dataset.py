@@ -13,7 +13,7 @@ import shutil
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
 @torch.no_grad()
-def process_folder(model, input_folder, output_folder, batch_size=16, debug_first_batch=True):
+def process_folder(model, input_folder, output_folder, batch_size=16, debug_first_batch=False):
     """Process all images in a folder through the encoder in batches"""
     os.makedirs(output_folder, exist_ok=True)
     

@@ -5,7 +5,7 @@ from PIL import Image
 import os
 from einops import rearrange
 from omegaconf import OmegaConf
-from computer.util import init_and_load_model, normalize_image
+from computer.util import load_model_from_config, normalize_image
 from tqdm import tqdm
 import shutil
 
@@ -119,7 +119,7 @@ if __name__ == '__main__':
     # Load model
     print("Loading model...")
     config = OmegaConf.load(args.config)
-    model = init_and_load_model(config, args.ckpt_path)
+    model = load_model_from_config(config, args.ckpt_path)
     model = model.to(device)
     model.eval()
     

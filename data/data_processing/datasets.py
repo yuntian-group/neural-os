@@ -159,14 +159,23 @@ class ActionsData(Dataset):
         self.targets = data['Target_image'].to_list()
 
         self._length = len(self.image_seq_paths)
+        
+        # Check if processed data exists by checking first image
+        first_img = self.image_seq_paths[0][0]
+        processed_path = first_img.replace('train_dataset/', 'train_dataset_encoded/').replace('.png', '.npy')
+        self.use_processed = os.path.exists(processed_path)
+        if self.use_processed:
+            print("Found processed data in train_dataset_encoded/")
 
-
-    def __len__(self):
-        return self._length
+    def load_processed_image(self, image_path):
+        """Load preprocessed latent from .npy file"""
+        processed_path = image_path.replace('train_dataset/', 'train_dataset_encoded/').replace('.png', '.npy')
+        return torch.from_numpy(np.load(processed_path))
 
     def __getitem__(self, i):
         """
         takes a sequence of cond. images and actions and a single target.
+        Always loads original images, and loads processed versions if available
         """
         example = dict()
         i = i % self._length
@@ -187,12 +196,20 @@ class ActionsData(Dataset):
                 # Draw cursor at scaled position
                 image = draw_cursor(image, x_scaled, y_scaled, scaling_factor=1)
             
-            # Convert to tensor
-            #example["image"] = torch.tensor(image).permute(2, 0, 1).float() / 127.5 - 1.0
-            example["image"] = normalize_image(Image.fromarray(image)) #.permute(2, 0, 1).float() / 127.5 - 1.0
+            example["image"] = normalize_image(Image.fromarray(image))
         else:
-            # Original code
+            # Always load original images
             example["image"] = normalize_image(self.targets[i])
+            example['c_concat'] = torch.stack([normalize_image(image_path) 
+                                            for image_path in self.image_seq_paths[i]])
+            
+            # Load processed versions if available
+            if self.use_processed:
+                example['image_processed'] = self.load_processed_image(self.targets[i])
+                example['c_concat_processed'] = torch.stack([
+                    self.load_processed_image(image_path) 
+                    for image_path in self.image_seq_paths[i]
+                ])
             
         # Rest of the original code...
         action_seq = self.actions_seq[i]
@@ -203,9 +220,6 @@ class ActionsData(Dataset):
             example[f"action_{j}"] = ' '.join(example[f"action_{j}"])
             x, y = parse_action_string(action_seq[j+7])
             example[f"position_map_{j}"] = create_position_map((x,y))
-        #example["caption"] = ' '.join(self.actions_seq[i]) # actions_cond #untokenized actions
-
-        example['c_concat'] = torch.stack([normalize_image(image_path) for image_path in self.image_seq_paths[i]]) # sequence of images
 
         return example 
 

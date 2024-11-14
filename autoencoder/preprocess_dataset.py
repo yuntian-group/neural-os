@@ -43,6 +43,11 @@ def process_folder(model, input_folder, output_folder, batch_size=16, debug_firs
         # Save each latent as numpy array
         for img_file, latent in zip(batch_files, latents):
             latent_path = os.path.join(output_folder, img_file.replace('.png', '.npy'))
+            
+            # Special handling for padding.png: set all values to 0
+            if img_file == 'padding.png':
+                latent = torch.zeros_like(latent)
+            
             np.save(latent_path, latent.cpu().numpy())
             
         # Debug first batch after saving

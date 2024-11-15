@@ -76,8 +76,8 @@ model:
 data:
   target: data.data_processing.datasets.DataModule
   params:
-    batch_size: 64
-    num_workers: 8
+    batch_size: 32
+    num_workers: 4
     wrap: false
     shuffle: True
     drop_last: True
@@ -100,6 +100,6 @@ lightning:
     limit_val_batches: 0
     accelerator: gpu
     gpus: 1
-    accumulate_grad_batches: 1
+    accumulate_grad_batches: 2
     gradient_clip_val: 1
     checkpoint_callback: True 

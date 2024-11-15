@@ -6,7 +6,7 @@ def format_action(action_str, is_padding=False):
     if is_padding:
         return "N N N N N : N N N N N"
     prefix = 'N'
-    items = action_str.aplit('~')
+    items = action_str.split('~')
     if len(items) == 3:
         a = items[0]
         items = items[1:]

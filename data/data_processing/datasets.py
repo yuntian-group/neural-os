@@ -29,6 +29,8 @@ def parse_action_string(action_str):
     Returns:
         tuple: (x, y) coordinates or None if action is padding
     """
+    action_type = action_str[0]
+    action_str = action_str[1:].strip()
     if 'N' in action_str:
         return (None, None)
         
@@ -43,9 +45,9 @@ def parse_action_string(action_str):
     # Parse y: remove sign, join digits, convert to int, apply sign
     y = int(y_part)
     
-    return (x, y)
+    return x, y, action_type
 
-def create_position_map(pos, image_size=64, original_width=1024, original_height=640):
+def create_position_and_click_map(pos,action_type,image_size=64, original_width=1024, original_height=640):
     """Convert cursor position to a binary position map
     Args:
         x, y: Original cursor positions
@@ -69,9 +71,13 @@ def create_position_map(pos, image_size=64, original_width=1024, original_height
     # Create binary position map
     pos_map = torch.zeros((1, image_size, image_size))
     pos_map[0, y_scaled, x_scaled] = 1.0
+
+    leftclick_map = torch.zeros((1, image_size, image_size))
+    if action_type == 'L':
+        leftclick_map[0, y_scaled, x_scaled] = 1.0
     
     
-    return pos_map
+    return pos_map, leftclick_map
 
 def get_cursor_image():
     """Get cursor image from SVG"""
@@ -181,6 +187,7 @@ class ActionsData(Dataset):
         i = i % self._length
         
         if self.debug_mode:
+            assert False
             # Create a blank 64x64 image
             image = np.ones((64, 64, 3), dtype=np.uint8) * 255
             
@@ -218,8 +225,10 @@ class ActionsData(Dataset):
             example[f"action_{j}"] = action_seq[j:j+8]
             assert len(example[f"action_{j}"]) == 8, f"Action sequence {j} must be 8 actions long"
             example[f"action_{j}"] = ' '.join(example[f"action_{j}"])
-            x, y = parse_action_string(action_seq[j+7])
-            example[f"position_map_{j}"] = create_position_map((x,y))
+            x, y, action_type = parse_action_string(action_seq[j+7])
+            position_map, leftclick_map = create_position_and_click_map((x,y), action_type)
+            example[f"position_map_{j}"] = position_map
+            example[f"leftclick_map_{j}"] = leftclick_map
 
         return example 
 

@@ -670,7 +670,15 @@ class LatentDiffusion(DDPM):
         Returns:
             tuple: (updated condition dictionary, padding mask)
         """
-        image_sequence = torch.as_tensor(batch[k])
+        assert k == 'c_concat', "Only concat conditioning is supported for now"
+        import pdb; pdb.set_trace()
+        if f'{k}_processed' in batch:
+            image_sequence = batch[f'{k}_processed']
+            # Create padding mask based on preprocessed latents
+            # For preprocessed data, padding is all zeros
+            is_padding = (image_sequence.abs() < 1e-6).all(dim=(1,2,3))  # shape: [batch_size, sequence_length]
+            c[k] = image_sequence
+            #return c, is_padding
         enc_sequence = []
 
         if len(image_sequence.shape) == 4:
@@ -702,8 +710,15 @@ class LatentDiffusion(DDPM):
         if bs is not None:
             x = x[:bs]
         x = x.to(self.device)
-        encoder_posterior = self.encode_first_stage(x)
-        z = self.get_first_stage_encoding(encoder_posterior).detach()
+        assert k == 'image', "Only image conditioning is supported for now"
+        import pdb; pdb.set_trace()
+        if 'image_processed' in batch:
+            z = batch['image_processed']
+            assert bs is None, "Batch size must be None when using processed images"
+            z = z.to(self.device)
+        else:
+            encoder_posterior = self.encode_first_stage(x)
+            z = self.get_first_stage_encoding(encoder_posterior).detach()
 
         debug = False
         if debug:
@@ -806,15 +821,16 @@ class LatentDiffusion(DDPM):
                         mask = sampling_mask & (~is_padding[:, j+7].view(-1, 1, 1, 1))
                         #if is_padding[:, j+7].any():
                         #    import pdb; pdb.set_trace()
-                        c[hkey][:, 7*3+j*3:7*3+j*3+3] = torch.where(mask, z_samples, c[hkey][:, 7*3+j*3:7*3+j*3+3])
+                        c[hkey][:, 7*4+j*4:7*4+j*4+4] = torch.where(mask, z_samples, c[hkey][:, 7*4+j*4:7*4+j*4+4])
 
-            c[hkey] = c[hkey][:, 3*7:]
+            c[hkey] = c[hkey][:, 4*7:]
             #import pdb; pdb.set_trace()
             pos_map = batch['position_map_7']
+            leftclick_map = batch['leftclick_map_7']
             #c[hkey] = torch.cat([c[hkey], pos_map], dim=1)
-            c[hkey] = torch.cat([c[hkey], pos_map], dim=1)
+            c[hkey] = torch.cat([c[hkey], pos_map, leftclick_map], dim=1)
             # concatenate with the position map.
-            assert c[hkey].shape[1] == 3*7 + 1
+            assert c[hkey].shape[1] == 4*7 + 2
         else:
             assert False, "Only concat conditioning is supported for now"
         out = [z, c]

@@ -216,9 +216,7 @@ class ActionsData(Dataset):
             example["image"] = normalize_image(Image.fromarray(image))
         else:
             # Always load original images
-            example["image"] = normalize_image(self.targets[i])
-            example['c_concat'] = torch.stack([normalize_image(image_path) 
-                                            for image_path in self.image_seq_paths[i]])
+            
             
             # Load processed versions if available
             if self.use_processed:
@@ -227,7 +225,10 @@ class ActionsData(Dataset):
                     self.load_processed_image(image_path) 
                     for image_path in self.image_seq_paths[i]
                 ])
-            
+            else:
+                example["image"] = normalize_image(self.targets[i])
+                example['c_concat'] = torch.stack([normalize_image(image_path) 
+                                                for image_path in self.image_seq_paths[i]])
         # Rest of the original code...
         action_seq = self.actions_seq[i]
         assert len(action_seq) == 15, "Action sequence must be 15 actions long"

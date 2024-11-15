@@ -667,19 +667,27 @@ class LatentDiffusion(DDPM):
     def enc_concat_seq(self, c: dict, batch, k) -> tuple:
         """
         encodes a sequence of images from a batch for conditioning. used with c_concat and hybrid conditioning.
+        Will use preprocessed latents if available, otherwise encodes images.
         Returns:
             tuple: (updated condition dictionary, padding mask)
         """
         assert k == 'c_concat', "Only concat conditioning is supported for now"
-        import pdb; pdb.set_trace()
+        
+        # If preprocessed latents are available, use them directly
         if f'{k}_processed' in batch:
-            image_sequence = batch[f'{k}_processed']
+            image_sequence = batch[f'{k}_processed']  # shape: [B, L, C, H, W]
             # Create padding mask based on preprocessed latents
             # For preprocessed data, padding is all zeros
-            is_padding = (image_sequence.abs() < 1e-6).all(dim=(1,2,3))  # shape: [batch_size, sequence_length]
-            c[k] = image_sequence
-            #return c, is_padding
+            is_padding = (image_sequence.abs() < 1e-6).all(dim=(2,3,4))  # shape: [batch_size, sequence_length]
+            
+            # Reshape to combine sequence length and channel dimensions
+            B, L, C, H, W = image_sequence.shape
+            c[k] = image_sequence.reshape(B, L * C, H, W)
+            return c, is_padding
+            
+        # Otherwise, encode the images
         enc_sequence = []
+        image_sequence = batch[k]
 
         if len(image_sequence.shape) == 4:
             image_sequence = image_sequence.unsqueeze(0) #add batch dimension if missing
@@ -708,7 +716,7 @@ class LatentDiffusion(DDPM):
 
         
         assert k == 'image', "Only image conditioning is supported for now"
-        import pdb; pdb.set_trace()
+        #import pdb; pdb.set_trace()
         if 'image_processed' in batch:
             z = batch['image_processed']
             assert bs is None, "Batch size must be None when using processed images"
@@ -825,7 +833,7 @@ class LatentDiffusion(DDPM):
                         c[hkey][:, 7*4+j*4:7*4+j*4+4] = torch.where(mask, z_samples, c[hkey][:, 7*4+j*4:7*4+j*4+4])
 
             c[hkey] = c[hkey][:, 4*7:]
-            #import pdb; pdb.set_trace()
+            import pdb; pdb.set_trace()
             pos_map = batch['position_map_7']
             leftclick_map = batch['leftclick_map_7']
             #c[hkey] = torch.cat([c[hkey], pos_map], dim=1)

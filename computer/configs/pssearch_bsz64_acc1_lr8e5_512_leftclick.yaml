@@ -41,16 +41,14 @@ model:
         transformer_depth: 1
         context_dim: 768
     first_stage_config:
-      target: latent_diffusion.ldm.models.autoencoder.VQModelInterface
+      target: latent_diffusion.ldm.models.autoencoder.AutoencoderKL
       params:
-        embed_dim: 3
-        n_embed: 8192
+        embed_dim: 4
         monitor: val/rec_loss
-
         ddconfig:
-          double_z: false
-          z_channels: 3
-          resolution: 512
+          double_z: true
+          z_channels: 4
+          resolution: 256
           in_channels: 3
           out_ch: 3
           ch: 128
@@ -58,11 +56,16 @@ model:
           - 1
           - 2
           - 4
+          - 4
           num_res_blocks: 2
           attn_resolutions: []
           dropout: 0.0
         lossconfig:
-          target: torch.nn.Identity
+          target: latent_diffusion.ldm.modules.losses.contperceptual.LPIPSWithDiscriminator
+          params:
+            disc_start: 50001
+            kl_weight: 0.000001
+            disc_weight: 0.5
 
     cond_stage_config:
       target: latent_diffusion.ldm.modules.encoders.modules.GPTEmbedder

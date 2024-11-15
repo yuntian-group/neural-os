@@ -193,6 +193,7 @@ class ActionsData(Dataset):
         takes a sequence of cond. images and actions and a single target.
         Always loads original images, and loads processed versions if available
         """
+        print ('getitem', i)
         example = dict()
         i = i % self._length
         

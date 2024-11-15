@@ -31,16 +31,17 @@ if __name__ == "__main__":
     print (args.config)
     #print (config.model.scheduler_sampling_rate)
     print ('='*10)
+    model = init_model(config)
     # model = load_model_from_config(config, "model.ckpt")  # TODO: check path
 
     # model: LatentDiffusion = load_model_from_config(config, 'model.ckpt')
-    # model = load_first_stage_from_config(model, "model_ae.ckpt")
+    model = load_first_stage_from_config(model, './autoencoder_saved_kl4_bsz8_acc8_lr4.5e6_load_acc1_model-603000.ckpt')
     # model = load_cond_from_config(model, "model_bert.ckpt")
 
     #model = load_model_from_config(config, 'oct29_fixcursor_test_15_no_deltas_1000_paths/model_test_15_no_deltas_1000_paths.ckpt')
     #model = load_model_from_config(config, 'saved_fixcursor_lr2e5_debug_gpt_firstframe_posmap_debugidentity_256/model-step=010500.ckpt')
     #model = load_model_from_config(config, 'saved_fixcursor_lr2e5_debug_gpt_firstframe_posmap_debugidentity_256_cont/model-step=003500.ckpt')
-    model = load_model_from_config(config, 'oct29_fixcursor_test_15_no_deltas_1000_paths/model_test_15_no_deltas_1000_paths.ckpt')
+    #model = load_model_from_config(config, 'oct29_fixcursor_test_15_no_deltas_1000_paths/model_test_15_no_deltas_1000_paths.ckpt')
     #model = load_model_from_config(config, 'saved_fixcursor_lr2e5_debug_gpt_firstframe_posmap_debugidentity_256/model_saved_fixcursor_lr2e5_debug_gpt_firstframe_posmap_debugidentity_256.ckpt')
     #import pdb; pdb.set_trace()
 

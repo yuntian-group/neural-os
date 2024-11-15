@@ -141,7 +141,7 @@ if __name__ == '__main__':
         latent = posterior.sample()
         
         # Set all values to 0 and save
-        latent = torch.zeros_like(latent)
+        latent = torch.zeros_like(latent).squeeze(0)
         np.save(os.path.join(args.output_dir, 'padding.npy'), latent.cpu().numpy())
     
     # Then process each record folder

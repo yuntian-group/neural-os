@@ -706,10 +706,7 @@ class LatentDiffusion(DDPM):
     def get_input(self, batch, k, return_first_stage_outputs=False, force_c_encode=False,
                   cond_key=None, return_original_cond=False, bs=None):
 
-        x = super().get_input(batch, k)
-        if bs is not None:
-            x = x[:bs]
-        x = x.to(self.device)
+        
         assert k == 'image', "Only image conditioning is supported for now"
         import pdb; pdb.set_trace()
         if 'image_processed' in batch:
@@ -717,6 +714,10 @@ class LatentDiffusion(DDPM):
             assert bs is None, "Batch size must be None when using processed images"
             z = z.to(self.device)
         else:
+            x = super().get_input(batch, k)
+            if bs is not None:
+                x = x[:bs]
+            x = x.to(self.device)
             encoder_posterior = self.encode_first_stage(x)
             z = self.get_first_stage_encoding(encoder_posterior).detach()
 

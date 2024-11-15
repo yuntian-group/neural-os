@@ -31,7 +31,7 @@ if __name__ == "__main__":
     print (args.config)
     #print (config.model.scheduler_sampling_rate)
     print ('='*10)
-    import pdb; pdb.set_trace()
+    #import pdb; pdb.set_trace()
     model = init_model(config)
     # model = load_model_from_config(config, "model.ckpt")  # TODO: check path
 

@@ -78,12 +78,13 @@ def video_to_frames(video_path: str = '../raw_data/custom/videos/record_custom.m
             
             # Get the frame at the specified time
             save_image = False
+            save_dir = f'{save_path}/record_{video_num}'
+
             path = f'{save_dir}/image_{frame_number}.png'
             if save_image:
                 frame = video.get_frame(frame_number / fps)
                 
                 frame_rgb = frame #cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                save_dir = f'{save_path}/record_{video_num}'
                 os.makedirs(save_dir, exist_ok=True)
                 
                 Image.fromarray(frame_rgb).save(path)  # Saves in the correct format

@@ -143,7 +143,7 @@ if __name__ == '__main__':
         # Set all values to 0 and save
         latent = torch.zeros_like(latent).squeeze(0)
         np.save(os.path.join(args.output_dir, 'padding.npy'), latent.cpu().numpy())
-    
+    import pdb; pdb.set_trace() 
     # Then process each record folder
     print("Processing dataset...")
     for folder in tqdm(sorted(os.listdir(args.input_dir))):

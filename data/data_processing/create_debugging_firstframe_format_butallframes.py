@@ -5,12 +5,20 @@ from collections import defaultdict
 def format_action(action_str, is_padding=False):
     if is_padding:
         return "N N N N N : N N N N N"
-
-    if action_str == 'left_click':
-        return "L L L L L : L L L L L"
-    
+    prefix = 'N'
+    items = action_str.aplit('~')
+    if len(items) == 3:
+        a = items[0]
+        items = items[1:]
+        if a == 'left_click':
+            prefix = 'L'
+        else:
+            assert False
     # Split the x~y coordinates
-    x, y = map(int, action_str.split('~'))
+    #x, y = map(int, action_str.split('~'))
+    x, y = items
+    x = int(x)
+    y = int(y)
     
     # Convert numbers to padded strings and add spaces between digits
     x_str = f"{abs(x):04d}"
@@ -19,7 +27,7 @@ def format_action(action_str, is_padding=False):
     y_spaced = ' '.join(y_str)
     
     # Format with sign and proper spacing
-    return f"{'+ ' if x >= 0 else '- '}{x_spaced} : {'+ ' if y >= 0 else '- '}{y_spaced}"
+    return prefix + ' ' + f"{'+ ' if x >= 0 else '- '}{x_spaced} : {'+ ' if y >= 0 else '- '}{y_spaced}"
 
 def filter_first_frames(input_file, output_file):
     # Read the CSV file

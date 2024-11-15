@@ -61,11 +61,7 @@ model:
           attn_resolutions: []
           dropout: 0.0
         lossconfig:
-          target: latent_diffusion.ldm.modules.losses.contperceptual.LPIPSWithDiscriminator
-          params:
-            disc_start: 50001
-            kl_weight: 0.000001
-            disc_weight: 0.5
+          target: torch.nn.Identity
 
     cond_stage_config:
       target: latent_diffusion.ldm.modules.encoders.modules.GPTEmbedder

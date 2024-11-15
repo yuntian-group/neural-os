@@ -91,6 +91,7 @@ if __name__ == "__main__":
     num_workers = multiprocessing.cpu_count()
 
     num_workers = min(num_workers, 32)
+    num_workers = 1
 
     print (f"Using {num_workers} workers.")
 

@@ -52,11 +52,11 @@ def convert_to_14_frames(input_file, output_file):
         #import pdb; pdb.set_trace()
         if not all(a == b for a, b in zip(extended_actions[-8:], original_actions)):
             import pdb; pdb.set_trace()
-        def diff(action1, action2):
-            a11, a12 = action1.split('~')
-            a21, a22 = action2.split('~')
-            a11, a12, a21, a22 = int(a11), int(a12), int(a21), int(a22)
-            return f'{a11-a21}~{a12-a22}'
+        #def diff(action1, action2):
+        #    a11, a12 = action1.split('~')
+        #    a21, a22 = action2.split('~')
+        #    a11, a12, a21, a22 = int(a11), int(a12), int(a21), int(a22)
+        #    return f'{a11-a21}~{a12-a22}'
         #import pdb; pdb.set_trace()
         #extended_actions = [diff(image_to_action[img], image_to_action[get_prev_image(img)]) for img in extended_images]
         extended_actions = [image_to_action[img] for img in extended_images]

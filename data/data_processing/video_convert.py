@@ -70,20 +70,23 @@ def video_to_frames(video_path: str = '../raw_data/custom/videos/record_custom.m
             action_row = mouse_data.iloc[frame_number]
 
             if action_row['Right Click']:
-                action = 'right_click'
+                action = 'right_click~' + f"{int(action_row['X'])}~{int(action_row['Y'])}"
             elif action_row['Left Click']:
-                action = 'left_click'
+                action = 'left_click~' + f"{int(action_row['X'])}~{int(action_row['Y'])}"
             else:
                 action = f"{int(action_row['X'])}~{int(action_row['Y'])}"
             
             # Get the frame at the specified time
-            frame = video.get_frame(frame_number / fps)
-            
-            frame_rgb = frame #cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            save_dir = f'{save_path}/record_{video_num}'
-            os.makedirs(save_dir, exist_ok=True)
+            save_image = False
             path = f'{save_dir}/image_{frame_number}.png'
-            Image.fromarray(frame_rgb).save(path)  # Saves in the correct format
+            if save_image:
+                frame = video.get_frame(frame_number / fps)
+                
+                frame_rgb = frame #cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                save_dir = f'{save_path}/record_{video_num}'
+                os.makedirs(save_dir, exist_ok=True)
+                
+                Image.fromarray(frame_rgb).save(path)  # Saves in the correct format
 
             #append the path and labels
             images_paths.append(path)

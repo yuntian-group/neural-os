@@ -5,6 +5,9 @@ from collections import defaultdict
 def format_action(action_str, is_padding=False):
     if is_padding:
         return "N N N N N : N N N N N"
+
+    if action_str == 'left_click':
+        return "L L L L L : L L L L L"
     
     # Split the x~y coordinates
     x, y = map(int, action_str.split('~'))

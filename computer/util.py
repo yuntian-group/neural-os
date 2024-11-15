@@ -135,6 +135,7 @@ def load_first_stage_from_config(model: LatentDiffusion, ckpt, verbose=False) ->
     model.first_stage_model.train = disabled_train
     for param in model.first_stage_model.parameters():
         param.requires_grad = False
+    print ('loaded first stage')
 
     return model
 

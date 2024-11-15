@@ -50,14 +50,14 @@ if __name__ == "__main__":
 
     #model = load_autoencoder_from_ckpt(model, 'autoencoder/train_0/model_ae_epoch=00.ckpt') #loads autoencoder weights.
     #model = load_cond_from_ckpt(model, 'model_bert.ckpt') #loads encoder weights.
-
+    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+    model = model.to(device)
     data: DataModule = instantiate_from_config(config.data)
     data.setup()
 
     print("---------------------------------"); print("\u2705 Model loaded with ae and cond."); print("---------------------------------")
 
-    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-    model = model.to(device)
+    
 
     # for name, child in model.model.diffusion_model.named_children():
     #     print(name)

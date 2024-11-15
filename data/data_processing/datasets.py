@@ -173,6 +173,9 @@ class ActionsData(Dataset):
         if self.use_processed:
             print("Found processed data in train_dataset_encoded/")
 
+    def __len__(self):
+        return self._length
+
     def load_processed_image(self, image_path):
         """Load preprocessed latent from .npy file"""
         processed_path = image_path.replace('train_dataset/', 'train_dataset_encoded/').replace('.png', '.npy')

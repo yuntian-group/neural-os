@@ -167,11 +167,15 @@ class ActionsData(Dataset):
         self.data_path = data_csv_path
         self.debug_mode = debug_mode
         
-        data = pd.read_csv(data_csv_path)
+        # Read only the necessary columns
+        data = pd.read_csv(data_csv_path, usecols=["Image_seq_cond_path", "Action_seq", "Target_image"])
         self.image_seq_paths = data["Image_seq_cond_path"].apply(ast.literal_eval).to_list()
         self.actions_seq = data['Action_seq'].apply(ast.literal_eval).to_list()
         self.targets = data['Target_image'].to_list()
-
+        
+        # Clear the dataframe from memory
+        del data
+        
         self._length = len(self.image_seq_paths)
         
         # Check if processed data exists by checking first image

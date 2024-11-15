@@ -32,7 +32,7 @@ def parse_action_string(action_str):
     action_type = action_str[0]
     action_str = action_str[1:].strip()
     if 'N' in action_str:
-        return (None, None)
+        return (None, None, None)
         
     # Split into x and y parts
     action_str = action_str.replace(' ', '')
@@ -59,10 +59,17 @@ def create_position_and_click_map(pos,action_type,image_size=64, original_width=
     """
     x, y = pos
     if x is None:
-        return torch.zeros((1, image_size, image_size))
+        return torch.zeros((1, image_size, image_size)), torch.zeros((1, image_size, image_size))
     # Scale the positions to new size
-    x_scaled = int((x / original_width) * image_size)
-    y_scaled = int((y / original_height) * image_size)
+    #x_scaled = int((x / original_width) * image_size)
+    #y_scaled = int((y / original_height) * image_size)
+    screen_width, screen_height = 1920, 1080
+    video_width, video_height = 512, 512
+        
+    x_scaled = x - (screen_width / 2 - video_width / 2)
+    y_scaled = y - (screen_height / 2 - video_height / 2)
+    x_scaled = int(x_scaled / video_width * image_size)
+    y_scaled = int(y_scaled / video_height * image_size)
     
     # Clamp values to ensure they're within bounds
     x_scaled = max(0, min(x_scaled, image_size - 1))

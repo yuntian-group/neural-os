@@ -841,7 +841,7 @@ class LatentDiffusion(DDPM):
             inputs = [c[hkey], pos_map] + [batch[f'leftclick_map_{j}'] for j in range(7, -1, -1)]
             c[hkey] = torch.cat(inputs, dim=1)
             # concatenate with the position map.
-            assert c[hkey].shape[1] == 4*7 + 2
+            assert c[hkey].shape[1] == 4*7 + 2 + 7
         else:
             assert False, "Only concat conditioning is supported for now"
         out = [z, c]

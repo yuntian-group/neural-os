@@ -32,11 +32,13 @@ if __name__ == "__main__":
     #print (config.model.scheduler_sampling_rate)
     print ('='*10)
     #import pdb; pdb.set_trace()
-    model = init_model(config)
-    # model = load_model_from_config(config, "model.ckpt")  # TODO: check path
+    from_autoencoder = False
+    if from_autoencoder:
+        model = init_model(config)
+        model = load_first_stage_from_config(model, './autoencoder_saved_kl4_bsz8_acc8_lr4.5e6_load_acc1_model-603000.ckpt')
+    else:
+        model = load_model_from_config(config, './saved_bsz64_acc1_lr8e5_512_leftclick/model-step=252000.ckpt')
 
-    # model: LatentDiffusion = load_model_from_config(config, 'model.ckpt')
-    model = load_first_stage_from_config(model, './autoencoder_saved_kl4_bsz8_acc8_lr4.5e6_load_acc1_model-603000.ckpt')
     # model = load_cond_from_config(model, "model_bert.ckpt")
 
     #model = load_model_from_config(config, 'oct29_fixcursor_test_15_no_deltas_1000_paths/model_test_15_no_deltas_1000_paths.ckpt')

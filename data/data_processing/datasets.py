@@ -16,6 +16,7 @@ from torch.utils.data import DataLoader, Dataset
 from PIL import Image
 
 from latent_diffusion.ldm.util import instantiate_from_config
+from computer.util import load_model_from_config
 
 import cv2
 import numpy as np
@@ -192,8 +193,8 @@ class ActionsData(Dataset):
             if 'train' in data_csv_path:
                 print ('Loading autoencoder model for reprocessing')
                 config = OmegaConf.load("autoencoder_config_kl4_lr4.5e6_load_acc1.yaml")
-                self.model = instantiate_from_config(config.model)
-                self.model.load_state_dict(torch.load("autoencoder_saved_kl4_bsz8_acc8_lr4.5e6_load_acc1_model-603000.ckpt"))
+                self.model = load_model_from_config(config, "autoencoder_saved_kl4_bsz8_acc8_lr4.5e6_load_acc1_model-603000.ckpt")
+                #self.model.load_state_dict(torch.load("autoencoder_saved_kl4_bsz8_acc8_lr4.5e6_load_acc1_model-603000.ckpt"))
                 self.model = self.model.to(device)
                 self.model.eval()
                 print("Loaded model for reprocessing if needed")

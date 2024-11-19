@@ -16,7 +16,7 @@ from torch.utils.data import DataLoader, Dataset
 from PIL import Image
 
 from latent_diffusion.ldm.util import instantiate_from_config
-from computer.util import load_model_from_config
+#from computer.util import load_model_from_config
 
 import cv2
 import numpy as np
@@ -158,7 +158,34 @@ def draw_cursor(frame, x, y, left_click=False, right_click=False, scaling_factor
             cv2.circle(frame, (x + 8, y + 8), click_radius, click_color, -1)
     
     return frame
+def load_model_from_config(config, ckpt, verbose=False):
 
+    """
+    Loads a pretrained model from config and ckpt.
+    """
+
+    print(f"Loading model from {ckpt}")
+    pl_sd = torch.load(ckpt, map_location='cpu')
+    sd = pl_sd["state_dict"]
+    model = instantiate_from_config(config.model)
+    try:
+        m, u = model.load_state_dict(sd, strict=False)
+
+        if len(m) > 0 and verbose:
+            print("missing keys:")
+            print(m)
+        if len(u) > 0 and verbose:
+            print("unexpected keys:")
+            print(u)
+    except RuntimeError as e:
+        # Check if the error message contains "size mismatch"
+        if ("size mismatch" and 'input_blocks') in str(e):
+            print("\u2757 Input block module could not load weights from ckpt due to the change in input channels.")
+        else: raise
+
+    model.cuda()
+    model.eval()
+    return model
 class ActionsData(Dataset):
     """
     class dataset for csllm. includes image sequences and corresponding action sequences for cond.

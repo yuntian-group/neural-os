@@ -7,6 +7,7 @@ from einops import rearrange
 from PIL import Image
 import pandas as pd
 import ast
+from computer.util import load_model_from_config
 from latent_diffusion.ldm.util import instantiate_from_config
 
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
@@ -95,9 +96,7 @@ if __name__ == "__main__":
     # Load model
     print("Loading model...")
     config = OmegaConf.load("autoencoder_config_kl4_lr4.5e6_load_acc1.yaml")
-    model = instantiate_from_config(config.model)
-    state_dict = torch.load("autoencoder_saved_kl4_bsz8_acc8_lr4.5e6_load_acc1_model-603000.ckpt")
-    model.load_state_dict(state_dict)
+    model = load_model_from_config(config, "autoencoder_saved_kl4_bsz8_acc8_lr4.5e6_load_acc1_model-603000.ckpt")
     model = model.to(device)
     model.eval()
     

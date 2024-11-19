@@ -8,6 +8,9 @@ from typing import List
 from latent_diffusion.ldm.modules.encoders.modules import BERTTokenizer
 import ast
 import pytorch_lightning as pl
+from einops import rearrange
+from omegaconf import OmegaConf
+from latent_diffusion.ldm.util import instantiate_from_config
 
 from torch.utils.data import DataLoader, Dataset
 from PIL import Image
@@ -183,14 +186,62 @@ class ActionsData(Dataset):
         self.use_processed = os.path.exists(processed_path)
         if self.use_processed:
             print("Found processed data in train_dataset_encoded/")
+            
+            # Load model for reprocessing if needed
+            #try:
+            if 'train' in data_csv_path:
+                print ('Loading autoencoder model for reprocessing')
+                config = OmegaConf.load("autoencoder_config_kl4_lr4.5e6_load_acc1.yaml")
+                self.model = instantiate_from_config(config.model)
+                self.model.load_state_dict(torch.load("autoencoder_saved_kl4_bsz8_acc8_lr4.5e6_load_acc1_model-603000.ckpt"))
+                self.model = self.model.to(device)
+                self.model.eval()
+                print("Loaded model for reprocessing if needed")
+            else:
+                self.model = None
+            #except Exception as e:
+            #    print(f"Warning: Could not load model for reprocessing: {e}")
+            #    self.model = None
 
     def __len__(self):
         return self._length
 
     def load_processed_image(self, image_path):
-        """Load preprocessed latent from .npy file"""
+        """Load preprocessed latent from .npy file, reprocess if loading fails"""
         processed_path = image_path.replace('train_dataset/', 'train_dataset_encoded/').replace('.png', '.npy')
-        return torch.from_numpy(np.load(processed_path))
+        try:
+            return torch.from_numpy(np.load(processed_path))
+        except Exception as e:
+            print(f"Warning: Failed to load {processed_path}, reprocessing...")
+            print(e)
+            
+            if self.model is None:
+                raise RuntimeError("Model not available for reprocessing")
+            
+            # Load and process the original image
+            image = normalize_image(image_path)
+            image = torch.unsqueeze(image, dim=0)
+            image = rearrange(image, 'b h w c -> b c h w').to(device)
+            
+            # Get latent representation
+            with torch.no_grad():
+                posterior = self.model.encode(image)
+                latent = posterior.sample()
+                
+                # Special handling for padding.png
+                if os.path.basename(image_path) == 'padding.png':
+                    latent = torch.zeros_like(latent)
+                latent = latent.squeeze(0)
+            try:
+                # Ensure directory exists
+                os.makedirs(os.path.dirname(processed_path), exist_ok=True)
+                # Save the processed latent
+                np.save(processed_path, latent.cpu().numpy())
+            except Exception as e:
+                print(f"Warning: Failed to save {processed_path}")
+                print(e)
+                
+            return latent
 
     def __getitem__(self, i):
         """

@@ -25,7 +25,7 @@ from latent_diffusion.ldm.modules.distributions.distributions import normal_kl, 
 from latent_diffusion.ldm.models.autoencoder import VQModelInterface, IdentityFirstStage, AutoencoderKL
 from latent_diffusion.ldm.modules.diffusionmodules.util import make_beta_schedule, extract_into_tensor, noise_like
 from latent_diffusion.ldm.models.diffusion.ddim import DDIMSampler
-
+from PIL import Image
 
 __conditioning_keys__ = {'concat': 'c_concat',
                          'crossattn': 'c_crossattn',

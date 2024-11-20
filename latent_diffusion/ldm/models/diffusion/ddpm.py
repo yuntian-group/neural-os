@@ -25,7 +25,6 @@ from latent_diffusion.ldm.modules.distributions.distributions import normal_kl, 
 from latent_diffusion.ldm.models.autoencoder import VQModelInterface, IdentityFirstStage, AutoencoderKL
 from latent_diffusion.ldm.modules.diffusionmodules.util import make_beta_schedule, extract_into_tensor, noise_like
 from latent_diffusion.ldm.models.diffusion.ddim import DDIMSampler
-from PIL import Image
 
 __conditioning_keys__ = {'concat': 'c_concat',
                          'crossattn': 'c_crossattn',
@@ -827,12 +826,13 @@ class LatentDiffusion(DDPM):
                         x_samples_ddim = torch.cat(x_samples_ddim, dim=0)
                         x_samples_ddim = torch.clamp(x_samples_ddim, min=-1.0, max=1.0)
 
-                        # save to disk for visualization and debugging
-                        for kkk in range(batch_size):
-                            image = Image.fromarray(((x_samples_ddim[kkk].transpose(0, 1).transpose(1, 2).cpu().float().numpy()+1)*255/2).astype(np.uint8))
-                            image.save(f'ddim_sample_{j}_{kkk}.png')
-                        
-                        import pdb; pdb.set_trace()
+                        ## save to disk for visualization and debugging
+                        #for kkk in range(batch_size):
+                        #    from PIL import Image, ImageDraw
+                        #    image = Image.fromarray(((x_samples_ddim[kkk].transpose(0, 1).transpose(1, 2).cpu().float().numpy()+1)*255/2).astype(np.uint8))
+                        #    image.save(f'ddim_sample_{j}_{kkk}.png')
+                        #
+                        #import pdb; pdb.set_trace()
                         # Encode the generated samples back to latent space
                         z_samples = self.encode_first_stage(x_samples_ddim)
                         

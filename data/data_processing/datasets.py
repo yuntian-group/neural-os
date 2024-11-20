@@ -222,7 +222,7 @@ class ActionsData(Dataset):
                 config = OmegaConf.load("autoencoder_config_kl4_lr4.5e6_load_acc1.yaml")
                 self.model = load_model_from_config(config, "autoencoder_saved_kl4_bsz8_acc8_lr4.5e6_load_acc1_model-603000.ckpt")
                 #self.model.load_state_dict(torch.load("autoencoder_saved_kl4_bsz8_acc8_lr4.5e6_load_acc1_model-603000.ckpt"))
-                self.model = self.model.to(device)
+                #self.model = self.model.to(device)
                 self.model.eval()
                 print("Loaded model for reprocessing if needed")
             else:
@@ -249,7 +249,7 @@ class ActionsData(Dataset):
             # Load and process the original image
             image = normalize_image(image_path)
             image = torch.unsqueeze(image, dim=0)
-            image = rearrange(image, 'b h w c -> b c h w').to(device)
+            image = rearrange(image, 'b h w c -> b c h w')#.to(device)
             
             # Get latent representation
             with torch.no_grad():

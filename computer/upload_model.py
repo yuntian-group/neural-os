@@ -28,7 +28,7 @@ LOCAL_CHECKPOINT_PATH = "saved_fixcursor_lr2e5_debug_gpt_firstframe_posmap_debug
 LOCAL_CHECKPOINT_PATH = "saved_fixcursor_lr2e5_debug_gpt_firstframe_posmap_longtrainh200/model-step=007500.ckpt"
 LOCAL_CHECKPOINT_PATH = "saved_bsz64_acc1_lr8e5/model-step=012500.ckpt"
 LOCAL_CHECKPOINT_PATH = "saved_bsz64_acc1_lr8e5_512_leftclick/model-step=246000.ckpt"
-LOCAL_CHECKPOINT_PATH = "saved_bsz64_acc1_lr8e5_512_leftclick_histpos/model-step=027000.ckpt"
+LOCAL_CHECKPOINT_PATH = "saved_bsz64_acc1_lr8e5_512_leftclick_histpos/model-step=043000.ckpt"
 CONFIG_PATH = "config_csllm.yaml"
 CONFIG_PATH = "configs/2e5_debug_gpt_firstframe.yaml"
 CONFIG_PATH = "configs/2e5_debug_gpt_firstframe_identity.yaml"

@@ -824,7 +824,7 @@ class LatentDiffusion(DDPM):
                             batch_samples = samples_ddim[idx:min(idx + decode_batch_size, samples_ddim.shape[0])]
                             batch_decoded = self.decode_first_stage(batch_samples)
                             x_samples_ddim.append(batch_decoded)
-                            batch_encoded = self.encode_first_stage(batch_decoded)
+                            batch_encoded = self.encode_first_stage(batch_decoded).sample()
                             z_samples.append(batch_encoded)
                         x_samples_ddim = torch.cat(x_samples_ddim, dim=0)
                         x_samples_ddim = torch.clamp(x_samples_ddim, min=-1.0, max=1.0)

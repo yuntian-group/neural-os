@@ -819,13 +819,16 @@ class LatentDiffusion(DDPM):
                         # Decode in smaller batches
                         decode_batch_size = 16
                         x_samples_ddim = []
+                        z_samples = []
                         for idx in range(0, samples_ddim.shape[0], decode_batch_size):
                             batch_samples = samples_ddim[idx:min(idx + decode_batch_size, samples_ddim.shape[0])]
                             batch_decoded = self.decode_first_stage(batch_samples)
                             x_samples_ddim.append(batch_decoded)
+                            batch_encoded = self.encode_first_stage(batch_decoded)
+                            z_samples.append(batch_encoded)
                         x_samples_ddim = torch.cat(x_samples_ddim, dim=0)
                         x_samples_ddim = torch.clamp(x_samples_ddim, min=-1.0, max=1.0)
-
+                        z_samples = torch.cat(z_samples, dim=0)
                         ## save to disk for visualization and debugging
                         #for kkk in range(batch_size):
                         #    from PIL import Image, ImageDraw
@@ -834,7 +837,7 @@ class LatentDiffusion(DDPM):
                         #
                         #import pdb; pdb.set_trace()
                         # Encode the generated samples back to latent space
-                        z_samples = self.encode_first_stage(x_samples_ddim)
+                        #z_samples = self.encode_first_stage(x_samples_ddim)
                         
                         # Replace the corresponding frames in c[hkey]
                         sampling_mask = torch.rand(batch_size, 1, 1, 1, device=c[hkey].device) < 1.5 #self.scheduler_sampling_rate

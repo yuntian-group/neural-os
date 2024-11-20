@@ -817,14 +817,21 @@ class LatentDiffusion(DDPM):
                                          #unconditional_guidance_scale=5.0,
                                          #unconditional_conditioning=uc_dict,
                                          #eta=0)
-        
-                        x_samples_ddim = self.decode_first_stage(samples_ddim)
-                        #x_samples_ddim = torch.clamp((x_samples_ddim + 1.0) / 2.0, min=0.0, max=1.0)
-                        x_samples_ddim = torch.clamp((x_samples_ddim), min=-1.0, max=1.0)
+                        # Decode in smaller batches
+                        decode_batch_size = 16
+                        x_samples_ddim = []
+                        for idx in range(0, samples_ddim.shape[0], decode_batch_size):
+                            batch_samples = samples_ddim[idx:min(idx + decode_batch_size, samples_ddim.shape[0])]
+                            batch_decoded = self.decode_first_stage(batch_samples)
+                            x_samples_ddim.append(batch_decoded)
+                        x_samples_ddim = torch.cat(x_samples_ddim, dim=0)
+                        x_samples_ddim = torch.clamp(x_samples_ddim, min=-1.0, max=1.0)
+
                         # save to disk for visualization and debugging
                         for kkk in range(batch_size):
                             image = Image.fromarray(((x_samples_ddim[kkk].transpose(0, 1).transpose(1, 2).cpu().float().numpy()+1)*255/2).astype(np.uint8))
                             image.save(f'ddim_sample_{j}_{kkk}.png')
+                        
                         import pdb; pdb.set_trace()
                         # Encode the generated samples back to latent space
                         z_samples = self.encode_first_stage(x_samples_ddim)

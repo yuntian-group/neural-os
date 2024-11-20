@@ -324,6 +324,11 @@ class ActionsData(Dataset):
             position_map, leftclick_map = create_position_and_click_map((x,y), action_type)
             example[f"position_map_{j}"] = position_map
             example[f"leftclick_map_{j}"] = leftclick_map
+        for j in range(-1, -8, -1):
+            x, y, action_type = parse_action_string(action_seq[j+7])
+            position_map, leftclick_map = create_position_and_click_map((x,y), action_type)
+            example[f"position_map_{j}"] = position_map
+            example[f"leftclick_map_{j}"] = leftclick_map
 
         return example 
 

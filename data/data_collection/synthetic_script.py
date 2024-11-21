@@ -5,6 +5,9 @@ from synthetic_mouse_path import generate_multiple_trajectories
 import random
 import numpy as np
 import json
+import multiprocessing
+from functools import partial
+import psutil
 
 def initialize_clean_state():
     """Create and save a clean container state with initialized desktop"""
@@ -70,7 +73,7 @@ try:
     record(
         "raw_data",
         "record_{record_idx}",
-        duration=120,
+        duration=12,
         trajectory=trajectory_data
     )
 except Exception as e:
@@ -123,86 +126,70 @@ python3 -u {temp_script}
     print(result.stderr)
     result.check_returncode()
 
-def create_synthetic_dataset(n=1):
-    """Create synthetic dataset using container state restoration"""
-    screen_width = 1024
-    screen_height = 768
+def process_trajectory(trajectory_idx, trajectory, screen_width, screen_height, clean_state, memory_limit):
+    """Process a single trajectory in its own container"""
+    print(f"Recording trajectory {trajectory_idx}")
     
-    # Create clean state with properly initialized X server
-    print("Initializing clean container state...")
-    
-    # Start a container and let it initialize
-    base_container_id = subprocess.check_output([
+    # Create a fresh container from clean state
+    container_id = subprocess.check_output([
         'docker', 'run', '-d',
+        '-v', f'{os.getcwd()}/raw_data:/app/raw_data',
         '--env', 'DISPLAY=:99',
         '--env', f'SCREEN_WIDTH={screen_width}',
         '--env', f'SCREEN_HEIGHT={screen_height}',
-        'synthetic_data_generator',
+        clean_state,
         '/app/start.sh'
     ]).decode().strip()
     
-    # Wait for X server to be ready
-    time.sleep(5)
+    try:
+        time.sleep(3)  # Wait for container to initialize
+        record_trajectory(container_id, trajectory, trajectory_idx)
+    finally:
+        subprocess.run(['docker', 'rm', '-f', container_id], check=True)
+
+def create_synthetic_dataset(n=1, max_workers=None, memory_per_worker='2g'):
+    """Create synthetic dataset with resource management"""
+    screen_width = 1024
+    screen_height = 768
     
-    # Test X server
-    subprocess.run([
-        'docker', 'exec',
-        base_container_id,
-        'bash', '-c',
-        '''
-        for i in $(seq 1 10); do 
-            if xdpyinfo >/dev/null 2>&1; then 
-                echo "X server is ready"
-                exit 0
-            fi
-            sleep 1
-        done
-        echo "X server failed to start"
-        exit 1
-        '''
-    ], check=True)
+    # Calculate optimal number of workers based on system resources
+    total_memory_gb = psutil.virtual_memory().total / (1024**3)  # Convert to GB
+    num_cpus = os.cpu_count()
     
-    # Save the clean state
-    clean_state = subprocess.check_output([
-        'docker', 'commit', base_container_id
-    ]).decode().strip()
+    if max_workers is None:
+        # Calculate based on available resources
+        memory_needed_per_worker = 8  # GB
+        max_by_memory = int((total_memory_gb - 4) / memory_needed_per_worker)  # Leave 4GB for system
+        max_by_cpu = num_cpus - 2  # Leave 2 CPU cores for system
+        max_workers = min(max_by_memory, max_by_cpu)
+        
+        # For very large machines, maybe cap at 32 or adjust based on your needs
+        # max_workers = min(max_workers, 32)  # Optional cap
     
-    # Clean up the initialization container
-    subprocess.run(['docker', 'rm', '-f', base_container_id], check=True)
+    print(f"System resources: {num_cpus} CPUs, {total_memory_gb:.1f}GB RAM")
+    print(f"Using {max_workers} workers")
     
     try:
         # Generate all trajectories first
         print("Generating all trajectories...")
         trajectories = generate_multiple_trajectories(n, screen_width, screen_height, duration=12)
         
-        # Process each trajectory
-        for i, trajectory in enumerate(trajectories):
-            print(f"Recording trajectory {i}/{n}")
-            
-            # Create a fresh container from clean state
-            container_id = subprocess.check_output([
-                'docker', 'run', '-d',
-                '-v', f'{os.getcwd()}/raw_data:/app/raw_data',
-                '--env', 'DISPLAY=:99',
-                '--env', f'SCREEN_WIDTH={screen_width}',
-                '--env', f'SCREEN_HEIGHT={screen_height}',
-                clean_state,
-                '/app/start.sh'
-            ]).decode().strip()
-            
-            try:
-                # Wait longer for desktop to be fully ready
-                time.sleep(10)  # Increased from 2 to 3 seconds
-                record_trajectory(container_id, trajectory, i)
-            finally:
-                subprocess.run(['docker', 'rm', '-f', container_id])
-            
-            # Optional: Small delay between recordings
-            time.sleep(0.1)
+        # Process in parallel with resource limits
+        process_func = partial(
+            process_trajectory,
+            screen_width=screen_width,
+            screen_height=screen_height,
+            clean_state=clean_state,
+            memory_limit=memory_per_worker
+        )
+        
+        with multiprocessing.Pool(max_workers) as pool:
+            pool.starmap(process_func, enumerate(trajectories))
     
     finally:
-        # Clean up the saved state
+        # Cleanup
         subprocess.run(['docker', 'rmi', clean_state], check=True)
+        subprocess.run('docker container prune -f', shell=True, check=False)
 
 if __name__ == "__main__":
     # Ensure raw_data directory exists
@@ -210,5 +197,9 @@ if __name__ == "__main__":
     os.makedirs('raw_data/videos', exist_ok=True)
     os.makedirs('raw_data/actions', exist_ok=True)
     
-    # Run without batching
+    # Set higher recursion limit for multiprocessing
+    import sys
+    sys.setrecursionlimit(10000)
+    
+    # Run with parallel processing
     create_synthetic_dataset(40)

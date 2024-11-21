@@ -1,5 +1,7 @@
 #!/bin/bash
-
+# Clean up any existing X server locks
+rm -f /tmp/.X99-lock
+rm -f /tmp/.X11-unix/X99
 ## Create required directories
 #mkdir -p /root/.cache/sessions
 mkdir -p /root/.config/xfce4/xfconf/xfce-perchannel-xml
@@ -60,6 +62,11 @@ cat > /root/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-desktop.xml << EOF
       </property>
     </property>
   </property>
+  <property name="desktop-icons" type="empty">
+    <property name="file-icons" type="empty">
+      <property name="show-filesystem" type="bool" value="false"/>
+    </property>
+  </property>
 </channel>
 EOF
 
@@ -81,6 +88,19 @@ EOF
 
 Xvfb :99 -screen 0 ${SCREEN_WIDTH}x${SCREEN_HEIGHT}x${SCREEN_DEPTH} &
 sleep 2
+XVFB_PID=$!
+
+# Wait for X server to start
+for i in $(seq 1 10); do
+    if xdpyinfo >/dev/null 2>&1; then
+        break
+    fi
+    sleep 1
+done
+
+# Start D-Bus (suppress warnings)
+dbus-daemon --system --fork >/dev/null 2>&1
+dbus-daemon --session --fork >/dev/null 2>&1
 #xfconf-query -c xfce4-desktop -p /backdrop/screen0/monitor0/workspace0/last-image -s /usr/share/backgrounds/xfce/background.png
 ##xfconf-query -c xfce4-desktop -p /backdrop/screen0/monitor0/workspace0/last-image -s /root/Pictures/my_background.png
 #
@@ -119,6 +139,11 @@ cat <<EOF > /root/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-desktop.xml
       </property>
     </property>
   </property>
+  <property name="desktop-icons" type="empty">
+    <property name="file-icons" type="empty">
+      <property name="show-filesystem" type="bool" value="false"/>
+    </property>
+  </property>
 </channel>
 EOF
 
@@ -140,7 +165,7 @@ EOF
 #EOF
 
 startxfce4 &
-sleep 5  # Give desktop time to start
+XFCE_PID=$!
 # Reload the XFCE panel configuration
 # Add Terminal and Browser shortcuts to the desktop
 mkdir -p /root/Desktop
@@ -167,6 +192,7 @@ Terminal=false
 Categories=Network;WebBrowser;
 EOF
 chmod +x ~/Desktop/firefox.desktop
+sleep 5  # Give desktop time to start
 xfce4-panel --quit
 
 #xfdesktop --reload
@@ -178,4 +204,10 @@ xfce4-panel --quit
 ## Set a background color
 #xsetroot -solid "#333333"
 # Run the Python script
-python3 synthetic_script.py
+#python3 synthetic_script.py
+## Keep the container running if no command is specified
+if [ $# -eq 0 ]; then
+    wait $XVFB_PID
+else
+    exec "$@"
+fi

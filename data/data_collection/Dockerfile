@@ -57,7 +57,10 @@ COPY background.png /usr/share/backgrounds/xfce/
 
 
 WORKDIR /app
+ENV PYTHONPATH=/app
 
 RUN chmod +x /app/start.sh
-
-CMD ["/app/start.sh"]
+#
+#CMD ["/app/start.sh"]
+#
+#ENTRYPOINT []

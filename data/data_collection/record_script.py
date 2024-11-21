@@ -163,6 +163,8 @@ def record(save_dir: str = 'raw_data', save_name: str = 'record_0',
             
             # Iterate through each point in the trajectory
             for i, ((x, y), should_click) in enumerate(trajectory):
+                x = int(x)
+                y = int(y)
                 frame_start = time.time()
 
                 # Move cursor and click if needed

@@ -7,7 +7,8 @@ import asyncio
 import time
 import pandas as pd
 import pyautogui
-pyautogui.PAUSE = 0
+pyautogui.FAILSAFE = False  # Disable fail-safe
+pyautogui.PAUSE = 0  # No pause between actions for faster execution
 import pkg_resources
 from PIL import Image, ImageDraw
 from cairosvg import svg2png

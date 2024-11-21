@@ -70,7 +70,7 @@ try:
     record(
         "raw_data",
         "record_{record_idx}",
-        duration=12,
+        duration=120,
         trajectory=trajectory_data
     )
 except Exception as e:

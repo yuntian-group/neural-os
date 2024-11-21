@@ -1,5 +1,4 @@
 import numpy as np
-import pyautogui
 import time
 from scipy.special import comb
 import random

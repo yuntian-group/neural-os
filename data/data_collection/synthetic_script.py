@@ -173,7 +173,7 @@ def create_synthetic_dataset(n=1):
     try:
         # Generate all trajectories first
         print("Generating all trajectories...")
-        trajectories = generate_multiple_trajectories(n, screen_width, screen_height, duration=120)
+        trajectories = generate_multiple_trajectories(n, screen_width, screen_height, duration=12)
         
         # Process each trajectory
         for i, trajectory in enumerate(trajectories):

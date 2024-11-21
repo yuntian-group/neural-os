@@ -5,9 +5,9 @@ import os
 import asyncio
 #from dotenv import load_dotenv
 import time
-from pynput.mouse import Controller, Listener, Button
 import pandas as pd
 import pyautogui
+pyautogui.PAUSE = 0
 import pkg_resources
 from PIL import Image, ImageDraw
 from cairosvg import svg2png
@@ -16,17 +16,12 @@ from io import BytesIO
 # Load environment variables
 #load_dotenv()
 current_directory = os.path.dirname(os.path.abspath(__file__)) #for obs video paths
-parent_directory = os.path.dirname(current_directory)
+#parent_directory = os.path.dirname(current_directory)
+base_directory = '/app/raw_data'
 
-mouse = Controller()
 right_click = False
 left_click = False
 
-
-def on_click(x, y, button, pressed):
-    global right_click, left_click
-    if button == Button.right: right_click = pressed
-    elif button == Button.left: left_click = pressed
 
 def get_cursor_image():
     """Get cursor image from SVG"""
@@ -117,30 +112,26 @@ def draw_cursor(frame, x, y, left_click=False, right_click=False, scaling_factor
     
     return frame
 
-async def record(save_dir: str = 'raw_data', save_name: str = 'record_0', 
-                duration: int = 12, function_to_record: callable = None, 
-                fn_args: tuple = ()):
+def record(save_dir: str = 'raw_data', save_name: str = 'record_0', 
+           duration: int = 12, trajectory: list = None):
     """
-    Records mouse positions, clicks, and screen at 15 fps.
-    Frames are stored at original resolution.
+    Records mouse positions, clicks, and screen at specified fps.
+    Moves cursor through trajectory while recording.
+    trajectory is a list of tuples ((x,y), should_click)
     """
-    fps = 15
+    fps = 24
     interval = 1.0 / fps
     
-    # Ensure directories exist with parent_directory
-    os.makedirs(f'{parent_directory}/{save_dir}/videos', exist_ok=True)
-    os.makedirs(f'{parent_directory}/{save_dir}/actions', exist_ok=True)
+    # Ensure directories exist
+    os.makedirs(os.path.join(base_directory, save_dir, 'videos'), exist_ok=True)
+    os.makedirs(os.path.join(base_directory, save_dir, 'actions'), exist_ok=True)
 
     # Initialize mouse data collection
     data = []
     
-    # Start mouse listener
-    listener = Listener(on_click=on_click)
-    listener.start()
-
     with mss.mss(with_cursor=True) as sct:
         monitor = sct.monitors[1]
-        scaling_factor = 1
+        print("Selected monitor:", monitor)
         
         # Get actual frame dimensions first
         screen = np.array(sct.grab(monitor))
@@ -148,19 +139,16 @@ async def record(save_dir: str = 'raw_data', save_name: str = 'record_0',
         height, width = frame.shape[:2]
         print(f"Frame shape: {frame.shape}")
         
-        # Calculate scaling factor by comparing monitor and frame dimensions
+        # Calculate scaling factor
         scaling_factor = height / monitor['height']
         print(f"Detected scaling factor: {scaling_factor}")
         
-        # Initialize video writer with original size
+        # Initialize video writer
         codec = 'mp4v'
         fourcc = cv2.VideoWriter_fourcc(*codec)
         out = cv2.VideoWriter(
-            f'{parent_directory}/{save_dir}/videos/{save_name}.mp4', 
-            fourcc, 
-            fps, 
-            (width, height),  # Use original size
-            isColor=True
+            f'{base_directory}/{save_dir}/videos/{save_name}.mp4', 
+            fourcc, fps, (width, height), isColor=True
         )
            
         if not out.isOpened():
@@ -171,22 +159,49 @@ async def record(save_dir: str = 'raw_data', save_name: str = 'record_0',
         
         frame_count = 0
         try:
-            # Start function_to_record if provided
-            if function_to_record:
-                function_task = asyncio.create_task(asyncio.to_thread(function_to_record, *fn_args))
-                await asyncio.sleep(0.1)  # Small delay to ensure function starts
-
             start_time = time.time()
-            while time.time() - start_time < duration:
+            
+            # Iterate through each point in the trajectory
+            for i, ((x, y), should_click) in enumerate(trajectory):
                 frame_start = time.time()
 
-                # Capture screen and mouse data
+                # Move cursor and click if needed
+                pyautogui.moveTo(x, y)
+                if should_click:
+                    pyautogui.click()
+
+                # Capture screen
+                
+                #window_name = 'test_window'
+                #cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
+                #cv2.resizeWindow(window_name, 1024, 768)
+                
+                # Create a test image with some patterns
+                #test_image = np.zeros((768, 1024, 3), dtype=np.uint8)
+                # Draw some shapes
+                #cv2.rectangle(test_image, (100, 100), (300, 300), (0, 255, 0), -1)
+                #cv2.circle(test_image, (512, 384), 100, (0, 0, 255), -1)
+                #cv2.putText(test_image, "Test Pattern", (400, 200), 
+                #   cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 255, 255), 2)
+        
+                # Show the test image
+                #cv2.imshow(window_name, test_image)
+                #cv2.waitKey(1)  # Update the window
+                #time.sleep(1)
                 screen = np.array(sct.grab(monitor))
+                #print("Screenshot shape:", screen.shape)
+                #print("Screenshot dtype:", screen.dtype)
+                #print("Screenshot min/max values:", screen.min(), screen.max())
+                
+                # Save a test image to verify capture
+                # Save both the test image and the capture
+                #cv2.imwrite('/app/raw_data/test_pattern.png', test_image)
+                #cv2.imwrite('/app/raw_data/test_capture.png', screen)
+
                 frame = cv2.cvtColor(screen, cv2.COLOR_BGRA2BGR)
                 
-                # Draw cursor before writing
-                x, y = mouse.position
-                frame = draw_cursor(frame, x, y, left_click, right_click, scaling_factor)
+                # Draw cursor with click indicator
+                #frame = draw_cursor(frame, x, y, should_click, right_click, scaling_factor)
                 
                 # Write frame at original size
                 #frame = cv2.resize(frame, output_size, interpolation=cv2.INTER_AREA)
@@ -195,65 +210,46 @@ async def record(save_dir: str = 'raw_data', save_name: str = 'record_0',
                 #if frame_count % 15 == 0:  # Print every second
                 #    print(f"Wrote frame {frame_count}, success: {success}")
 
+                # Record data
                 current_time = time.time() - start_time
                 seconds = int(current_time)
                 milliseconds = int((current_time - seconds) * 1000)
                 time_formatted = f"{seconds}:{milliseconds}"
 
-               #x, y = mouse.position
                 data.append([
                     current_time, 
                     time_formatted, 
                     x, y, 
                     right_click, 
-                    left_click
+                    should_click
                 ])
 
-                # Maintain 15 fps
+                # Maintain fps
                 elapsed = time.time() - frame_start
                 if elapsed < interval:
-                    await asyncio.sleep(interval - elapsed)
+                    time.sleep(interval - elapsed)
 
         finally:
-            # Ensure proper cleanup
             if out.isOpened():
                 out.release()
-                print("Video writer released")
-            listener.stop()
-            cv2.destroyAllWindows()  # Clean up any OpenCV windows
+            #cv2.destroyAllWindows()
 
-            # Wait for function_to_record to complete if it exists
-            if function_to_record and 'function_task' in locals():
-                try:
-                    await function_task
-                except asyncio.CancelledError:
-                    pass
-
-            # Cancel function_to_record if it's still running
-            if function_to_record and 'function_task' in locals():
-                if not function_task.done():
-                    function_task.cancel()
-                    try:
-                        await function_task
-                    except asyncio.CancelledError:
-                        pass
-
-            # Save mouse data with parent_directory
+            # Save mouse data
             df = pd.DataFrame(
                 data, 
                 columns=['Timestamp', 'Timestamp_formated', 'X', 'Y', 'Right Click', 'Left Click']
             )
             df.to_csv(
-                f'{parent_directory}/{save_dir}/actions/{save_name}.csv', 
+                f'{base_directory}/{save_dir}/actions/{save_name}.csv', 
                 index=False
             )
 
         #max_x, max_y = pyautogui.size()
         #print(f"Recorded mouse data on: width {max_x}px height {max_y}px screen.")
         print(f"Saved video and actions csv at {save_dir}/{save_name}.")
-
         # Verify the video file was created successfully
-        if os.path.exists(f'{parent_directory}/{save_dir}/videos/{save_name}.mp4'):
-            print(f"Video file size: {os.path.getsize(f'{parent_directory}/{save_dir}/videos/{save_name}.mp4')} bytes")
+        if os.path.exists(f'{base_directory}/{save_dir}/videos/{save_name}.mp4'):
+            print(f"Video file size: {os.path.getsize(f'{base_directory}/{save_dir}/videos/{save_name}.mp4')} bytes")
         else:
             print("Video file was not created!")
+

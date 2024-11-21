@@ -1,7 +1,6 @@
 import numpy as np
 import pyautogui
 import time
-import matplotlib.pyplot as plt
 from scipy.special import comb
 
 
@@ -27,16 +26,45 @@ def generate_control_points(num_points, screen_width, screen_height):
     return list(zip(x, y))
 
 def generate_human_like_trajectory(screen_width, screen_height, 
-                                   num_control_points=25, num_points=110):
+                                 num_control_points=25, 
+                                 duration=12,  # Duration in seconds
+                                 fps=24,  # Match recording FPS
+                                 num_clicks=3):
+    # Calculate number of points based on duration and fps
+    num_points = int(duration * fps)
+    
     control_points = generate_control_points(num_control_points, screen_width, screen_height)
     curve = bezier_curve(control_points, num_points)
     noisy_curve = add_noise(curve)
-    return np.clip(noisy_curve, 0, [screen_width, screen_height]).astype(int)
+    trajectory = np.clip(noisy_curve, 0, [screen_width, screen_height]).astype(int)
+    
+    # Generate fixed number of clicks at random points
+    # Avoid clicks too close to start or end
+    buffer = num_points // 10  # 10% buffer at start and end
+    buffer = 0
+    click_indices = np.random.choice(
+        range(buffer, num_points - buffer), 
+        size=num_clicks, 
+        replace=False
+    )
+    click_indices.sort()  # Sort to maintain temporal order
+    
+    # Create click array
+    clicks = np.zeros(len(trajectory), dtype=bool)
+    clicks[click_indices] = True
+    
+    return list(zip(trajectory, clicks))
 
-def generate_multiple_trajectories(num_trajectories, screen_width, screen_height):
+def generate_multiple_trajectories(num_trajectories, screen_width, screen_height, duration=12):
     trajectories = []
     for _ in range(num_trajectories):
-        trajectory = generate_human_like_trajectory(screen_width, screen_height)
+        # Randomly choose number of clicks for this trajectory
+        num_clicks = np.random.randint(0, int(0.2*duration*24))  # Random number of clicks proportional to duration
+        trajectory = generate_human_like_trajectory(
+            screen_width, screen_height,
+            duration=duration,
+            num_clicks=num_clicks
+        )
         trajectories.append(trajectory)
     return trajectories
 
@@ -50,6 +78,7 @@ def move_mouse_through_trajectory(trajectory, delay=0.005):
         # time.sleep(delay)
 
 def plot_trajectories(trajectories, screen_width, screen_height):
+    import matplotlib.pyplot as plt
     plt.figure(figsize=(12, 6))
     for trajectory in trajectories:
         x, y = trajectory.T

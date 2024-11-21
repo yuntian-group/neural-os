@@ -5,3 +5,5 @@ pandas
 pyautogui
 mss
 python-xlib
+cairosvg
+scipy

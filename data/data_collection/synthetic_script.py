@@ -173,7 +173,7 @@ def create_synthetic_dataset(n=1):
     try:
         # Generate all trajectories first
         print("Generating all trajectories...")
-        trajectories = generate_multiple_trajectories(n, screen_width, screen_height)
+        trajectories = generate_multiple_trajectories(n, screen_width, screen_height, duration=120)
         
         # Process each trajectory
         for i, trajectory in enumerate(trajectories):
@@ -211,4 +211,4 @@ if __name__ == "__main__":
     os.makedirs('raw_data/actions', exist_ok=True)
     
     # Run without batching
-    create_synthetic_dataset(4)
+    create_synthetic_dataset(40)

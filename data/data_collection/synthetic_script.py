@@ -142,7 +142,7 @@ def process_trajectory(trajectory_idx, trajectory, screen_width, screen_height, 
     ]).decode().strip()
     
     try:
-        time.sleep(3)  # Wait for container to initialize
+        time.sleep(10)  # Wait for container to initialize
         record_trajectory(container_id, trajectory, trajectory_idx)
     finally:
         subprocess.run(['docker', 'rm', '-f', container_id], check=True)
@@ -158,13 +158,13 @@ def create_synthetic_dataset(n=1, max_workers=None, memory_per_worker='2g'):
     
     if max_workers is None:
         # Calculate based on available resources
-        memory_needed_per_worker = 16  # GB
+        memory_needed_per_worker = 2  # GB
         max_by_memory = int((total_memory_gb - 4) / memory_needed_per_worker)  # Leave 4GB for system
         max_by_cpu = num_cpus - 2  # Leave 2 CPU cores for system
         max_workers = min(max_by_memory, max_by_cpu)
         
         # For very large machines, maybe cap at 32 or adjust based on your needs
-        max_workers = min(max_workers, 32)  # Optional cap
+        max_workers = min(max_workers, 16)  # Optional cap
     
     print(f"System resources: {num_cpus} CPUs, {total_memory_gb:.1f}GB RAM")
     print(f"Using {max_workers} workers")

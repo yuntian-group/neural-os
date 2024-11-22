@@ -197,8 +197,6 @@ def create_synthetic_dataset(n=1, max_workers=None, memory_per_worker='2g'):
 if __name__ == "__main__":
     # Ensure raw_data directory exists
     os.makedirs('raw_data', exist_ok=True)
-    os.makedirs('raw_data/videos', exist_ok=True)
-    os.makedirs('raw_data/actions', exist_ok=True)
     
     # Set higher recursion limit for multiprocessing
     import sys

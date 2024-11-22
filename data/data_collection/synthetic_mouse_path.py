@@ -90,14 +90,14 @@ def generate_human_like_trajectory(screen_width, screen_height,
             gap = random.randint(1, 6)  # Between 125ms and 250ms
             
             # Add small random movement between clicks
-            if not HUMAN:
-                original_pos = trajectory[idx].copy()
-                for j in range(1, gap + 1):
-                    jitter = np.random.normal(0, 1, 2)  # 1 pixel standard deviation for more stability
-                    new_pos = original_pos + jitter
-                    new_pos = np.clip(new_pos, 0, [screen_width - 1, screen_height - 1])
-                    trajectory[idx + j] = new_pos.astype(int)
-            
+            #if not HUMAN:
+            original_pos = trajectory[idx].copy()
+            for j in range(1, gap + 1):
+                jitter = np.random.normal(0, 1, 2)  # 1 pixel standard deviation for more stability
+                new_pos = original_pos + jitter
+                new_pos = np.clip(new_pos, 0, [screen_width - 1, screen_height - 1])
+                trajectory[idx + j] = new_pos.astype(int)
+        
             # Second click
             clicks[idx + gap] = True
         else:

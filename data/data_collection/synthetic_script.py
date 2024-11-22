@@ -73,7 +73,7 @@ try:
     record(
         "raw_data",
         "record_{record_idx}",
-        duration=60,
+        duration=30,
         trajectory=trajectory_data
     )
 except Exception as e:
@@ -175,7 +175,7 @@ def create_synthetic_dataset(n=1, max_workers=None, memory_per_worker='2g'):
     try:
         # Generate all trajectories first
         print("Generating all trajectories...")
-        trajectories = generate_multiple_trajectories(n, screen_width, screen_height, duration=60)
+        trajectories = generate_multiple_trajectories(n, screen_width, screen_height, duration=30)
         
         # Process in parallel with resource limits
         process_func = partial(
@@ -205,4 +205,4 @@ if __name__ == "__main__":
     sys.setrecursionlimit(10000)
     
     # Run with parallel processing
-    create_synthetic_dataset(64)
+    create_synthetic_dataset(16000)

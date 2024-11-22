@@ -158,7 +158,7 @@ def create_synthetic_dataset(n=1, max_workers=None, memory_per_worker='2g'):
     
     if max_workers is None:
         # Calculate based on available resources
-        memory_needed_per_worker = 8  # GB
+        memory_needed_per_worker = 16  # GB
         max_by_memory = int((total_memory_gb - 4) / memory_needed_per_worker)  # Leave 4GB for system
         max_by_cpu = num_cpus - 2  # Leave 2 CPU cores for system
         max_workers = min(max_by_memory, max_by_cpu)
@@ -202,4 +202,4 @@ if __name__ == "__main__":
     sys.setrecursionlimit(10000)
     
     # Run with parallel processing
-    create_synthetic_dataset(40)
+    create_synthetic_dataset(64)

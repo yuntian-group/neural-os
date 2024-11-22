@@ -142,7 +142,7 @@ def process_trajectory(trajectory_idx, trajectory, screen_width, screen_height, 
     ]).decode().strip()
     
     try:
-        time.sleep(10)  # Wait for container to initialize
+        time.sleep(20)  # Wait for container to initialize
         record_trajectory(container_id, trajectory, trajectory_idx)
     finally:
         subprocess.run(['docker', 'rm', '-f', container_id], check=True)

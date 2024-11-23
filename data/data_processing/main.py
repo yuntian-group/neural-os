@@ -75,16 +75,19 @@ def get_video_dimensions(video_path: str) -> tuple[int, int]:
         Tuple of (width, height)
     """
     try:
-        with cv2.VideoCapture(video_path) as cap:
-            if not cap.isOpened():
-                raise ValueError(f"Could not open video file: {video_path}")
-            
-            ret, frame = cap.read()
-            if not ret:
-                raise ValueError(f"Could not read frame from video file: {video_path}")
-            
-            height, width = frame.shape[:2]
-            return width, height
+        cap = cv2.VideoCapture(video_path)
+        if not cap.isOpened():
+            raise ValueError(f"Could not open video file: {video_path}")
+        
+        ret, frame = cap.read()
+        cap.release()  # Properly release the video capture
+        
+        if not ret:
+            raise ValueError(f"Could not read frame from video file: {video_path}")
+        
+        height, width = frame.shape[:2]
+        return width, height
+        
     except Exception as e:
         raise ValueError(f"Error reading video dimensions: {str(e)}")
 
@@ -109,7 +112,8 @@ if __name__ == "__main__":
     # Get video dimensions using the new helper function
     first_video = os.path.join(args.video_dir, video_files[0])
     width, height = get_video_dimensions(first_video)
-    
+    print(f"Video dimensions: width: {width}, height: {height}")
+
     # Create a padding image with the same size
     black_image = create_padding_img(width, height)
     black_image.save(os.path.join(save_dir, 'padding.png'))

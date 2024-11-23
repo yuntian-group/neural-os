@@ -19,7 +19,7 @@ def parse_args():
     parser.add_argument("--actions_dir", type=str, default='../raw_data/actions',
                         help="directory where the actions are saved.")
     
-    parser.add_argument("--seq_len", type=int, default=15,
+    parser.add_argument("--seq_len", type=int, default=49,
                         help="This number -1 is the number of frames conditioned on.")
 
     args = parser.parse_args()

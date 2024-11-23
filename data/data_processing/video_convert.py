@@ -140,7 +140,7 @@ def video_to_frames(video_path: str, actions_path: str, video_num: int, save_pat
     return df
 
 
-def sequence_creator(dataframe: pd.DataFrame, save_path: str, seq_len: int = 8, save_dataset: bool = False) -> pd.DataFrame:
+def sequence_creator(dataframe: pd.DataFrame, save_path: str, seq_len: int, save_dataset: bool) -> pd.DataFrame:
     """
     Creates sequences from video frames and actions.
     
@@ -201,7 +201,7 @@ def parse_args():
     parser.add_argument("--actions_path", type=str, default='../raw_data/custom/actions/record_custom.csv',
                         help="where to save the dataset.")
 
-    parser.add_argument("--seq_len", type=int, default=15,
+    parser.add_argument("--seq_len", type=int, default=49,
                         help="This number -1 is the number of frames conditioned on.")
     
     

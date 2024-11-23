@@ -164,7 +164,7 @@ def create_synthetic_dataset(n=1, max_workers=None, memory_per_worker='2g'):
         max_workers = min(max_by_memory, max_by_cpu)
         
         # For very large machines, maybe cap at 32 or adjust based on your needs
-        max_workers = min(max_workers, 16)  # Optional cap
+        max_workers = min(max_workers, 32)  # Optional cap
     
     print(f"System resources: {num_cpus} CPUs, {total_memory_gb:.1f}GB RAM")
     print(f"Using {max_workers} workers")

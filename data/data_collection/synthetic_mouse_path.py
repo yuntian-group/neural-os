@@ -109,7 +109,7 @@ def generate_multiple_trajectories(num_trajectories, screen_width, screen_height
     trajectories = []
     for _ in range(num_trajectories):
         # Randomly choose number of clicks for this trajectory
-        num_clicks = np.random.randint(0, int(0.2*duration*fps))  # Random number of clicks proportional to duration
+        num_clicks = np.random.randint(0, int(0.4*duration*fps))  # Random number of clicks proportional to duration
         trajectory = generate_human_like_trajectory(
             screen_width, screen_height,
             duration=duration,

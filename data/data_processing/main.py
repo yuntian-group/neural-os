@@ -25,7 +25,7 @@ def parse_args():
     args = parser.parse_args()
     
     # Add directory validation
-    for dir_path in [args.save_dir, args.video_dir, args.actions_dir]:
+    for dir_path in [args.video_dir, args.actions_dir]:
         if not os.path.exists(dir_path):
             raise ValueError(f"Directory does not exist: {dir_path}")
             

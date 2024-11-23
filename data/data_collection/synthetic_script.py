@@ -74,6 +74,7 @@ try:
         "raw_data",
         "record_{record_idx}",
         duration=30,
+        fps=15,
         trajectory=trajectory_data
     )
 except Exception as e:

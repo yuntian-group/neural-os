@@ -114,13 +114,12 @@ def draw_cursor(frame, x, y, left_click=False, right_click=False, scaling_factor
     return frame
 
 def record(save_dir: str = 'raw_data', save_name: str = 'record_0', 
-           duration: int = 12, trajectory: list = None):
+           duration: int = 12, fps: int = 15, trajectory: list = None):
     """
     Records mouse positions, clicks, and screen at specified fps.
     Moves cursor through trajectory while recording.
     trajectory is a list of tuples ((x,y), should_click)
     """
-    fps = 15
     interval = 1.0 / fps
     
     # Ensure directories exist

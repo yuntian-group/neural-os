@@ -140,7 +140,7 @@ def video_to_frames(video_path: str, actions_path: str, video_num: int, save_pat
     return df
 
 
-def sequence_creator(dataframe: pd.DataFrame, save_path: str, seq_len: int, save_dataset: bool) -> pd.DataFrame:
+def sequence_creator(dataframe: pd.DataFrame, save_path: str, seq_len: int) -> pd.DataFrame:
     """
     Creates sequences from video frames and actions.
     
@@ -183,8 +183,7 @@ def sequence_creator(dataframe: pd.DataFrame, save_path: str, seq_len: int, save
     seq_df['Target_image'] = target_image
 
     #Saves an individual video if specified
-    if save_dataset: 
-        seq_df.to_csv(os.path.join(save_path, 'train_dataset.csv'), index=False)
+    seq_df.to_csv(os.path.join(save_path, 'train_dataset.csv'), index=False)
 
     return seq_df
 

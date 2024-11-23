@@ -120,7 +120,7 @@ def record(save_dir: str = 'raw_data', save_name: str = 'record_0',
     Moves cursor through trajectory while recording.
     trajectory is a list of tuples ((x,y), should_click)
     """
-    fps = 24
+    fps = 15
     interval = 1.0 / fps
     
     # Ensure directories exist

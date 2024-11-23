@@ -38,12 +38,12 @@ def generate_control_points(num_points, screen_width, screen_height):
         points.append((x, y))
     return points
 
-def generate_human_like_trajectory(screen_width, screen_height, 
-                                 num_control_points=25, 
-                                 duration=12,  # Duration in seconds
-                                 fps=24,  # Match recording FPS
-                                 num_clicks=3,
-                                 double_click_prob=0.3):  # Probability of double click
+def generate_human_like_trajectory(screen_width, screen_height,
+                                   duration,  # Duration in seconds
+                                   fps,  # Match recording FPS
+                                   num_clicks,
+                                   num_control_points=25, 
+                                   double_click_prob=0.3):  # Probability of double click
     # Calculate number of points based on duration and fps
     num_points = int(duration * fps)
     HUMAN = random.random() > 0.5
@@ -105,7 +105,7 @@ def generate_human_like_trajectory(screen_width, screen_height,
     
     return list(zip(trajectory, clicks))
 
-def generate_multiple_trajectories(num_trajectories, screen_width, screen_height, duration=12):
+def generate_multiple_trajectories(num_trajectories, screen_width, screen_height, duration, fps):
     trajectories = []
     for _ in range(num_trajectories):
         # Randomly choose number of clicks for this trajectory
@@ -113,7 +113,8 @@ def generate_multiple_trajectories(num_trajectories, screen_width, screen_height
         trajectory = generate_human_like_trajectory(
             screen_width, screen_height,
             duration=duration,
-            num_clicks=num_clicks
+            num_clicks=num_clicks,
+            fps=fps
         )
         trajectories.append(trajectory)
     return trajectories

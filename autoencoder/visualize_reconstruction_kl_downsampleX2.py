@@ -7,7 +7,7 @@ from einops import rearrange
 from omegaconf import OmegaConf
 from computer.util import load_model_from_config
 from data.data_processing.datasets import normalize_image
-
+import cv2
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
 @torch.no_grad()
@@ -21,9 +21,12 @@ def visualize_reconstruction(model, image_path, save_path):
         save_path: Where to save visualizations
     """
     os.makedirs(save_path, exist_ok=True)
+    # downsample image by factor of 2
+    image = Image.open(image_path)
+    image = cv2.resize(image, (image.width // 2, image.height // 2), interpolation=cv2.INTER_AREA)
     
     # Load and process image
-    image = normalize_image(image_path)
+    image = normalize_image(image)
     image = torch.unsqueeze(image, dim=0)
     image = rearrange(image, 'b h w c -> b c h w').to(device)
     

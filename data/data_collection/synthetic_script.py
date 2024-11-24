@@ -16,8 +16,8 @@ def initialize_clean_state():
     # Start a container and let it initialize
     base_container_id = subprocess.check_output([
         'docker', 'run', '-d',
-        '--env', f'SCREEN_WIDTH=1024',
-        '--env', f'SCREEN_HEIGHT=768',
+        '--env', f'SCREEN_WIDTH=512',
+        '--env', f'SCREEN_HEIGHT=384',
         'synthetic_data_generator',
         '/app/start.sh'
     ]).decode().strip()
@@ -150,8 +150,8 @@ def process_trajectory(trajectory_idx, trajectory, screen_width, screen_height, 
 
 def create_synthetic_dataset(n=1, max_workers=None, memory_per_worker='2g'):
     """Create synthetic dataset with resource management"""
-    screen_width = 1024
-    screen_height = 768
+    screen_width = 512
+    screen_height = 384
     
     # Calculate optimal number of workers based on system resources
     total_memory_gb = psutil.virtual_memory().total / (1024**3)  # Convert to GB

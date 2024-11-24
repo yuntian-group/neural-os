@@ -48,9 +48,9 @@ def convert_checkpoint_to_4ch(input_path, output_path):
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Convert autoencoder checkpoint to use 4 channels.")
-    parser.add_argument("--input", type=str, required=True,
+    parser.add_argument("--input", type=str, default='autoencoder_kl_f16.ckpt',
                         help="Path to input checkpoint")
-    parser.add_argument("--output", type=str, required=True,
+    parser.add_argument("--output", type=str, default='autoencoder_kl_f16_4ch.ckpt',
                         help="Path to save converted checkpoint")
     return parser.parse_args()
 

@@ -1,4 +1,4 @@
-save_path: saved_kl4_bsz8_acc8_lr4.5e6
+save_path: saved_kl_f16_4ch_load_lr4.5e6_bsz8_acc1
 
 model:
   base_learning_rate: 4.5e-06
@@ -34,7 +34,7 @@ model:
 data:
   target: data.data_processing.datasets.DataModule
   params:
-    batch_size: 6
+    batch_size: 8
     num_workers: 4
     wrap: false
     shuffle: true
@@ -45,7 +45,7 @@ data:
     train:
       target: data.data_processing.datasets.ActionsData
       params:
-        data_csv_path: train_dataset/train_dataset.csv
+        data_csv_path: train_dataset/train_dataset_debug.csv
     # validation:
     #   target: data.data_processing.datasets.ActionsData
     #   params:

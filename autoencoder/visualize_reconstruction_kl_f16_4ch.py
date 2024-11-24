@@ -57,7 +57,7 @@ def parse_args():
     parser.add_argument("--ckpt_path", type=str, default='autoencoder_kl_f16_4ch.ckpt',
                         help="Path to model checkpoint.")
     
-    parser.add_argument("--config", type=str, default="config_kl16_lr4.5e6.yaml",
+    parser.add_argument("--config", type=str, default="config_kl16_4ch_lr4.5e6.yaml",
                         help="Path to model config.")
     
     parser.add_argument("--image_path", type=str, required=True,

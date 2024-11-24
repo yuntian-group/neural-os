@@ -94,13 +94,13 @@ def parse_args():
     parser.add_argument("--ckpt_path", type=str, default='autoencoder_kl_f16.ckpt',
                         help="Path to model checkpoint.")
     
-    parser.add_argument("--config", type=str, default="config_kl4_lr4.5e6.yaml",
+    parser.add_argument("--config", type=str, default="config_kl16_lr4.5e6.yaml",
                         help="Path to model config.")
     
     parser.add_argument("--image_path", type=str, required=True,
                         help="Path to input image.")
     
-    parser.add_argument("--save_path", type=str, default="visualization_kl",
+    parser.add_argument("--save_path", type=str, default="visualization_kl_f16",
                         help="Where to save visualizations.")
     
     return parser.parse_args()

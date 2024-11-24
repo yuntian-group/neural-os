@@ -315,6 +315,8 @@ class ActionsData(Dataset):
                                                 for image_path in self.image_seq_paths[i]])
         # Rest of the original code...
         action_seq = self.actions_seq[i]
+        if len(action_seq) > 15:
+            action_seq = action_seq[-15:]
         assert len(action_seq) == 15, "Action sequence must be 15 actions long"
         for j in range(8):
             example[f"action_{j}"] = action_seq[j:j+8]

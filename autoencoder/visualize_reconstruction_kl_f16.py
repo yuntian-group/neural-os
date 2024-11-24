@@ -11,6 +11,43 @@ from data.data_processing.datasets import normalize_image
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
 @torch.no_grad()
+def modify_model_channels(model, n_channels):
+    """Modify the model to use specified number of channels in latent space"""
+    # Modify quant_conv (encoder side bottleneck)
+    old_quant_conv = model.quant_conv
+    new_quant_conv = torch.nn.Conv2d(
+        old_quant_conv.in_channels,
+        2 * n_channels,  # 2*embed_dim (mean and std)
+        kernel_size=1
+    ).to(device)
+    
+    # Transfer weights properly maintaining mean/std pairs
+    old_channels = old_quant_conv.weight.data.shape[0] // 2  # number of channels in original model
+    # Take first n_channels from means (first half)
+    new_quant_conv.weight.data[:n_channels] = old_quant_conv.weight.data[:n_channels]
+    new_quant_conv.bias.data[:n_channels] = old_quant_conv.bias.data[:n_channels]
+    # Take first n_channels from stds (second half)
+    new_quant_conv.weight.data[n_channels:] = old_quant_conv.weight.data[old_channels:old_channels+n_channels]
+    new_quant_conv.bias.data[n_channels:] = old_quant_conv.bias.data[old_channels:old_channels+n_channels]
+    
+    model.quant_conv = new_quant_conv
+
+    # Modify post_quant_conv (decoder side bottleneck)
+    old_post_quant_conv = model.post_quant_conv
+    new_post_quant_conv = torch.nn.Conv2d(
+        n_channels,  # embed_dim
+        old_post_quant_conv.out_channels,
+        kernel_size=1
+    ).to(device)
+    
+    # Transfer weights for the channels we're keeping
+    new_post_quant_conv.weight.data = old_post_quant_conv.weight.data[:, :n_channels]
+    new_post_quant_conv.bias.data = old_post_quant_conv.bias.data.clone()
+    model.post_quant_conv = new_post_quant_conv
+    
+    return model
+
+@torch.no_grad()
 def visualize_reconstruction(model, image_path, save_path):
     """
     Takes an input image, shows its latent representation and reconstruction.
@@ -29,7 +66,6 @@ def visualize_reconstruction(model, image_path, save_path):
     
     # Get latent representation
     latent = model.encode(image).sample()
-    import pdb; pdb.set_trace()
     
     # Decode back to image
     reconstruction = model.decode(latent)
@@ -69,15 +105,31 @@ def parse_args():
     
     return parser.parse_args()
 
-if __name__ == '__main__':
+def main():
     args = parse_args()
     
-    # Load model
-    config = OmegaConf.load(args.config)
-    model = load_model_from_config(config, args.ckpt_path)
-    model = model.to(device)
-    model.eval()
+    # Test different channel counts
+    channel_counts = [1, 2, 3, 8, 16]
     
-    # Process image
-    visualize_reconstruction(model, args.image_path, args.save_path)
-    print(f"Visualizations saved to {args.save_path}") 
+    for n_channels in channel_counts:
+        print(f"Processing with {n_channels} channels...")
+        
+        # Load fresh model for each channel count
+        config = OmegaConf.load(args.config)
+        model = load_model_from_config(config, args.ckpt_path)
+        model = model.to(device)
+        model.eval()
+        
+        # Modify model architecture
+        model = modify_model_channels(model, n_channels)
+        
+        # Create subdirectory for this channel count
+        save_subdir = os.path.join(args.save_path, f'channels_{n_channels}')
+        
+        # Process image
+        visualize_reconstruction(model, args.image_path, save_subdir)
+    
+    print(f"Visualizations saved to {args.save_path}")
+
+if __name__ == '__main__':
+    main() 

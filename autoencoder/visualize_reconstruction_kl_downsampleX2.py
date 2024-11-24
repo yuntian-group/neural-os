@@ -21,11 +21,16 @@ def visualize_reconstruction(model, image_path, save_path):
         save_path: Where to save visualizations
     """
     os.makedirs(save_path, exist_ok=True)
-    # downsample image by factor of 2
-    image = Image.open(image_path)
-    image = cv2.resize(image, (image.width // 2, image.height // 2), interpolation=cv2.INTER_AREA)
     
     # Load and process image
+    image = Image.open(image_path)
+    # Convert PIL Image to numpy array for cv2
+    image_np = np.array(image)
+    # Resize
+    image_np = cv2.resize(image_np, (image.width // 2, image.height // 2), interpolation=cv2.INTER_AREA)
+    # Convert back to PIL Image
+    image = Image.fromarray(image_np)
+    
     image = normalize_image(image)
     image = torch.unsqueeze(image, dim=0)
     image = rearrange(image, 'b h w c -> b c h w').to(device)

@@ -18,30 +18,21 @@ RUN apt-get update && apt-get install -y \
     libxrender-dev \
     libgl1-mesa-glx \
     ffmpeg \
-    xfce4 xfce4-goodies \
+    xfce4 xfce4-goodies xfce4-terminal \
     dbus-x11 \
     xserver-xorg \
     xinit \
     x11-xserver-utils \
-    && apt-get clean #rm -rf /var/lib/apt/lists/*
-
-    #xfce4 \
-    #xfce4-terminal \
-    #xfce4-panel \
-    #xfdesktop4 \
-    #xfwm4 \
-# Install Python packages
-RUN apt-get update && apt-get install -y \
-    xfce4-terminal \
-    firefox
+    firefox \
+    && apt-get clean
 
 COPY requirements.txt .
 RUN pip3 install -r requirements.txt
 
 # Set up virtual display
 ENV DISPLAY=:99
-ENV SCREEN_WIDTH=1024
-ENV SCREEN_HEIGHT=768
+ENV SCREEN_WIDTH=512
+ENV SCREEN_HEIGHT=368
 ENV SCREEN_DEPTH=24
 
 # Copy your scripts
@@ -49,12 +40,9 @@ COPY synthetic_script.py /app/
 COPY synthetic_mouse_path.py /app/
 COPY record_script.py /app/
 COPY start.sh /app/
-# Create directory for background
+
 RUN mkdir -p /usr/share/backgrounds/xfce
-
-# Copy your background image
 COPY background.png /usr/share/backgrounds/xfce/
-
 
 WORKDIR /app
 ENV PYTHONPATH=/app

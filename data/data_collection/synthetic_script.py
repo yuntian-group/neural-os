@@ -2,12 +2,11 @@ import subprocess
 import os
 import time
 from synthetic_mouse_path import generate_multiple_trajectories
-import random
 import numpy as np
-import json
 import multiprocessing
 from functools import partial
 import psutil
+from tqdm import tqdm
 
 SCREEN_WIDTH = 512
 SCREEN_HEIGHT = 384
@@ -130,8 +129,9 @@ python3 -u {temp_script}
     print(result.stderr)
     result.check_returncode()
 
-def process_trajectory(trajectory_idx, trajectory, screen_width, screen_height, clean_state, memory_limit):
+def process_trajectory(args, screen_width, screen_height, clean_state, memory_limit):
     """Process a single trajectory in its own container"""
+    trajectory_idx, trajectory = args  # Unpack the tuple from enumerate
     print(f"Recording trajectory {trajectory_idx}")
     
     # Create a fresh container from clean state
@@ -177,11 +177,15 @@ def create_synthetic_dataset(n=1, max_workers=None, memory_per_worker='2g'):
     clean_state = initialize_clean_state()
     
     try:
-        # Generate all trajectories first
+        # Generate all trajectories first with progress bar
         print("Generating all trajectories...")
-        trajectories = generate_multiple_trajectories(n, screen_width, screen_height, duration=30, fps=15)
+        trajectories = list(tqdm(
+            generate_multiple_trajectories(n, screen_width, screen_height, duration=30, fps=15),
+            total=n,
+            desc="Generating trajectories"
+        ))
         
-        # Process in parallel with resource limits
+        # Process in parallel with resource limits and progress bar
         process_func = partial(
             process_trajectory,
             screen_width=screen_width,
@@ -191,7 +195,11 @@ def create_synthetic_dataset(n=1, max_workers=None, memory_per_worker='2g'):
         )
         
         with multiprocessing.Pool(max_workers) as pool:
-            pool.starmap(process_func, enumerate(trajectories))
+            list(tqdm(
+                pool.imap(process_func, enumerate(trajectories)),
+                total=len(trajectories),
+                desc="Processing trajectories"
+            ))
     
     finally:
         # Cleanup

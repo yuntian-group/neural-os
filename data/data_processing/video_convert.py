@@ -112,8 +112,9 @@ def video_to_frames(video_path: str, actions_path: str, video_num: int, save_pat
         duration = video.duration
         
         # Make FPS check a warning instead of hard assertion
-        if fps != 24:
+        if fps != 15:
             print(f"Warning: Expected FPS of 24, got {fps}")
+            assert False
         
         for frame_number in range(0, int(fps * duration)):
             action_row = mouse_data.iloc[frame_number]
@@ -200,7 +201,7 @@ def parse_args():
     parser.add_argument("--actions_path", type=str, default='../raw_data/custom/actions/record_custom.csv',
                         help="where to save the dataset.")
 
-    parser.add_argument("--seq_len", type=int, default=49,
+    parser.add_argument("--seq_len", type=int, default=15,
                         help="This number -1 is the number of frames conditioned on.")
     
     

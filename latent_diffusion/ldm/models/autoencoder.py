@@ -395,7 +395,7 @@ class AutoencoderKL(pl.LightningModule):
         #import pdb; pdb.set_trace()
 
         opt_ae, opt_disc = self.optimizers()
-        print (str(int(self.global_step)))
+        #print (str(int(self.global_step)))
         # Manual checkpoint every 10 steps
         if self.global_step % 3000 == 0:
             print ('saving checkpoint')

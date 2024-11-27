@@ -114,6 +114,11 @@ def parse_args():
     parser.add_argument("--batch_size", type=int, default=16,
                         help="Batch size for processing images.")
     
+    parser.add_argument("--start_idx", type=int, default=None,
+                        help="Start index for processing folders (inclusive)")
+    parser.add_argument("--end_idx", type=int, default=None,
+                        help="End index for processing folders (exclusive)")
+    
     return parser.parse_args()
 
 if __name__ == '__main__':
@@ -129,29 +134,33 @@ if __name__ == '__main__':
     # Create output directory
     os.makedirs(args.output_dir, exist_ok=True)
     
-    # First handle the root padding.png
-    root_padding = os.path.join(args.input_dir, 'padding.png')
-    if os.path.exists(root_padding):
-        print("Processing root padding.png...")
-        # Load and process padding image to get correct shape
-        image = normalize_image(root_padding)
-        image = torch.unsqueeze(image, dim=0)
-        image = rearrange(image, 'b h w c -> b c h w').to(device)
-        
-        # Get latent shape through encoder
-        posterior = model.encode(image)
-        latent = posterior.sample()
-        
-        # Set all values to 0 and save
-        latent = torch.zeros_like(latent).squeeze(0)
-        np.save(os.path.join(args.output_dir, 'padding.npy'), latent.cpu().numpy())
-    #import pdb; pdb.set_trace() 
-    # Then process each record folder
-    print("Processing dataset...")
-    for folder in tqdm(sorted(os.listdir(args.input_dir))):
-        if not folder.startswith('record_'):
-            continue
+    # Process root padding.png only in the first job
+    if args.start_idx is None or args.start_idx == 0:
+        root_padding = os.path.join(args.input_dir, 'padding.png')
+        if os.path.exists(root_padding):
+            print("Processing root padding.png...")
+            # Load and process padding image to get correct shape
+            image = normalize_image(root_padding)
+            image = torch.unsqueeze(image, dim=0)
+            image = rearrange(image, 'b h w c -> b c h w').to(device)
             
+            # Get latent shape through encoder
+            posterior = model.encode(image)
+            latent = posterior.sample()
+            
+            # Set all values to 0 and save
+            latent = torch.zeros_like(latent).squeeze(0)
+            np.save(os.path.join(args.output_dir, 'padding.npy'), latent.cpu().numpy())
+    
+    # Get sorted list of record folders
+    record_folders = sorted([f for f in os.listdir(args.input_dir) if f.startswith('record_')])
+    
+    # Apply folder range if specified
+    if args.start_idx is not None and args.end_idx is not None:
+        record_folders = record_folders[args.start_idx:args.end_idx]
+    
+    print(f"Processing dataset (folders {args.start_idx} to {args.end_idx})...")
+    for folder in tqdm(record_folders):
         input_folder = os.path.join(args.input_dir, folder)
         output_folder = os.path.join(args.output_dir, folder)
         

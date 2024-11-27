@@ -94,8 +94,10 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Pre-process dataset using trained encoder.")
     
     parser.add_argument("--ckpt_path", type=str, 
-                        default="saved_kl4_bsz8_acc8_lr4.5e6_load_acc1/model-603000.ckpt",
+                        default="saved_kl4_bsz8_acc8_lr4.5e6_load_acc1_512_384/model-351000.ckpt",
                         help="Path to model checkpoint.")
+                        #default="saved_kl4_bsz8_acc8_lr4.5e6_load_acc1/model-603000.ckpt",
+                        #help="Path to model checkpoint.")
     
     parser.add_argument("--config", type=str, 
                         default="config_kl4_lr4.5e6_load_acc1.yaml",
@@ -143,7 +145,7 @@ if __name__ == '__main__':
         # Set all values to 0 and save
         latent = torch.zeros_like(latent).squeeze(0)
         np.save(os.path.join(args.output_dir, 'padding.npy'), latent.cpu().numpy())
-    import pdb; pdb.set_trace() 
+    #import pdb; pdb.set_trace() 
     # Then process each record folder
     print("Processing dataset...")
     for folder in tqdm(sorted(os.listdir(args.input_dir))):

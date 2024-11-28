@@ -518,6 +518,7 @@ class Decoder(nn.Module):
         block_in = ch*ch_mult[self.num_resolutions-1]
         
         self.z_shape = (1,z_channels,curr_res_h,curr_res_w)
+        import pdb; pdb.set_trace()
         print(f"Working with z of shape {self.z_shape} = {np.prod(self.z_shape)} dimensions.")
 
         # z to block_in

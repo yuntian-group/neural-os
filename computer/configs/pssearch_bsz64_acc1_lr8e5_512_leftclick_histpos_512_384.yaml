@@ -83,7 +83,7 @@ data:
     train:
       target: data.data_processing.datasets.ActionsData
       params:
-        data_csv_path: train_dataset/train_dataset_14frames_firstframe_allframes.csv
+        data_csv_path: train_dataset/train_dataset.csv
         #validation:
         #  target: data.data_processing.datasets.ActionsData
         #  params:

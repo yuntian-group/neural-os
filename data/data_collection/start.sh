@@ -107,7 +107,7 @@ sleep 5  # Give desktop time to start
 xfce4-panel --quit
 sleep 1  # Give desktop time to start
 
-#x11vnc -display :99 -passwd vncpassword -forever -nopw -listen 0.0.0.0 -rfbport 5900 &
+x11vnc -display :99 -passwd vncpassword -forever -nopw -listen 0.0.0.0 -rfbport 5900 &
 ## Keep the container running if no command is specified
 if [ $# -eq 0 ]; then
     wait $XVFB_PID

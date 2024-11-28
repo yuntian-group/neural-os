@@ -54,7 +54,7 @@ class DDPM(pl.LightningModule):
                  monitor="val/loss",
                  use_ema=True,
                  first_stage_key="image",
-                 image_size=256,
+                 image_size=None,  # Changed from fixed size to None
                  channels=3,
                  log_every_t=100,
                  clip_denoised=True,
@@ -80,7 +80,7 @@ class DDPM(pl.LightningModule):
         self.clip_denoised = clip_denoised
         self.log_every_t = log_every_t
         self.first_stage_key = first_stage_key
-        self.image_size = image_size  # try conv?
+        self.image_size = image_size  # Can now be None or a tuple (H, W)
         self.channels = channels
         self.use_positional_encodings = use_positional_encodings
         self.model = DiffusionWrapper(unet_config, conditioning_key)
@@ -1388,9 +1388,16 @@ class LatentDiffusion(DDPM):
     @torch.no_grad()
     def sample(self, cond, batch_size=16, return_intermediates=False, x_T=None,
                verbose=True, timesteps=None, quantize_denoised=False,
-               mask=None, x0=None, shape=None,**kwargs):
+               mask=None, x0=None, shape=None, **kwargs):
+        if shape is None and self.image_size is not None:
+            # Support tuple image_size
+            if isinstance(self.image_size, (tuple, list)):
+                shape = (batch_size, self.channels, *self.image_size)
+            else:
+                shape = (batch_size, self.channels, self.image_size, self.image_size)
         if shape is None:
-            shape = (batch_size, self.channels, self.image_size, self.image_size)
+            raise ValueError("Either shape or self.image_size must be specified")
+            
         if cond is not None:
             if isinstance(cond, dict):
                 cond = {key: cond[key][:batch_size] if not isinstance(cond[key], list) else
@@ -1398,10 +1405,10 @@ class LatentDiffusion(DDPM):
             else:
                 cond = [c[:batch_size] for c in cond] if isinstance(cond, list) else cond[:batch_size]
         return self.p_sample_loop(cond,
-                                  shape,
-                                  return_intermediates=return_intermediates, x_T=x_T,
-                                  verbose=verbose, timesteps=timesteps, quantize_denoised=quantize_denoised,
-                                  mask=mask, x0=x0)
+                              shape,
+                              return_intermediates=return_intermediates, x_T=x_T,
+                              verbose=verbose, timesteps=timesteps, quantize_denoised=quantize_denoised,
+                              mask=mask, x0=x0)
 
     @torch.no_grad()
     def sample_log(self,cond,batch_size,ddim, ddim_steps,**kwargs):

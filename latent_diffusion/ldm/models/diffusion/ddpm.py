@@ -861,6 +861,7 @@ class LatentDiffusion(DDPM):
         else:
             assert False, "Only concat conditioning is supported for now"
         out = [z, c]
+        import pdb; pdb.set_trace()
         if return_first_stage_outputs:
             xrec = self.decode_first_stage(z)
             out.extend([x, xrec])

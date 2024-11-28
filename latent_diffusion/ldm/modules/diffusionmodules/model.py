@@ -195,10 +195,9 @@ class AttnBlock(nn.Module):
         v = v.reshape(b,c,h*w)
         w_ = w_.permute(0,2,1)   # b,hw,hw (first hw of k, second of q)
         h_ = torch.bmm(v,w_)     # b, c,hw (hw of q) h_[b,c,j] = sum_i v[b,c,i] w_[b,i,j]
-        h_ = h_.reshape(b,c,h,w)
+        h_ = h_.reshape(b,c,h,w)  # Reshape back to original spatial dimensions
 
         h_ = self.proj_out(h_)
-
         return x+h_
 
 
@@ -223,7 +222,19 @@ class Model(nn.Module):
         self.temb_ch = self.ch*4
         self.num_resolutions = len(ch_mult)
         self.num_res_blocks = num_res_blocks
-        self.resolution = resolution
+        
+        # Support both int and tuple/list resolutions
+        if isinstance(resolution, (tuple, list)):
+            self.resolution_h, self.resolution_w = resolution
+            curr_res = (
+                self.resolution_h // 2 ** (self.num_resolutions - 1),
+                self.resolution_w // 2 ** (self.num_resolutions - 1)
+            )
+        else:
+            self.resolution_h = self.resolution_w = resolution
+            curr_res = resolution // 2 ** (self.num_resolutions - 1)
+        self.resolution = resolution  # Store original resolution format
+        
         self.in_channels = in_channels
 
         self.use_timestep = use_timestep
@@ -244,7 +255,8 @@ class Model(nn.Module):
                                        stride=1,
                                        padding=1)
 
-        curr_res = resolution
+        curr_res_h = self.resolution_h
+        curr_res_w = self.resolution_w
         in_ch_mult = (1,)+tuple(ch_mult)
         self.down = nn.ModuleList()
         for i_level in range(self.num_resolutions):
@@ -258,14 +270,15 @@ class Model(nn.Module):
                                          temb_channels=self.temb_ch,
                                          dropout=dropout))
                 block_in = block_out
-                if curr_res in attn_resolutions:
+                if (curr_res_h, curr_res_w) in attn_resolutions:
                     attn.append(make_attn(block_in, attn_type=attn_type))
             down = nn.Module()
             down.block = block
             down.attn = attn
             if i_level != self.num_resolutions-1:
                 down.downsample = Downsample(block_in, resamp_with_conv)
-                curr_res = curr_res // 2
+                curr_res_h = curr_res_h // 2
+                curr_res_w = curr_res_w // 2
             self.down.append(down)
 
         # middle
@@ -295,14 +308,15 @@ class Model(nn.Module):
                                          temb_channels=self.temb_ch,
                                          dropout=dropout))
                 block_in = block_out
-                if curr_res in attn_resolutions:
+                if (curr_res_h, curr_res_w) in attn_resolutions:
                     attn.append(make_attn(block_in, attn_type=attn_type))
             up = nn.Module()
             up.block = block
             up.attn = attn
             if i_level != 0:
                 up.upsample = Upsample(block_in, resamp_with_conv)
-                curr_res = curr_res * 2
+                curr_res_h = curr_res_h * 2
+                curr_res_w = curr_res_w * 2
             self.up.insert(0, up) # prepend to get consistent order
 
         # end
@@ -376,7 +390,19 @@ class Encoder(nn.Module):
         self.temb_ch = 0
         self.num_resolutions = len(ch_mult)
         self.num_res_blocks = num_res_blocks
-        self.resolution = resolution
+        
+        # Support both int and tuple/list resolutions
+        if isinstance(resolution, (tuple, list)):
+            self.resolution_h, self.resolution_w = resolution
+            curr_res = (
+                self.resolution_h // 2 ** (self.num_resolutions - 1),
+                self.resolution_w // 2 ** (self.num_resolutions - 1)
+            )
+        else:
+            self.resolution_h = self.resolution_w = resolution
+            curr_res = resolution // 2 ** (self.num_resolutions - 1)
+        self.resolution = resolution  # Store original resolution format
+        
         self.in_channels = in_channels
 
         # downsampling
@@ -386,7 +412,8 @@ class Encoder(nn.Module):
                                        stride=1,
                                        padding=1)
 
-        curr_res = resolution
+        curr_res_h = self.resolution_h
+        curr_res_w = self.resolution_w
         in_ch_mult = (1,)+tuple(ch_mult)
         self.in_ch_mult = in_ch_mult
         self.down = nn.ModuleList()
@@ -401,14 +428,15 @@ class Encoder(nn.Module):
                                          temb_channels=self.temb_ch,
                                          dropout=dropout))
                 block_in = block_out
-                if curr_res in attn_resolutions:
+                if (curr_res_h, curr_res_w) in attn_resolutions:
                     attn.append(make_attn(block_in, attn_type=attn_type))
             down = nn.Module()
             down.block = block
             down.attn = attn
             if i_level != self.num_resolutions-1:
                 down.downsample = Downsample(block_in, resamp_with_conv)
-                curr_res = curr_res // 2
+                curr_res_h = curr_res_h // 2
+                curr_res_w = curr_res_w // 2
             self.down.append(down)
 
         # middle
@@ -470,6 +498,16 @@ class Decoder(nn.Module):
         self.temb_ch = 0
         self.num_resolutions = len(ch_mult)
         self.num_res_blocks = num_res_blocks
+        
+        # Support both int and tuple/list resolutions
+        if isinstance(resolution, (tuple, list)):
+            self.resolution_h, self.resolution_w = resolution
+            curr_res_h = self.resolution_h // 2**(self.num_resolutions-1)
+            curr_res_w = self.resolution_w // 2**(self.num_resolutions-1)
+        else:
+            self.resolution_h = self.resolution_w = resolution
+            curr_res_h = curr_res_w = resolution // 2**(self.num_resolutions-1)
+            
         self.resolution = resolution
         self.in_channels = in_channels
         self.give_pre_end = give_pre_end
@@ -478,10 +516,9 @@ class Decoder(nn.Module):
         # compute in_ch_mult, block_in and curr_res at lowest res
         in_ch_mult = (1,)+tuple(ch_mult)
         block_in = ch*ch_mult[self.num_resolutions-1]
-        curr_res = resolution // 2**(self.num_resolutions-1)
-        self.z_shape = (1,z_channels,curr_res,curr_res)
-        print("Working with z of shape {} = {} dimensions.".format(
-            self.z_shape, np.prod(self.z_shape)))
+        
+        self.z_shape = (1,z_channels,curr_res_h,curr_res_w)
+        print(f"Working with z of shape {self.z_shape} = {np.prod(self.z_shape)} dimensions.")
 
         # z to block_in
         self.conv_in = torch.nn.Conv2d(z_channels,
@@ -514,14 +551,15 @@ class Decoder(nn.Module):
                                          temb_channels=self.temb_ch,
                                          dropout=dropout))
                 block_in = block_out
-                if curr_res in attn_resolutions:
+                if (curr_res_h, curr_res_w) in attn_resolutions:
                     attn.append(make_attn(block_in, attn_type=attn_type))
             up = nn.Module()
             up.block = block
             up.attn = attn
             if i_level != 0:
                 up.upsample = Upsample(block_in, resamp_with_conv)
-                curr_res = curr_res * 2
+                curr_res_h = curr_res_h * 2
+                curr_res_w = curr_res_w * 2
             self.up.insert(0, up) # prepend to get consistent order
 
         # end
@@ -606,14 +644,26 @@ class SimpleDecoder(nn.Module):
 
 class UpsampleDecoder(nn.Module):
     def __init__(self, in_channels, out_channels, ch, num_res_blocks, resolution,
-                 ch_mult=(2,2), dropout=0.0):
+                 ch_mult=(2,2), dropout=0.0, attn_resolutions=[]):
         super().__init__()
         # upsampling
         self.temb_ch = 0
         self.num_resolutions = len(ch_mult)
         self.num_res_blocks = num_res_blocks
         block_in = in_channels
-        curr_res = resolution // 2 ** (self.num_resolutions - 1)
+        
+        # Support both int and tuple/list resolutions
+        if isinstance(resolution, (tuple, list)):
+            self.resolution_h, self.resolution_w = resolution
+            curr_res_h = self.resolution_h // 2 ** (self.num_resolutions - 1)
+            curr_res_w = self.resolution_w // 2 ** (self.num_resolutions - 1)
+        else:
+            self.resolution_h = self.resolution_w = resolution
+            curr_res_h = curr_res_w = resolution // 2 ** (self.num_resolutions - 1)
+            
+        if attn_resolutions and isinstance(attn_resolutions[0], int):
+            attn_resolutions = [(res, res) for res in attn_resolutions]
+            
         self.res_blocks = nn.ModuleList()
         self.upsample_blocks = nn.ModuleList()
         for i_level in range(self.num_resolutions):
@@ -628,7 +678,8 @@ class UpsampleDecoder(nn.Module):
             self.res_blocks.append(nn.ModuleList(res_block))
             if i_level != self.num_resolutions - 1:
                 self.upsample_blocks.append(Upsample(block_in, True))
-                curr_res = curr_res * 2
+                curr_res_h = curr_res_h * 2
+                curr_res_w = curr_res_w * 2
 
         # end
         self.norm_out = Normalize(block_in)
@@ -681,7 +732,17 @@ class LatentRescaler(nn.Module):
         x = self.conv_in(x)
         for block in self.res_block1:
             x = block(x, None)
-        x = torch.nn.functional.interpolate(x, size=(int(round(x.shape[2]*self.factor)), int(round(x.shape[3]*self.factor))))
+            
+        # Handle tuple factors for rectangular images
+        if isinstance(self.factor, (tuple, list)):
+            new_size = (int(round(x.shape[2]*self.factor[0])), 
+                       int(round(x.shape[3]*self.factor[1])))
+            x = torch.nn.functional.interpolate(x, size=new_size)
+        else:
+            x = torch.nn.functional.interpolate(x, 
+                size=(int(round(x.shape[2]*self.factor)), 
+                      int(round(x.shape[3]*self.factor))))
+                      
         x = self.attn(x)
         for block in self.res_block2:
             x = block(x, None)
@@ -728,9 +789,20 @@ class MergedRescaleDecoder(nn.Module):
 class Upsampler(nn.Module):
     def __init__(self, in_size, out_size, in_channels, out_channels, ch_mult=2):
         super().__init__()
-        assert out_size >= in_size
-        num_blocks = int(np.log2(out_size//in_size))+1
-        factor_up = 1.+ (out_size % in_size)
+        # Support both int and tuple/list sizes
+        if isinstance(in_size, (tuple, list)) and isinstance(out_size, (tuple, list)):
+            assert len(in_size) == len(out_size) == 2
+            scale_h = out_size[0] / in_size[0]
+            scale_w = out_size[1] / in_size[1]
+            num_blocks = max(int(np.log2(scale_h)), int(np.log2(scale_w))) + 1
+            factor_up_h = 1. + (out_size[0] % in_size[0])
+            factor_up_w = 1. + (out_size[1] % in_size[1])
+            factor_up = (factor_up_h, factor_up_w)
+        else:
+            assert out_size >= in_size
+            num_blocks = int(np.log2(out_size//in_size)) + 1
+            factor_up = 1. + (out_size % in_size)
+            
         print(f"Building {self.__class__.__name__} with in_size: {in_size} --> out_size {out_size} and factor {factor_up}")
         self.rescaler = LatentRescaler(factor=factor_up, in_channels=in_channels, mid_channels=2*in_channels,
                                        out_channels=in_channels)

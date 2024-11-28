@@ -51,42 +51,35 @@ def parse_action_string(action_str):
     
     return x, y, action_type
 
-def create_position_and_click_map(pos,action_type,image_size=64, original_width=1024, original_height=640):
+def create_position_and_click_map(pos, action_type, image_height=48, image_width=64, original_width=512, original_height=384):
     """Convert cursor position to a binary position map
     Args:
         x, y: Original cursor positions
-        image_size: Size of the output position map (square)
+        image_width: Width of the output position map (64)
+        image_height: Height of the output position map (48)
         original_width: Original screen width (1024)
         original_height: Original screen height (640)
     Returns:
-        torch.Tensor: Binary position map of shape (1, image_size, image_size)
+        torch.Tensor: Binary position map of shape (1, image_height, image_width)
     """
     x, y = pos
     if x is None:
-        return torch.zeros((1, image_size, image_size)), torch.zeros((1, image_size, image_size))
-    # Scale the positions to new size
-    #x_scaled = int((x / original_width) * image_size)
-    #y_scaled = int((y / original_height) * image_size)
-    screen_width, screen_height = 1920, 1080
-    video_width, video_height = 512, 512
-        
-    x_scaled = x - (screen_width / 2 - video_width / 2)
-    y_scaled = y - (screen_height / 2 - video_height / 2)
-    x_scaled = int(x_scaled / video_width * image_size)
-    y_scaled = int(y_scaled / video_height * image_size)
+        return torch.zeros((1, image_height, image_width)), torch.zeros((1, image_height, image_width))
+    
+    x_scaled = int(x / original_width * image_width)
+    y_scaled = int(y / original_height * image_height)
     
     # Clamp values to ensure they're within bounds
-    x_scaled = max(0, min(x_scaled, image_size - 1))
-    y_scaled = max(0, min(y_scaled, image_size - 1))
+    x_scaled = max(0, min(x_scaled, image_width - 1))
+    y_scaled = max(0, min(y_scaled, image_height - 1))
     
     # Create binary position map
-    pos_map = torch.zeros((1, image_size, image_size))
+    pos_map = torch.zeros((1, image_height, image_width))
     pos_map[0, y_scaled, x_scaled] = 1.0
 
-    leftclick_map = torch.zeros((1, image_size, image_size))
+    leftclick_map = torch.zeros((1, image_height, image_width))
     if action_type == 'L':
         leftclick_map[0, y_scaled, x_scaled] = 1.0
-    
     
     return pos_map, leftclick_map
 

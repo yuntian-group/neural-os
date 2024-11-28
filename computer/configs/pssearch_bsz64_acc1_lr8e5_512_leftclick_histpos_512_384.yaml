@@ -13,7 +13,7 @@ model:
     cond_stage_key: action_
     scheduler_sampling_rate: 0.0
     hybrid_key: c_concat
-    image_size: 64
+    image_size: [64, 48]
     channels: 3
     cond_stage_trainable: true
     conditioning_key: hybrid
@@ -22,7 +22,7 @@ model:
     unet_config:
       target: latent_diffusion.ldm.modules.diffusionmodules.openaimodel.UNetModel
       params:
-        image_size: 64
+        image_size: [64, 48]
         in_channels: 41
         out_channels: 4
         model_channels: 192

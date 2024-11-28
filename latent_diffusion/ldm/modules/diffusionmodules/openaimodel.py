@@ -36,13 +36,19 @@ class AttentionPool2d(nn.Module):
 
     def __init__(
         self,
-        spacial_dim: int,
+        spacial_dim: int | tuple,
         embed_dim: int,
         num_heads_channels: int,
         output_dim: int = None,
     ):
         super().__init__()
-        self.positional_embedding = nn.Parameter(th.randn(embed_dim, spacial_dim ** 2 + 1) / embed_dim ** 0.5)
+        if isinstance(spacial_dim, (tuple, list)):
+            height, width = spacial_dim
+            num_spatial = height * width
+        else:
+            num_spatial = spacial_dim ** 2
+            
+        self.positional_embedding = nn.Parameter(th.randn(embed_dim, num_spatial + 1) / embed_dim ** 0.5)
         self.qkv_proj = conv_nd(1, embed_dim, 3 * embed_dim, 1)
         self.c_proj = conv_nd(1, embed_dim, output_dim or embed_dim, 1)
         self.num_heads = embed_dim // num_heads_channels
@@ -898,11 +904,16 @@ class EncoderUNetModel(nn.Module):
             )
         elif pool == "attention":
             assert num_head_channels != -1
+            if isinstance(image_size, (tuple, list)):
+                spatial_size = (self.image_height // ds, self.image_width // ds)
+            else:
+                spatial_size = image_size // ds
+                
             self.out = nn.Sequential(
                 normalization(ch),
                 nn.SiLU(),
                 AttentionPool2d(
-                    (image_size // ds), ch, num_head_channels, out_channels
+                    spatial_size, ch, num_head_channels, out_channels
                 ),
             )
         elif pool == "spatial":

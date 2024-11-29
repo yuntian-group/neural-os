@@ -378,7 +378,9 @@ class DataModule(pl.LightningDataModule):
             self.dataset_configs["validation"] = validation
         if test:
             self.dataset_configs["test"] = test
-        self.kwargs = kwargs
+        # Filter out Lightning-specific kwargs
+        self.dataloader_kwargs = {k: v for k, v in kwargs.items() 
+                                if k not in ['wrap']}
 
     def setup(self, stage=None):
         """Called by Lightning before train/val/test."""
@@ -392,15 +394,15 @@ class DataModule(pl.LightningDataModule):
     def train_dataloader(self):
         return DataLoader(self.datasets["train"], 
                          batch_size=self.batch_size,
-                         **self.kwargs)
+                         **self.dataloader_kwargs)
 
     def val_dataloader(self):
         return DataLoader(self.datasets["validation"],
                          batch_size=self.batch_size,
-                         **self.kwargs)
+                         **self.dataloader_kwargs)
 
     def test_dataloader(self):
         return DataLoader(self.datasets["test"], 
                          batch_size=self.batch_size,
-                         **self.kwargs)
+                         **self.dataloader_kwargs)
         

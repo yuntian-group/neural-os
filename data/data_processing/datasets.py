@@ -212,8 +212,10 @@ class ActionsData(Dataset):
             #try:
             if 'train' in data_csv_path:
                 print ('Loading autoencoder model for reprocessing')
-                config = OmegaConf.load("autoencoder_config_kl4_lr4.5e6_load_acc1.yaml")
-                self.model = load_model_from_config(config, "autoencoder_saved_kl4_bsz8_acc8_lr4.5e6_load_acc1_model-603000.ckpt")
+                #config = OmegaConf.load("autoencoder_config_kl4_lr4.5e6_load_acc1.yaml")
+                config = OmegaConf.load("../autoencoder/config_kl4_lr4.5e6_load_acc1_512_384.yaml")
+                #self.model = load_model_from_config(config, "autoencoder_saved_kl4_bsz8_acc8_lr4.5e6_load_acc1_model-603000.ckpt")
+                self.model = load_model_from_config(config, "../autoencoder/saved_kl4_bsz8_acc8_lr4.5e6_load_acc1_512_384/model-354000.ckpt")
                 #self.model.load_state_dict(torch.load("autoencoder_saved_kl4_bsz8_acc8_lr4.5e6_load_acc1_model-603000.ckpt"))
                 #self.model = self.model.to(device)
                 self.model.eval()

@@ -222,10 +222,8 @@ class ActionsData(Dataset):
             print("Found processed data in train_dataset_encoded/")
             
             # Load model for reprocessing if needed
-            #try:
-            if 'train' in data_csv_path:
-                print ('Loading autoencoder model for reprocessing')
-                #config = OmegaConf.load("autoencoder_config_kl4_lr4.5e6_load_acc1.yaml")
+            if 'train' in self.data_path:
+                print('Loading autoencoder model for reprocessing')
                 config = OmegaConf.load("../autoencoder/config_kl4_lr4.5e6_load_acc1_512_384.yaml")
                 #self.model = load_model_from_config(config, "autoencoder_saved_kl4_bsz8_acc8_lr4.5e6_load_acc1_model-603000.ckpt")
                 self.model = load_model_from_config(config, "../autoencoder/saved_kl4_bsz8_acc8_lr4.5e6_load_acc1_512_384/model-354000.ckpt")

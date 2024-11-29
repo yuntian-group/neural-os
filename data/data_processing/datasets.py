@@ -180,25 +180,37 @@ def load_model_from_config(config, ckpt, verbose=False):
     model.eval()
     return model
 class ActionsData(Dataset):
-    """
-    class dataset for csllm. includes image sequences and corresponding action sequences for cond.
-    """
+    _shared_data = {}  # Class-level cache for dataframes
+    
     def __init__(self,
                  data_csv_path,
                  debug_mode=False
                  ):
         self.data_path = data_csv_path
         self.debug_mode = debug_mode
+        self._length = None  # Will be set in setup
+        self.use_processed = False  # Will be set in setup
         
-        # Read only the necessary columns
-        data = pd.read_csv(data_csv_path, usecols=["Image_seq_cond_path", "Action_seq", "Target_image"])
-        self.image_seq_paths = data["Image_seq_cond_path"].apply(ast.literal_eval).to_list()
-        self.actions_seq = data['Action_seq'].apply(ast.literal_eval).to_list()
-        self.targets = data['Target_image'].to_list()
+        # Don't load data in __init__, just store the path
         
-        # Clear the dataframe from memory
-        del data
-        
+    def setup(self):
+        """Called by Lightning when setting up the dataset"""
+        if self.data_path not in ActionsData._shared_data:
+            print(f"Loading data from {self.data_path}")
+            # Read only the necessary columns
+            data = pd.read_csv(self.data_path, usecols=["Image_seq_cond_path", "Action_seq", "Target_image"])
+            ActionsData._shared_data[self.data_path] = {
+                'image_seq_paths': data["Image_seq_cond_path"].apply(ast.literal_eval).to_list(),
+                'actions_seq': data['Action_seq'].apply(ast.literal_eval).to_list(),
+                'targets': data['Target_image'].to_list()
+            }
+            del data  # Clear the dataframe from memory
+            
+        # Get data from cache
+        cached_data = ActionsData._shared_data[self.data_path]
+        self.image_seq_paths = cached_data['image_seq_paths']
+        self.actions_seq = cached_data['actions_seq']
+        self.targets = cached_data['targets']
         self._length = len(self.image_seq_paths)
         
         # Check if processed data exists by checking first image
@@ -356,69 +368,40 @@ class DataModule(pl.LightningDataModule):
                  batch_size, 
                  train=None, 
                  validation=None, 
-                 test=None, 
-                 wrap=False, 
-                 num_workers=None, 
-                 shuffle=True,
-                 drop_last=False,
-                 pin_memory=False,
-                 prefetch_factor=2,
-                 persistent_workers=False
-        ):
+                 test=None,
+                 **kwargs):
         super().__init__()
         self.batch_size = batch_size
-        self.wrap=wrap, 
-        self.num_workers=num_workers
-        self.shuffle=shuffle,
-        self.drop_last=drop_last,
-        self.pin_memory=pin_memory,
-        self.prefetch_factor=prefetch_factor,
-        self.persistent_workers=persistent_workers
-
-        if num_workers > 1:
-            os.environ["TOKENIZERS_PARALLELISM"] = "true"
-
-        self.dataset_configs = dict()
-
+        self.dataset_configs = {}
         if train:
             self.dataset_configs["train"] = train
-            self.train_dataloader = self.init_train_dataloader
         if validation:
             self.dataset_configs["validation"] = validation
-            self.val_dataloader = self.init_val_dataloader
         if test:
             self.dataset_configs["test"] = test
-            self.test_dataloader = self.init_test_dataloader
+        self.kwargs = kwargs
 
     def setup(self, stage=None):
-        self.datasets = dict(
-            (k, instantiate_from_config(self.dataset_configs[k]))
-            for k in self.dataset_configs)
+        """Called by Lightning before train/val/test."""
+        if not hasattr(self, 'datasets'):
+            self.datasets = {}
+            for k, config in self.dataset_configs.items():
+                dataset = instantiate_from_config(config)
+                dataset.setup()  # Call setup on the dataset
+                self.datasets[k] = dataset
 
-    def init_train_dataloader(self):
+    def train_dataloader(self):
         return DataLoader(self.datasets["train"], 
-                          batch_size=self.batch_size,
-                          num_workers=self.num_workers, 
-                          shuffle=self.shuffle,
-                          pin_memory=self.pin_memory,
-                          persistent_workers=self.persistent_workers,
-                          drop_last=True)
+                         batch_size=self.batch_size,
+                         **self.kwargs)
 
-    def init_val_dataloader(self):
+    def val_dataloader(self):
         return DataLoader(self.datasets["validation"],
-                          batch_size=self.batch_size,
-                          num_workers=self.num_workers,
-                          shuffle=self.shuffle,
-                          pin_memory=self.pin_memory,
-                          persistent_workers=self.persistent_workers,
-                          drop_last=True)
+                         batch_size=self.batch_size,
+                         **self.kwargs)
 
-    def init_test_dataloader(self):
+    def test_dataloader(self):
         return DataLoader(self.datasets["test"], 
-                          batch_size=self.batch_size,
-                          num_workers=self.num_workers, 
-                          shuffle=self.shuffle,
-                          pin_memory=self.pin_memory,
-                          persistent_workers=self.persistent_workers,
-                          drop_last=True)
+                         batch_size=self.batch_size,
+                         **self.kwargs)
         

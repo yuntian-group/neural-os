@@ -194,6 +194,7 @@ class ActionsData(Dataset):
         # Don't load data in __init__, just store the path
         
     def setup(self):
+        print ('setup called')
         """Called by Lightning when setting up the dataset"""
         if self.data_path not in ActionsData._shared_data:
             print(f"Loading data from {self.data_path}")

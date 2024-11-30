@@ -40,7 +40,8 @@ if __name__ == "__main__":
         model = load_first_stage_from_config(model, '../autoencoder/saved_kl4_bsz8_acc8_lr4.5e6_load_acc1_512_384/model-354000.ckpt')
     else:
         #model = load_model_from_config(config, './saved_bsz64_acc1_lr8e5_512_leftclick/model-step=252000.ckpt')
-        model = load_model_from_config(config, './saved_bsz64_acc1_lr8e5_512_leftclick_histpos_512_384/model-step=045000.ckpt')
+        #model = load_model_from_config(config, './saved_bsz64_acc1_lr8e5_512_leftclick_histpos_512_384/model-step=045000.ckpt')
+        model = load_model_from_config(config, './saved_bsz64_acc1_lr8e5_512_leftclick_histpos_512_384_cont/model-step=052000.ckpt')
 
     # model = load_cond_from_config(model, "model_bert.ckpt")
 

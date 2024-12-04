@@ -335,7 +335,7 @@ class ActionsData(Dataset):
             #image = draw_cursor(image, x, y, left_click=(action_type=='L'))
             
             image = draw_cursor(image, x, y, left_click=False)
-            DEBUG = True
+            DEBUG = False
             print (image.shape)
             #import pdb; pdb.set_trace()
             if DEBUG and double_click_pos is not None and (double_click_time == 14-2):

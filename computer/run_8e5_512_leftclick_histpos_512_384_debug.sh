@@ -7,6 +7,7 @@
 #SBATCH -e slurm.%N.%j.err # STDERR
 #SBATCH --gres=gpu:nvidia_h100_80gb_hbm3:1
 #SBATCH --cpus-per-task=8
+#SBATCH --exclude=holygpu8a16301
 
 export BASE=/n/netscratch/shieber_lab/Lab/yuntian/computer/computer
 cd $BASE

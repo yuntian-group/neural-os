@@ -333,7 +333,13 @@ class ActionsData(Dataset):
             
             # Draw final cursor position
             #image = draw_cursor(image, x, y, left_click=(action_type=='L'))
+            
             image = draw_cursor(image, x, y, left_click=False)
+            DEBUG = True
+            if DEBUG and double_click_pos is not None and (double_click_time == 14-2):
+                print (action_seq)
+                image.save('debug_image.png')
+                import pdb; pdb.set_trace()
             example["image_processed"] = torch.cat([normalize_image(Image.fromarray(image)), torch.zeros((1, 48, 64))], dim=0)
             example["c_concat_processed"] = torch.zeros((14*4, 48, 64))
             # Get the last action (current position)

@@ -285,26 +285,72 @@ class ActionsData(Dataset):
         #print ('getitem', i)
         example = dict()
         i = i % self._length
+        self.debug_mode = True
         
         if self.debug_mode:
-            assert False
-            # Create a blank 64x64 image
-            image = np.ones((64, 64, 3), dtype=np.uint8) * 255
+            # Create a blank 64x48 image
+            image = np.ones((48, 64, 3), dtype=np.uint8) * 255
             
+            # Generate synthetic action sequence with potential double clicks
+            action_seq = []
+            #x, y = 32, 24  # Start at center
+            last_click_pos = None
+            last_click_time = -float('inf')
+            double_click_pos = None
+            double_click_time = -float('inf')
+            
+            for t in range(15):  # Generate 15 actions
+                # Random movement
+                x = np.random.randint(0, 64)
+                y = np.random.randint(0, 48)
+                #x = max(0, min(63, x + dx))
+                #y = max(0, min(47, y + dy))
+                
+                # Random click with 20% probability
+                if np.random.random() < 0.2:
+                    action_type = 'L'
+                    # Check for double click
+                    if last_click_pos is not None and (t - last_click_time) <= 2:
+                        #dx = abs(x - last_click_pos[0])
+                        #dy = abs(y - last_click_pos[1])
+                        #if dx <= 2 and dy <= 2 and (t - last_click_time) <= 2:
+                        double_click_pos = (x, y)
+                        double_click_time = t
+                    last_click_pos = (x, y)
+                    last_click_time = t
+                else:
+                    action_type = 'N'
+                
+                # Format action string
+                action_str = f"{action_type}+{int(x):04d}:+{int(y):04d}"
+                action_str = ' '.join(action_str)
+                action_seq.append(action_str)
+                
+                # Draw circle for double click after 2 frames
+            if double_click_pos is not None and (double_click_time == 14-2):
+                cx, cy = double_click_pos
+                cv2.circle(image, (int(cx), int(cy)), 8, (0, 255, 0), 2)
+            
+            # Draw final cursor position
+            #image = draw_cursor(image, x, y, left_click=(action_type=='L'))
+            image = draw_cursor(image, x, y, left_click=False)
+            example["image_processed"] = torch.cat([normalize_image(Image.fromarray(image)), torch.zeros((1, 48, 64))], dim=0)
+            example["c_concat_processed"] = torch.zeros((14*4, 48, 64))
             # Get the last action (current position)
-            action = self.actions_seq[i][-1]
-            coords = parse_action_string(action)
+            #action = self.actions_seq[i][-1]
+            #coords = parse_action_string(action)
             
-            if coords is not None:
-                x, y = coords
-                # Scale coordinates from 1024x640 to 64x64
-                x_scaled = int((x / 1024) * 64)
-                y_scaled = int((y / 640) * 64)
-                # Draw cursor at scaled position
-                image = draw_cursor(image, x_scaled, y_scaled, scaling_factor=1)
+            #if coords is not None:
+            #    x, y = coords
+            #    # Scale coordinates from 1024x640 to 64x64
+            #    x_scaled = int((x / 1024) * 64)
+            #    y_scaled = int((y / 640) * 64)
+            #    # Draw cursor at scaled position
+            #    image = draw_cursor(image, x_scaled, y_scaled, scaling_factor=1)
             
-            example["image"] = normalize_image(Image.fromarray(image))
+            #example["image"] = normalize_image(Image.fromarray(image))
         else:
+            assert False
             # Always load original images
             
             
@@ -320,9 +366,9 @@ class ActionsData(Dataset):
                 example['c_concat'] = torch.stack([normalize_image(image_path) 
                                                 for image_path in self.image_seq_paths[i]])
         # Rest of the original code...
-        action_seq = self.actions_seq[i]
-        if len(action_seq) > 15:
-            action_seq = action_seq[-15:]
+            action_seq = self.actions_seq[i]
+        #if len(action_seq) > 15:
+        #action_seq = action_seq[-15:]
         assert len(action_seq) == 15, "Action sequence must be 15 actions long"
         for j in range(8):
             example[f"action_{j}"] = action_seq[j:j+8]

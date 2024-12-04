@@ -326,7 +326,7 @@ class ActionsData(Dataset):
                     action_type = 'N'
                 
                 # Format action string
-                action_str = f"{action_type}+{int(x):04d}:+{int(y):04d}"
+                action_str = f"{action_type}+{int(x)*8:04d}:+{int(y)*8:04d}"
                 action_str = ' '.join(action_str)
                 action_seq.append(action_str)
                 

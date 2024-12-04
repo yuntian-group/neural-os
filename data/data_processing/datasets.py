@@ -190,6 +190,7 @@ class ActionsData(Dataset):
         self.debug_mode = debug_mode
         self._length = None  # Will be set in setup
         self.use_processed = False  # Will be set in setup
+        self.debug_mode = True
         
         # Don't load data in __init__, just store the path
         
@@ -238,7 +239,10 @@ class ActionsData(Dataset):
             #    self.model = None
 
     def __len__(self):
-        return self._length
+        if self.debug_mode:
+            return 1000000
+        else:
+            return self._length
 
     def load_processed_image(self, image_path):
         """Load preprocessed latent from .npy file, reprocess if loading fails"""

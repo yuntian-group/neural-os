@@ -336,6 +336,7 @@ class ActionsData(Dataset):
             
             image = draw_cursor(image, x, y, left_click=False)
             DEBUG = True
+            import pdb; pdb.set_trace()
             if DEBUG and double_click_pos is not None and (double_click_time == 14-2):
                 print (action_seq)
                 image.save('debug_image.png')

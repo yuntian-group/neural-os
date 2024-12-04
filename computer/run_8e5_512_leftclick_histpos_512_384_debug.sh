@@ -12,4 +12,4 @@ export BASE=/n/netscratch/shieber_lab/Lab/yuntian/computer/computer
 cd $BASE
 conda activate /n/netscratch/shieber_lab/Lab/yuntian/main
 which python
-stdbuf -oL -eL python main.py --config configs/pssearch_bsz64_acc1_lr8e5_512_leftclick_histpos_512_384_debug.yaml > log.pssearch_bsz64_acc1_lr8e5_512_leftclick_histpos_512_384.cont2 2>&1
+stdbuf -oL -eL python main.py --config configs/pssearch_bsz64_acc1_lr8e5_512_leftclick_histpos_512_384_debug.yaml > log.pssearch_bsz64_acc1_lr8e5_512_leftclick_histpos_512_384.cont2.debug 2>&1

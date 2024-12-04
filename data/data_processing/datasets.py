@@ -240,7 +240,7 @@ class ActionsData(Dataset):
 
     def __len__(self):
         if self.debug_mode:
-            return 1000000
+            return 10000000
         else:
             return self._length
 

@@ -340,7 +340,7 @@ class ActionsData(Dataset):
             #import pdb; pdb.set_trace()
             if DEBUG and double_click_pos is not None and (double_click_time == 14-2):
                 print (action_seq)
-                image.save('debug_image.png')
+                Image.fromarray(image).save('debug_image.png')
                 import pdb; pdb.set_trace()
             example["image_processed"] = torch.cat([normalize_image(Image.fromarray(image)), torch.zeros((48, 64, 1))], dim=-1)
             example["c_concat_processed"] = torch.zeros((14, 4, 48, 64))

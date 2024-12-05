@@ -734,7 +734,7 @@ class LatentDiffusion(DDPM):
             z = batch['image_processed'][:, :3]
             for i, zz in enumerate(z):
                 from PIL import Image
-                Image.fromarray(zz.cpu().numpy().transpose(0,1).transpose(1,2)).save(f'leftclick_debug_image_{i}.png')
+                Image.fromarray((zz.transpose(0,1).transpose(1,2).cpu().float().numpy()+1)*255/2).save(f'leftclick_debug_image_{i}.png')
 
         debug = False
         if debug:

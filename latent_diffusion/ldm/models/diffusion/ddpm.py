@@ -728,14 +728,7 @@ class LatentDiffusion(DDPM):
             x = x.to(self.device)
             encoder_posterior = self.encode_first_stage(x)
             z = self.get_first_stage_encoding(encoder_posterior).detach()
-        DEBUG = True
-        if DEBUG:
-            import pdb; pdb.set_trace()
-            z = batch['image_processed'][:, :3]
-            for i, zz in enumerate(z):
-                from PIL import Image
-                Image.fromarray(((zz.transpose(0,1).transpose(1,2).cpu().float().numpy()+1)*255/2).astype(np.uint8)).save(f'leftclick_debug_image_{i}.png')
-
+        
         debug = False
         if debug:
             import pdb; pdb.set_trace()
@@ -869,6 +862,36 @@ class LatentDiffusion(DDPM):
             assert c[hkey].shape[1] == 4*7 + 2 + 7
         else:
             assert False, "Only concat conditioning is supported for now"
+
+        DEBUG = True
+        if DEBUG:
+            import pdb; pdb.set_trace()
+            z = batch['image_processed'][:, :3]
+            for i, zz in enumerate(z):
+                from PIL import Image
+                import copy
+                #Image.fromarray(((zz.transpose(0,1).transpose(1,2).cpu().float().numpy()+1)*255/2).astype(np.uint8)).save(f'leftclick_debug_image_{i}.png')
+
+                c_i = copy.deepcopy(c)
+                c_i['c_concat'] = c['c_concat'][i:i+1]
+                c_i['c_crossattn'] = c['c_crossattn'][i:i+1]
+                sample_i = self.p_sample_loop(cond=c_i, shape=[1, 4, 48, 64], return_intermediates=False, verbose=True)
+                sample_i = sample_i.squeeze(0)[:3]
+                # plot sample_i side by side with zz
+                # Convert tensors to numpy arrays and prepare for visualization
+                zz_img = ((zz.transpose(0,1).transpose(1,2).cpu().float().numpy() + 1) * 127.5).astype(np.uint8)
+                sample_img = ((sample_i[:3].transpose(0,1).transpose(1,2).cpu().float().numpy() + 1) * 127.5).astype(np.uint8)
+                
+                # Create a new image with twice the width to hold both images
+                combined_img = np.zeros((48, 64*2, 3), dtype=np.uint8)
+                combined_img[:, :64] = zz_img  # Original on left
+                combined_img[:, 64:] = sample_img  # Generated on right
+                
+                # Save the combined image
+                Image.fromarray(combined_img).save(f'debug_comparison_{i}.png')
+                import pdb; pdb.set_trace()
+
+
         out = [z, c]
         #import pdb; pdb.set_trace()
         if return_first_stage_outputs:

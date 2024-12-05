@@ -875,6 +875,7 @@ class LatentDiffusion(DDPM):
                 c_i = copy.deepcopy(c)
                 c_i['c_concat'] = c['c_concat'][i:i+1]
                 c_i['c_crossattn'] = c['c_crossattn'][i:i+1]
+                c_i = self.get_learned_conditioning(c_i)
                 sample_i = self.p_sample_loop(cond=c_i, shape=[1, 4, 48, 64], return_intermediates=False, verbose=True)
                 sample_i = sample_i.squeeze(0)[:3]
                 # plot sample_i side by side with zz

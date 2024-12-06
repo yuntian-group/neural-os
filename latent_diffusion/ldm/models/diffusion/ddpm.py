@@ -865,6 +865,7 @@ class LatentDiffusion(DDPM):
 
         DEBUG = True
         if DEBUG:
+            self.eval()
             import pdb; pdb.set_trace()
             z = batch['image_processed'][:, :3]
             for i, zz in enumerate(z):

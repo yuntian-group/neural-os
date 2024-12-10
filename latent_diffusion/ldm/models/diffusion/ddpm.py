@@ -864,9 +864,12 @@ class LatentDiffusion(DDPM):
             assert False, "Only concat conditioning is supported for now"
 
         DEBUG = True
+        if not hasattr(self, 'i'):
+            self.i = 0
+
         if DEBUG:
             self.eval()
-            import pdb; pdb.set_trace()
+            #import pdb; pdb.set_trace()
             z = self.decode_first_stage(batch['image_processed'])
             for i, zz in enumerate(z):
                 from PIL import Image
@@ -892,8 +895,9 @@ class LatentDiffusion(DDPM):
                 combined_img[:, 64*8:] = sample_img  # Generated on right
                 
                 # Save the combined image
-                Image.fromarray(combined_img).save(f'real_vs_generated_debug_comparison_{i}.png')
-            import pdb; pdb.set_trace()
+                Image.fromarray(combined_img).save(f'real_vs_generated_debug_comparison_{self.i}.png')
+                self.i += 1
+            #import pdb; pdb.set_trace()
 
 
         out = [z, c]

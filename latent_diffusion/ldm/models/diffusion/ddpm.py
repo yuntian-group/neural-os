@@ -893,7 +893,7 @@ class LatentDiffusion(DDPM):
                 
                 # Save the combined image
                 Image.fromarray(combined_img).save(f'real_vs_generated_debug_comparison_{i}.png')
-                import pdb; pdb.set_trace()
+            import pdb; pdb.set_trace()
 
 
         out = [z, c]

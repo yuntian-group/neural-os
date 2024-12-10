@@ -870,8 +870,8 @@ class LatentDiffusion(DDPM):
         if DEBUG:
             self.eval()
             #import pdb; pdb.set_trace()
-            z = self.decode_first_stage(batch['image_processed'])
-            for i, zz in enumerate(z):
+            z_vis = self.decode_first_stage(batch['image_processed'])
+            for i, zz in enumerate(z_vis):
                 from PIL import Image
                 import copy
                 #Image.fromarray(((zz.transpose(0,1).transpose(1,2).cpu().float().numpy()+1)*255/2).astype(np.uint8)).save(f'leftclick_debug_image_{i}.png')

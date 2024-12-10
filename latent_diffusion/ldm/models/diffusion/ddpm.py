@@ -874,6 +874,7 @@ class LatentDiffusion(DDPM):
             prev_frames = self.decode_first_stage(batch['c_concat_processed'][:, -1])
             for i, zz in enumerate(z_vis):
                 prev_frame = prev_frames[i]
+                prev_frame_img = ((prev_frame.transpose(0,1).transpose(1,2).cpu().float().numpy()+1)*255/2).astype(np.uint8)
                 from PIL import Image
                 import copy
                 #Image.fromarray(((zz.transpose(0,1).transpose(1,2).cpu().float().numpy()+1)*255/2).astype(np.uint8)).save(f'leftclick_debug_image_{i}.png')
@@ -893,7 +894,7 @@ class LatentDiffusion(DDPM):
                 
                 # Create a new image with twice the width to hold both images
                 combined_img = np.zeros((48*8, 64*8*3, 3), dtype=np.uint8)
-                combined_img[:, :64*8] = prev_frame  # Original on left
+                combined_img[:, :64*8] = prev_frame_img  # Original on left
                 combined_img[:, 64*8:64*8*2] = zz_img  # Generated on right
                 combined_img[:, 64*8*2:] = sample_img  # Generated on right
                 

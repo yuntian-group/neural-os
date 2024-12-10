@@ -882,6 +882,7 @@ class LatentDiffusion(DDPM):
                 sample_i = sample_i.squeeze(0).clamp(-1, 1)
                 # plot sample_i side by side with zz
                 # Convert tensors to numpy arrays and prepare for visualization
+                zz = zz.clamp(-1, 1)
                 zz_img = ((zz.transpose(0,1).transpose(1,2).cpu().float().numpy() + 1) * 127.5).astype(np.uint8)
                 sample_img = ((sample_i[:3].transpose(0,1).transpose(1,2).cpu().float().numpy() + 1) * 127.5).astype(np.uint8)
                 

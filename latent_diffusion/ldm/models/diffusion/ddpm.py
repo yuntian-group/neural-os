@@ -873,7 +873,7 @@ class LatentDiffusion(DDPM):
             z_vis = self.decode_first_stage(batch['image_processed'])
             prev_frames = self.decode_first_stage(batch['c_concat_processed'][:, -1])
             for i, zz in enumerate(z_vis):
-                prev_frame = prev_frames[i]
+                prev_frame = prev_frames[i].clamp(-1, 1)
                 prev_frame_img = ((prev_frame.transpose(0,1).transpose(1,2).cpu().float().numpy()+1)*255/2).astype(np.uint8)
                 from PIL import Image
                 import copy

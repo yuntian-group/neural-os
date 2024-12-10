@@ -72,7 +72,7 @@ model:
 data:
   target: data.data_processing.datasets.DataModule
   params:
-    batch_size: 64
+    batch_size: 16
     num_workers: 4
     wrap: false
     shuffle: True
@@ -83,7 +83,7 @@ data:
     train:
       target: data.data_processing.datasets.ActionsData
       params:
-        data_csv_path: train_dataset/train_dataset.csv
+        data_csv_path: train_dataset/train_dataset_100.csv
         #validation:
         #  target: data.data_processing.datasets.ActionsData
         #  params:

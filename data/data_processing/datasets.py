@@ -290,7 +290,7 @@ class ActionsData(Dataset):
         #print ('getitem', i)
         example = dict()
         i = i % self._length
-        self.debug_mode = True
+        #self.debug_mode = True
         
         if self.debug_mode:
             # Create a blank 64x48 image

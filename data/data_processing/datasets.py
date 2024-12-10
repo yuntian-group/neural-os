@@ -191,6 +191,7 @@ class ActionsData(Dataset):
         self._length = None  # Will be set in setup
         self.use_processed = False  # Will be set in setup
         self.debug_mode = True
+        self.debug_mode = False
         
         # Don't load data in __init__, just store the path
         
@@ -363,7 +364,7 @@ class ActionsData(Dataset):
             
             #example["image"] = normalize_image(Image.fromarray(image))
         else:
-            assert False
+            #assert False
             # Always load original images
             
             
@@ -375,6 +376,7 @@ class ActionsData(Dataset):
                     for image_path in self.image_seq_paths[i]
                 ])
             else:
+                assert False
                 example["image"] = normalize_image(self.targets[i])
                 example['c_concat'] = torch.stack([normalize_image(image_path) 
                                                 for image_path in self.image_seq_paths[i]])

@@ -867,7 +867,7 @@ class LatentDiffusion(DDPM):
         if DEBUG:
             self.eval()
             import pdb; pdb.set_trace()
-            z = batch['image_processed'][:, :3]
+            z = self.decode_first_stage(batch['image_processed'])
             for i, zz in enumerate(z):
                 from PIL import Image
                 import copy
@@ -878,19 +878,20 @@ class LatentDiffusion(DDPM):
                 c_i['c_crossattn'] = c['c_crossattn'][i:i+1]
                 c_i = self.get_learned_conditioning(c_i)
                 sample_i = self.p_sample_loop(cond=c_i, shape=[1, 4, 48, 64], return_intermediates=False, verbose=True)
-                sample_i = sample_i.squeeze(0)[:3].clamp(-1, 1)
+                sample_i = self.decode_first_stage(sample_i)
+                sample_i = sample_i.squeeze(0).clamp(-1, 1)
                 # plot sample_i side by side with zz
                 # Convert tensors to numpy arrays and prepare for visualization
                 zz_img = ((zz.transpose(0,1).transpose(1,2).cpu().float().numpy() + 1) * 127.5).astype(np.uint8)
                 sample_img = ((sample_i[:3].transpose(0,1).transpose(1,2).cpu().float().numpy() + 1) * 127.5).astype(np.uint8)
                 
                 # Create a new image with twice the width to hold both images
-                combined_img = np.zeros((48, 64*2, 3), dtype=np.uint8)
-                combined_img[:, :64] = zz_img  # Original on left
-                combined_img[:, 64:] = sample_img  # Generated on right
+                combined_img = np.zeros((48*8, 64*8*2, 3), dtype=np.uint8)
+                combined_img[:, :64*8] = zz_img  # Original on left
+                combined_img[:, 64*8:] = sample_img  # Generated on right
                 
                 # Save the combined image
-                Image.fromarray(combined_img).save(f'debug_comparison_{i}.png')
+                Image.fromarray(combined_img).save(f'real_vs_generated_debug_comparison_{i}.png')
                 import pdb; pdb.set_trace()
 
 

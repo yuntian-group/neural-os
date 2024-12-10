@@ -871,7 +871,7 @@ class LatentDiffusion(DDPM):
             self.eval()
             #import pdb; pdb.set_trace()
             z_vis = self.decode_first_stage(batch['image_processed'])
-            prev_frames = self.decode_first_stage(batch['c_concat_processed'][:, -4:])
+            prev_frames = self.decode_first_stage(batch['c_concat_processed'][:, -1])
             for i, zz in enumerate(z_vis):
                 prev_frame = prev_frames[i]
                 from PIL import Image

@@ -1,4 +1,4 @@
-save_path: saved_bsz64_acc1_lr8e5_512_leftclick_histpos_512_384_cont2
+save_path: saved_bsz64_acc1_lr8e5_512_leftclick_histpos_512_384_cont2_ddd
 
 model:
   base_learning_rate: 8.0e-05
@@ -72,7 +72,7 @@ model:
 data:
   target: data.data_processing.datasets.DataModule
   params:
-    batch_size: 16
+    batch_size: 8
     num_workers: 4
     wrap: false
     shuffle: True
@@ -83,7 +83,7 @@ data:
     train:
       target: data.data_processing.datasets.ActionsData
       params:
-        data_csv_path: train_dataset/train_dataset_100.csv
+        data_csv_path: train_dataset/train_dataset_20000.csv
         #validation:
         #  target: data.data_processing.datasets.ActionsData
         #  params:

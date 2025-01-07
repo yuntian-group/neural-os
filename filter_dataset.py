@@ -80,7 +80,7 @@ def filter_dataset(input_csv, output_csv, distances_csv, threshold=0.001, force_
     return filtered_df
 
 if __name__ == "__main__":
-    input_csv = "train_dataset/train_dataset_2000.csv"  # Update this path
+    input_csv = "train_dataset/train_dataset.csv"  # Update this path
     distances_csv = "train_dataset/dataset_with_distances.csv"  # Intermediate file with distances
     output_csv = "train_dataset/filtered_dataset.csv"   # Final filtered dataset
     
@@ -91,6 +91,6 @@ if __name__ == "__main__":
         output_csv, 
         distances_csv, 
         threshold=0.001, 
-        force_recompute=False,
-        num_workers=None  # Set to a specific number (e.g., 4) if desired
+        force_recompute=True,
+        num_workers=16# Set to a specific number (e.g., 4) if desired
     ) 

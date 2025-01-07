@@ -83,7 +83,7 @@ data:
     train:
       target: data.data_processing.datasets.ActionsData
       params:
-        data_csv_path: train_dataset/train_dataset_20000.csv
+        data_csv_path: train_dataset/filtered_dataset.csv
         #validation:
         #  target: data.data_processing.datasets.ActionsData
         #  params:

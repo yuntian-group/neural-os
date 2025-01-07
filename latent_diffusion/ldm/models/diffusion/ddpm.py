@@ -864,6 +864,7 @@ class LatentDiffusion(DDPM):
             assert False, "Only concat conditioning is supported for now"
 
         DEBUG = True
+        DEBUG = False
         if not hasattr(self, 'i'):
             self.i = 0
 

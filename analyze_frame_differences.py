@@ -58,6 +58,8 @@ def analyze_dataset(csv_path, num_samples_per_quantile=5):
     
     # Sample from different quantiles
     quantiles = [0.1, 0.25, 0.5, 0.75, 0.9]
+    quantiles = [0.90, 0.91, 0.92, 0.93, 0.94, 0.95, 0.96, 0.97, 0.98, 0.99]
+    quantiles = np.linspace(0.98, 1, num=50)
     
     print("\nSaving example frames for different quantiles...")
     for q in quantiles:
@@ -90,5 +92,5 @@ def analyze_dataset(csv_path, num_samples_per_quantile=5):
     return differences, frame_pairs
 
 if __name__ == "__main__":
-    csv_path = "path/to/your/data.csv"  # Update this path
+    csv_path = "train_dataset/train_dataset_2000.csv"  # Update this path
     differences, frame_pairs = analyze_dataset(csv_path) 

@@ -40,6 +40,19 @@ model:
         use_spatial_transformer: true
         transformer_depth: 1
         context_dim: 768
+
+    temporal_encoder_config:
+      target: latent_diffusion.ldm.modules.encoders.temporal_encoder.TemporalEncoder
+      params:
+        input_channels: 5
+        hidden_size: 256
+        num_layers: 2
+        sequence_length: 32
+        dropout: 0.1
+        output_channels: 41
+        output_height: 64
+        output_width: 48
+
     first_stage_config:
       target: latent_diffusion.ldm.models.autoencoder.AutoencoderKL
       params:

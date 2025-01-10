@@ -10,7 +10,6 @@ class TemporalEncoder(nn.Module):
         num_layers: int,
         sequence_length: int,
         dropout: float,
-        bidirectional: bool,
         output_channels: int,
         output_height: int,
         output_width: int
@@ -32,15 +31,13 @@ class TemporalEncoder(nn.Module):
             num_layers=num_layers,
             dropout=dropout if num_layers > 1 else 0,
             batch_first=True,
-            bidirectional=bidirectional
+            bidirectional=False
         )
         
-        # Calculate the total hidden size (doubled if bidirectional)
-        total_hidden_size = hidden_size * (2 if bidirectional else 1)
         
         # Project LSTM output to desired spatial feature map
         self.projection = nn.Sequential(
-            nn.Linear(total_hidden_size, output_channels * output_height * output_width),
+            nn.Linear(hidden_size, output_channels * output_height * output_width),
             nn.ReLU(inplace=True)
         )
         

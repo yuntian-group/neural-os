@@ -798,7 +798,10 @@ class LatentDiffusion(DDPM):
             if self.temporal_encoder is not None:
                 assert f'{hkey}_processed' in batch, "Processed sequence is required for temporal encoder"
                 import pdb; pdb.set_trace()
-            c, is_padding = self.enc_concat_seq(c, batch, hkey)
+                # c_concat_processed: previous image sequences, shape: [B, L, C, H, W]
+                # position_map_j: position map for the jth frame, shape: [B, 1, 64, 64]
+                # leftclick_map_j: leftclick map for the jth frame, shape: [B, 1, 64, 64]
+                c, is_padding = self.enc_concat_seq(c, batch, hkey)
             
             if random.random() < self.scheduler_sampling_rate:
                 #import pdb; pdb.set_trace()

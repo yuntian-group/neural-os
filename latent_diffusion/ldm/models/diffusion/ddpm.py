@@ -798,7 +798,7 @@ class LatentDiffusion(DDPM):
             #return the dict of conds with cattn for the learnable cond. and cconcat for latent cond.
             if self.temporal_encoder is not None:
                 assert f'{hkey}_processed' in batch, "Processed sequence is required for temporal encoder"
-                import pdb; pdb.set_trace()
+                #import pdb; pdb.set_trace()
                 # c_concat_processed: previous image sequences, shape: [B, L, C, H, W], with L being 14.
                 # position_map_j: position map for the jth frame, shape: [B, 1, H, W], with j being from -7 to 7 (15 in total)
                 # leftclick_map_j: leftclick map for the jth frame, shape: [B, 1, H, W], with j being from -7 to 7 (15 in total)
@@ -814,7 +814,7 @@ class LatentDiffusion(DDPM):
                     inputs_to_rnn.append(torch.cat([image_part, position_map_part, leftclick_map_part], dim=1))
                 inputs_to_rnn = torch.stack(inputs_to_rnn, dim=1)
                 output_from_rnn = self.temporal_encoder(inputs_to_rnn)
-                import pdb; pdb.set_trace()
+                #import pdb; pdb.set_trace()
                 #c[hkey] = c[hkey][:, 4*7:]
                 pos_map = batch['position_map_7']
                 c[hkey] = output_from_rnn

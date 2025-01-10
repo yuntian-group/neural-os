@@ -52,7 +52,7 @@ class TemporalEncoder(nn.Module):
         Returns:
             output: Tensor of shape [B, output_channels, output_height, output_width]
         """
-        import pdb; pdb.set_trace()
+        #import pdb; pdb.set_trace()
         batch_size = x.shape[0]
         sequence_length = x.shape[1]
         assert sequence_length == 14, "Sequence length must be 14"

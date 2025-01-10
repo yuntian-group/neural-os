@@ -53,6 +53,7 @@ class TemporalEncoder(nn.Module):
         Returns:
             output: Tensor of shape [B, output_channels, output_height, output_width]
         """
+        import pdb; pdb.set_trace()
         batch_size = x.shape[0]
         
         # Flatten spatial dimensions: [B, T, C, H, W] -> [B, T, C*H*W]

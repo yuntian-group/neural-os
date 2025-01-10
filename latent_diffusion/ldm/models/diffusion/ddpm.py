@@ -798,12 +798,26 @@ class LatentDiffusion(DDPM):
             if self.temporal_encoder is not None:
                 assert f'{hkey}_processed' in batch, "Processed sequence is required for temporal encoder"
                 import pdb; pdb.set_trace()
-                # c_concat_processed: previous image sequences, shape: [B, L, C, H, W]
-                # position_map_j: position map for the jth frame, shape: [B, 1, 64, 64]
-                # leftclick_map_j: leftclick map for the jth frame, shape: [B, 1, 64, 64]
-                c, is_padding = self.enc_concat_seq(c, batch, hkey)
+                # c_concat_processed: previous image sequences, shape: [B, L, C, H, W], with L being 14.
+                # position_map_j: position map for the jth frame, shape: [B, 1, H, W], with j being from -7 to 7 (15 in total)
+                # leftclick_map_j: leftclick map for the jth frame, shape: [B, 1, H, W], with j being from -7 to 7 (15 in total)
+                # concatenate through the channel dimension.
+                history_length_to_consider = 14
+                actual_history_length = batch['c_concat_processed'].shape[1]
+
+                inputs_to_rnn = []
+                for j in range(history_length_to_consider):
+                    image_part = batch[f'c_concat_processed'][:, actual_history_length-history_length_to_consider+j]
+                    position_map_part = batch[f'position_map_{7-history_length_to_consider+j}']
+                    leftclick_map_part = batch[f'leftclick_map_{7-history_length_to_consider+j}']
+                    inputs_to_rnn.append(torch.cat([image_part, position_map_part, leftclick_map_part], dim=1))
+                inputs_to_rnn = torch.stack(inputs_to_rnn, dim=1)
+                c[hkey] = self.temporal_encoder(inputs_to_rnn)
+
+            c, is_padding = self.enc_concat_seq(c, batch, hkey)
             
             if random.random() < self.scheduler_sampling_rate:
+                assert False, "Not implemented"
                 #import pdb; pdb.set_trace()
                 with torch.no_grad():
                     

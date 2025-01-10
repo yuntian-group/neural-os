@@ -794,6 +794,7 @@ class LatentDiffusion(DDPM):
             hkey = self.hybrid_key
 
             c = {'c_crossattn': batch[cond_key]} #cond_key is converted to cross attention.
+            c, is_padding = self.enc_concat_seq(c, batch, hkey)
             #return the dict of conds with cattn for the learnable cond. and cconcat for latent cond.
             if self.temporal_encoder is not None:
                 assert f'{hkey}_processed' in batch, "Processed sequence is required for temporal encoder"
@@ -814,80 +815,88 @@ class LatentDiffusion(DDPM):
                 inputs_to_rnn = torch.stack(inputs_to_rnn, dim=1)
                 output_from_rnn = self.temporal_encoder(inputs_to_rnn)
                 import pdb; pdb.set_trace()
+                #c[hkey] = c[hkey][:, 4*7:]
+                pos_map = batch['position_map_7']
+                c[hkey] = output_from_rnn
+                inputs = [c[hkey], pos_map] + [batch[f'leftclick_map_7']]
+                c[hkey] = torch.cat(inputs, dim=1)
+                # concatenate with the position map.
+                assert c[hkey].shape[1] == 4*7 + 2 + 7
+            else:
                 #c[hkey] = output_from_rnn
 
-            c, is_padding = self.enc_concat_seq(c, batch, hkey)
-            
-            if random.random() < self.scheduler_sampling_rate:
-                assert False, "Not implemented"
-                #import pdb; pdb.set_trace()
-                with torch.no_grad():
-                    
-                    assert cond_key == 'action_7', "Only action conditioning is supported for now"
-                    
-                    for j in range(6, -1, -1):
-                    #for j in range(7):
-                        c_prev = c[hkey][:, 4*j:4*j+28]
-                        c_dict = {'c_crossattn': batch[f"action_{j}"], 'c_concat': c_prev}
-                        c_dict = self.get_learned_conditioning(c_dict)
-                        batch_size = c_prev.shape[0]
-                        #uc_dict = {'c_crossattn': ['']*batch_size, 'c_concat': c_prev}
-                        #uc_dict = self.get_learned_conditioning(uc_dict)
-                        sampler = DDIMSampler(self)
-                        position_map = batch[f'position_map_{j}']
-                        c_dict['c_concat'] = torch.cat([c_dict['c_concat'], position_map] + [batch[f'leftclick_map_{k+j-7}'] for k in range(7, -1, -1)], dim=1)
-                        #uc_dict['c_concat'] = torch.cat([uc_dict['c_concat'], position_map], dim=1)
-                        samples_ddim, _ = sampler.sample(S=8,
-                                         conditioning=c_dict,
-                                         batch_size=batch_size,
-                                         shape=[4, 64, 64],
-                                         verbose=False,)
-                                         #unconditional_guidance_scale=5.0,
-                                         #unconditional_conditioning=uc_dict,
-                                         #eta=0)
-                        # Decode in smaller batches
-                        decode_batch_size = 16
-                        x_samples_ddim = []
-                        z_samples = []
-                        for idx in range(0, samples_ddim.shape[0], decode_batch_size):
-                            batch_samples = samples_ddim[idx:min(idx + decode_batch_size, samples_ddim.shape[0])]
-                            batch_decoded = self.decode_first_stage(batch_samples)
-                            x_samples_ddim.append(batch_decoded)
-                            batch_encoded = self.encode_first_stage(batch_decoded).sample()
-                            z_samples.append(batch_encoded)
-                        x_samples_ddim = torch.cat(x_samples_ddim, dim=0)
-                        x_samples_ddim = torch.clamp(x_samples_ddim, min=-1.0, max=1.0)
-                        z_samples = torch.cat(z_samples, dim=0)
-                        ## save to disk for visualization and debugging
-                        #for kkk in range(batch_size):
-                        #    from PIL import Image, ImageDraw
-                        #    image = Image.fromarray(((x_samples_ddim[kkk].transpose(0, 1).transpose(1, 2).cpu().float().numpy()+1)*255/2).astype(np.uint8))
-                        #    image.save(f'ddim_sample_{j}_{kkk}.png')
-                        #
-                        #import pdb; pdb.set_trace()
-                        # Encode the generated samples back to latent space
-                        #z_samples = self.encode_first_stage(x_samples_ddim)
+                #c, is_padding = self.enc_concat_seq(c, batch, hkey)
+                
+                if random.random() < self.scheduler_sampling_rate:
+                    assert False, "Not implemented"
+                    #import pdb; pdb.set_trace()
+                    with torch.no_grad():
                         
-                        # Replace the corresponding frames in c[hkey]
-                        sampling_mask = torch.rand(batch_size, 1, 1, 1, device=c[hkey].device) < 1.5 #self.scheduler_sampling_rate
-                        # Only apply sampling mask where is_padding is False
-                        mask = sampling_mask & (~is_padding[:, j+7].view(-1, 1, 1, 1))
-                        #if is_padding[:, j+7].any():
-                        #    import pdb; pdb.set_trace()
-                        c[hkey][:, 7*4+j*4:7*4+j*4+4] = torch.where(mask, z_samples, c[hkey][:, 7*4+j*4:7*4+j*4+4])
-                        break
+                        assert cond_key == 'action_7', "Only action conditioning is supported for now"
+                        
+                        for j in range(6, -1, -1):
+                        #for j in range(7):
+                            c_prev = c[hkey][:, 4*j:4*j+28]
+                            c_dict = {'c_crossattn': batch[f"action_{j}"], 'c_concat': c_prev}
+                            c_dict = self.get_learned_conditioning(c_dict)
+                            batch_size = c_prev.shape[0]
+                            #uc_dict = {'c_crossattn': ['']*batch_size, 'c_concat': c_prev}
+                            #uc_dict = self.get_learned_conditioning(uc_dict)
+                            sampler = DDIMSampler(self)
+                            position_map = batch[f'position_map_{j}']
+                            c_dict['c_concat'] = torch.cat([c_dict['c_concat'], position_map] + [batch[f'leftclick_map_{k+j-7}'] for k in range(7, -1, -1)], dim=1)
+                            #uc_dict['c_concat'] = torch.cat([uc_dict['c_concat'], position_map], dim=1)
+                            samples_ddim, _ = sampler.sample(S=8,
+                                            conditioning=c_dict,
+                                            batch_size=batch_size,
+                                            shape=[4, 64, 64],
+                                            verbose=False,)
+                                            #unconditional_guidance_scale=5.0,
+                                            #unconditional_conditioning=uc_dict,
+                                            #eta=0)
+                            # Decode in smaller batches
+                            decode_batch_size = 16
+                            x_samples_ddim = []
+                            z_samples = []
+                            for idx in range(0, samples_ddim.shape[0], decode_batch_size):
+                                batch_samples = samples_ddim[idx:min(idx + decode_batch_size, samples_ddim.shape[0])]
+                                batch_decoded = self.decode_first_stage(batch_samples)
+                                x_samples_ddim.append(batch_decoded)
+                                batch_encoded = self.encode_first_stage(batch_decoded).sample()
+                                z_samples.append(batch_encoded)
+                            x_samples_ddim = torch.cat(x_samples_ddim, dim=0)
+                            x_samples_ddim = torch.clamp(x_samples_ddim, min=-1.0, max=1.0)
+                            z_samples = torch.cat(z_samples, dim=0)
+                            ## save to disk for visualization and debugging
+                            #for kkk in range(batch_size):
+                            #    from PIL import Image, ImageDraw
+                            #    image = Image.fromarray(((x_samples_ddim[kkk].transpose(0, 1).transpose(1, 2).cpu().float().numpy()+1)*255/2).astype(np.uint8))
+                            #    image.save(f'ddim_sample_{j}_{kkk}.png')
+                            #
+                            #import pdb; pdb.set_trace()
+                            # Encode the generated samples back to latent space
+                            #z_samples = self.encode_first_stage(x_samples_ddim)
+                            
+                            # Replace the corresponding frames in c[hkey]
+                            sampling_mask = torch.rand(batch_size, 1, 1, 1, device=c[hkey].device) < 1.5 #self.scheduler_sampling_rate
+                            # Only apply sampling mask where is_padding is False
+                            mask = sampling_mask & (~is_padding[:, j+7].view(-1, 1, 1, 1))
+                            #if is_padding[:, j+7].any():
+                            #    import pdb; pdb.set_trace()
+                            c[hkey][:, 7*4+j*4:7*4+j*4+4] = torch.where(mask, z_samples, c[hkey][:, 7*4+j*4:7*4+j*4+4])
+                            break
 
-            c[hkey] = c[hkey][:, 4*7:]
-            #import pdb; pdb.set_trace()
-            pos_map = batch['position_map_7']
-            #leftclick_map = batch['leftclick_map_7']
-            #c[hkey] = torch.cat([c[hkey], pos_map], dim=1)
-            #c[hkey] = torch.cat([c[hkey], pos_map, leftclick_map], dim=1)
-            inputs = [c[hkey], pos_map] + [batch[f'leftclick_map_{j}'] for j in range(7, -1, -1)]
-            #import pdb; pdb.set_trace()
-            c[hkey] = torch.cat(inputs, dim=1)
-            # concatenate with the position map.
-            assert c[hkey].shape[1] == 4*7 + 2 + 7
+                c[hkey] = c[hkey][:, 4*7:]
+                #import pdb; pdb.set_trace()
+                pos_map = batch['position_map_7']
+                #leftclick_map = batch['leftclick_map_7']
+                #c[hkey] = torch.cat([c[hkey], pos_map], dim=1)
+                #c[hkey] = torch.cat([c[hkey], pos_map, leftclick_map], dim=1)
+                inputs = [c[hkey], pos_map] + [batch[f'leftclick_map_{j}'] for j in range(7, -1, -1)]
+                #import pdb; pdb.set_trace()
+                c[hkey] = torch.cat(inputs, dim=1)
+                # concatenate with the position map.
+                assert c[hkey].shape[1] == 4*7 + 2 + 7
         else:
             assert False, "Only concat conditioning is supported for now"
 

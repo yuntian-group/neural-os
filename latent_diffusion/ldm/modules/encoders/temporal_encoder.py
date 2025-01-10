@@ -8,7 +8,6 @@ class TemporalEncoder(nn.Module):
         input_channels: int,
         hidden_size: int,
         num_layers: int,
-        sequence_length: int,
         dropout: float,
         output_channels: int,
         output_height: int,
@@ -19,7 +18,6 @@ class TemporalEncoder(nn.Module):
         self.input_channels = input_channels
         self.hidden_size = hidden_size
         self.num_layers = num_layers
-        self.sequence_length = sequence_length
         self.output_channels = output_channels
         self.output_height = output_height
         self.output_width = output_width
@@ -37,10 +35,11 @@ class TemporalEncoder(nn.Module):
         
         # Project LSTM output to desired spatial feature map
         self.projection = nn.Sequential(
-            nn.Linear(hidden_size, output_channels * output_height * output_width),
-            nn.ReLU(inplace=True)
+            nn.Linear(hidden_size, hidden_size*4),
+            nn.ReLU(inplace=True),
+            nn.Linear(hidden_size*4, output_channels * output_height * output_width),
         )
-        
+    # TODO: maybe use a CNN to process the sequence
     def forward(self, x):
         """
         Args:
@@ -55,19 +54,18 @@ class TemporalEncoder(nn.Module):
         """
         import pdb; pdb.set_trace()
         batch_size = x.shape[0]
+        sequence_length = x.shape[1]
+        assert sequence_length == 14, "Sequence length must be 14"
         
         # Flatten spatial dimensions: [B, T, C, H, W] -> [B, T, C*H*W]
-        x_flat = x.reshape(batch_size, self.sequence_length, -1)
+
+        x_flat = x.reshape(batch_size, sequence_length, -1)
         
         # Process through LSTM
         lstm_out, (hidden, _) = self.lstm(x_flat)
         
         # Use the last hidden state
-        if self.lstm.bidirectional:
-            # Concatenate forward and backward last hidden states
-            hidden_last = torch.cat([hidden[-2], hidden[-1]], dim=1)
-        else:
-            hidden_last = hidden[-1]
+        hidden_last = hidden[-1]
         
         # Project to desired output shape
         output = self.projection(hidden_last)

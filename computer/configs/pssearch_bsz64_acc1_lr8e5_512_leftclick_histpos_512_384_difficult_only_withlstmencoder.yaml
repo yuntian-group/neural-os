@@ -47,11 +47,10 @@ model:
         input_channels: 5
         hidden_size: 256
         num_layers: 2
-        sequence_length: 32
         dropout: 0.1
-        output_channels: 41
-        output_height: 64
-        output_width: 48
+        output_channels: 35
+        output_height: 48
+        output_width: 64
 
     first_stage_config:
       target: latent_diffusion.ldm.models.autoencoder.AutoencoderKL

@@ -807,19 +807,21 @@ class LatentDiffusion(DDPM):
                 actual_history_length = batch['c_concat_processed'].shape[1]
 
                 inputs_to_rnn = []
+                TRIM_BEGINNING = 1
                 for j in range(history_length_to_consider):
                     image_part = batch[f'c_concat_processed'][:, actual_history_length-history_length_to_consider+j]
-                    position_map_part = batch[f'position_map_{7-history_length_to_consider+j}']
-                    leftclick_map_part = batch[f'leftclick_map_{7-history_length_to_consider+j}']
+                    position_map_part = batch[f'position_map_{7-history_length_to_consider+j+TRIM_BEGINNING}']
+                    leftclick_map_part = batch[f'leftclick_map_{7-history_length_to_consider+j+TRIM_BEGINNING}']
                     inputs_to_rnn.append(torch.cat([image_part, position_map_part, leftclick_map_part], dim=1))
                 inputs_to_rnn = torch.stack(inputs_to_rnn, dim=1)
                 output_from_rnn = self.temporal_encoder(inputs_to_rnn)
                 #import pdb; pdb.set_trace()
                 #c[hkey] = c[hkey][:, 4*7:]
-                pos_map = batch['position_map_7']
                 c[hkey] = output_from_rnn
-                inputs = [c[hkey], pos_map] + [batch[f'leftclick_map_7']]
-                c[hkey] = torch.cat(inputs, dim=1)
+                if TRIM_BEGINNING == 0:
+                    pos_map = batch['position_map_7']
+                    inputs = [c[hkey], pos_map] + [batch[f'leftclick_map_7']]
+                    c[hkey] = torch.cat(inputs, dim=1)
                 # concatenate with the position map.
                 assert c[hkey].shape[1] == 4*7 + 2 + 7
             else:

@@ -19,6 +19,9 @@ class TemporalEncoder(nn.Module):
         self.hidden_size = hidden_size
         self.num_layers = num_layers
         self.output_channels = output_channels
+        self.TRIM_BEGINNING = 1
+        if self.TRIM_BEGINNING == 1:
+            self.output_channels = output_channels + 2
         self.output_height = output_height
         self.output_width = output_width
         
@@ -40,6 +43,8 @@ class TemporalEncoder(nn.Module):
             nn.Linear(hidden_size*4, output_channels * output_height * output_width),
         )
     # TODO: maybe use a CNN to process the sequence
+    # TODO: maybe use aligned images and position maps
+    # TODO: maybe use layernorm to preprocess the input
     def forward(self, x):
         """
         Args:

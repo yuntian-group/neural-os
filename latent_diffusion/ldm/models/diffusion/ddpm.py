@@ -903,7 +903,8 @@ class LatentDiffusion(DDPM):
             assert False, "Only concat conditioning is supported for now"
 
         DEBUG = True
-        DEBUG = False
+        DEBUG = True
+        exp_name = 'without'
         if not hasattr(self, 'i'):
             self.i = 0
 
@@ -939,8 +940,18 @@ class LatentDiffusion(DDPM):
                 combined_img[:, 64*8*2:] = sample_img  # Generated on right
                 
                 # Save the combined image
-                Image.fromarray(combined_img).save(f'real_vs_generated_debug_comparison_{self.i}.png')
+                Image.fromarray(combined_img).save(f'{exp_name}_real_vs_generated_debug_comparison_{self.i}.png')
+                
+                # Save the corresponding action texts
+                with open(f'{exp_name}_real_vs_generated_debug_comparison_{self.i}.txt', 'w') as f:
+                    action_7 = batch['action_7'][i]
+                    action_0 = batch['action_0'][i]
+                    f.write(f"Current action (7): {action_7}\n")
+                    f.write(f"First action (0): {action_0}\n")
+                
                 self.i += 1
+                if self.i > 1000:
+                    sys.exit(1)
             #import pdb; pdb.set_trace()
 
 

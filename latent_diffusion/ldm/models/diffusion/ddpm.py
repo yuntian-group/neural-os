@@ -905,6 +905,7 @@ class LatentDiffusion(DDPM):
         DEBUG = True
         DEBUG = True
         exp_name = 'without'
+        os.makedirs(exp_name, exist_ok=True)
         if not hasattr(self, 'i'):
             self.i = 0
 
@@ -940,10 +941,10 @@ class LatentDiffusion(DDPM):
                 combined_img[:, 64*8*2:] = sample_img  # Generated on right
                 
                 # Save the combined image
-                Image.fromarray(combined_img).save(f'{exp_name}_real_vs_generated_debug_comparison_{self.i}.png')
+                Image.fromarray(combined_img).save(f'{exp_name}/real_vs_generated_debug_comparison_{self.i}.png')
                 
                 # Save the corresponding action texts
-                with open(f'{exp_name}_real_vs_generated_debug_comparison_{self.i}.txt', 'w') as f:
+                with open(f'{exp_name}/real_vs_generated_debug_comparison_{self.i}.txt', 'w') as f:
                     action_7 = batch['action_7'][i]
                     action_0 = batch['action_0'][i]
                     f.write(f"Current action (7): {action_7}\n")

@@ -33,8 +33,8 @@ if __name__ == "__main__":
     print ('='*10)
     #import pdb; pdb.set_trace()
     #from_autoencoder = True
-    from_autoencoder = True
     from_autoencoder = False
+    from_autoencoder = True
     if not from_autoencoder:
         assert 'eval' in args.config
     if from_autoencoder:

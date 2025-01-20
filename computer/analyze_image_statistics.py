@@ -1,3 +1,4 @@
+import torch
 import pandas as pd
 import numpy as np
 from PIL import Image
@@ -23,14 +24,15 @@ def analyze_image_statistics(csv_path):
     for idx, row in tqdm(df.iterrows(), total=len(df)):
         # Process sequence images
         for img_path in row['Image_seq_cond_path']:
-            img = np.array(Image.open(img_path))
+            img = np.load(img_path.replace('train_dataset/', 'train_dataset_encoded/').replace('.png', '.npy'))
+            #img = np.array(Image.open(img_path))
             means.append(img.mean())
             stds.append(img.std())
             mins.append(img.min())
             maxs.append(img.max())
         
         # Process target image
-        target_img = np.array(Image.open(row['Target_image']))
+        target_img = np.load(row['Target_image'].replace('train_dataset/', 'train_dataset_encoded/').replace('.png', '.npy'))
         means.append(target_img.mean())
         stds.append(target_img.std())
         mins.append(target_img.min())

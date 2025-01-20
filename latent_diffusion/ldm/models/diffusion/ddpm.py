@@ -904,7 +904,7 @@ class LatentDiffusion(DDPM):
             assert False, "Only concat conditioning is supported for now"
 
         DEBUG = True
-        DEBUG = True
+        DEBUG = False
         exp_name = 'without'
         exp_name = '8192_1layer'
         exp_name = '8192_1layer_trim'

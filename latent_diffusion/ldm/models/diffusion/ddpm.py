@@ -808,6 +808,7 @@ class LatentDiffusion(DDPM):
 
                 inputs_to_rnn = []
                 TRIM_BEGINNING = 1
+                TRIM_BEGINNING = 1
                 for j in range(history_length_to_consider):
                     image_part = batch[f'c_concat_processed'][:, actual_history_length-history_length_to_consider+j]
                     position_map_part = batch[f'position_map_{7-history_length_to_consider+j+TRIM_BEGINNING}']
@@ -905,6 +906,8 @@ class LatentDiffusion(DDPM):
         DEBUG = True
         DEBUG = True
         exp_name = 'without'
+        exp_name = '8192_1layer'
+        exp_name = '8192_1layer_trim'
         os.makedirs(exp_name, exist_ok=True)
         if not hasattr(self, 'i'):
             self.i = 0

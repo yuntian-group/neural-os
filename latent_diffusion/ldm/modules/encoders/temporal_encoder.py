@@ -20,6 +20,7 @@ class TemporalEncoder(nn.Module):
         self.num_layers = num_layers
         self.output_channels = output_channels
         self.TRIM_BEGINNING = 1
+        self.TRIM_BEGINNING = 1
         if self.TRIM_BEGINNING == 1:
             self.output_channels = output_channels + 2
         self.output_height = output_height

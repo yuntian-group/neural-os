@@ -184,14 +184,20 @@ class ActionsData(Dataset):
     
     def __init__(self,
                  data_csv_path,
-                 debug_mode=False
+                 debug_mode=False,
+                 normalization='none'  # Options: 'none', 'minmax', 'standard'
                  ):
         self.data_path = data_csv_path
         self.debug_mode = debug_mode
         self._length = None  # Will be set in setup
         self.use_processed = False  # Will be set in setup
-        self.debug_mode = True
-        self.debug_mode = False
+        self.normalization = normalization
+        
+        # Constants for normalization (based on your analysis)
+        self.data_mean = -0.54
+        self.data_std = 6.78
+        self.data_min = -27.681446075439453
+        self.data_max = 30.854148864746094
         
         # Don't load data in __init__, just store the path
         
@@ -238,6 +244,19 @@ class ActionsData(Dataset):
             #except Exception as e:
             #    print(f"Warning: Could not load model for reprocessing: {e}")
             #    self.model = None
+
+    def normalize_features(self, x):
+        """Normalize features based on specified strategy"""
+        if self.normalization == 'none':
+            return x
+        elif self.normalization == 'minmax':
+            # Normalize to [-1, 1]
+            return 2.0 * (x - self.data_min) / (self.data_max - self.data_min) - 1.0
+        elif self.normalization == 'standard':
+            # Standardize to mean=0, std=1
+            return (x - self.data_mean) / self.data_std
+        else:
+            raise ValueError(f"Unknown normalization strategy: {self.normalization}")
 
     def __len__(self):
         if self.debug_mode:
@@ -370,9 +389,11 @@ class ActionsData(Dataset):
             
             # Load processed versions if available
             if self.use_processed:
-                example['image_processed'] = self.load_processed_image(self.targets[i])
+                example['image_processed'] = self.normalize_features(
+                    self.load_processed_image(self.targets[i])
+                )
                 example['c_concat_processed'] = torch.stack([
-                    self.load_processed_image(image_path) 
+                    self.normalize_features(self.load_processed_image(image_path))
                     for image_path in self.image_seq_paths[i]
                 ])
             else:

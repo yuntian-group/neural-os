@@ -2,11 +2,13 @@ import pandas as pd
 import numpy as np
 from PIL import Image
 import ast
-from tqdm import tqdm
+from tqdm.auto import tqdm
 import os
 import torch
 from torchvision import transforms
 from pathlib import Path
+
+tqdm.pandas()  # Enable progress_apply for pandas
 
 def create_transition_image(sequence_paths, target_path, history_length=3):
     """Create a horizontal strip of images showing the transition"""

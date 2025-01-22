@@ -928,8 +928,8 @@ class LatentDiffusion(DDPM):
                 batch['image_processed'] = batch['image_processed'] * data_std + data_mean
                 batch['c_concat_processed'] = batch['c_concat_processed'] * data_std + data_mean
             elif exp_name == 'without_comp_norm_minmax':
-                batch['image_processed'] = batch['image_processed'].clamp(-1, 1) * (data_max - data_min) + data_min
-                batch['c_concat_processed'] = batch['c_concat_processed'].clamp(-1, 1) * (data_max - data_min) + data_min
+                batch['image_processed'] = (batch['image_processed'].clamp(-1, 1) + 1) * (data_max - data_min) / 2 + data_min
+                batch['c_concat_processed'] = (batch['c_concat_processed'].clamp(-1, 1) + 1) * (data_max - data_min) / 2 + data_min
             elif exp_name == 'without_comp_norm_none':
                 pass
             z_vis = self.decode_first_stage(batch['image_processed'])
@@ -951,7 +951,7 @@ class LatentDiffusion(DDPM):
                     sample_i = sample_i * data_std + data_mean
                     #prev_frame_img = prev_frame_img * data_std + data_mean
                 elif exp_name == 'without_comp_norm_minmax':
-                    sample_i = sample_i.clamp(-1, 1) * (data_max - data_min) + data_min
+                    sample_i = (sample_i.clamp(-1, 1) + 1) * (data_max - data_min) / 2 + data_min
                 elif exp_name == 'without_comp_norm_none':
                     pass
                 sample_i = self.decode_first_stage(sample_i)

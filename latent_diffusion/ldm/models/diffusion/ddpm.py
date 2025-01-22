@@ -910,8 +910,8 @@ class LatentDiffusion(DDPM):
         exp_name = '8192_1layer_trim'
 
         exp_name = 'without_comp_norm_none'
-        exp_name = 'without_comp_norm_minmax'
         exp_name = 'without_comp_norm_standard'
+        exp_name = 'without_comp_norm_minmax'
         DEBUG = True
         os.makedirs(exp_name, exist_ok=True)
         if not hasattr(self, 'i'):

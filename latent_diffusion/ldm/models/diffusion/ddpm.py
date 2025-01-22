@@ -909,10 +909,10 @@ class LatentDiffusion(DDPM):
         exp_name = '8192_1layer'
         exp_name = '8192_1layer_trim'
 
+        exp_name = 'without_comp_norm_minmax'
         exp_name = 'without_comp_norm_none'
         exp_name = 'without_comp_norm_standard'
-        exp_name = 'without_comp_norm_minmax'
-        DEBUG = True
+        DEBUG = False
         os.makedirs(exp_name, exist_ok=True)
         if not hasattr(self, 'i'):
             self.i = 0
@@ -979,7 +979,7 @@ class LatentDiffusion(DDPM):
                     f.write(f"First action (0): {action_0}\n")
                 
                 self.i += 1
-                if self.i > 32:
+                if self.i > 1000:
                     sys.exit(1)
             #import pdb; pdb.set_trace()
 

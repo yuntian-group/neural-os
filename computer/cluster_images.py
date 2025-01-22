@@ -62,6 +62,7 @@ def compute_distance_matrix(image_paths, device='cuda'):
         ab = torch.mm(images.view(images.size(0), -1), 
                      images.view(images.size(0), -1).t())  # [N, N]
         distances = (a2 + b2 - 2*ab) / (images.size(1) * images.size(2) * images.size(3))
+        distances = torch.clamp(distances, min=0)
         
         return distances.cpu().numpy()
 
@@ -92,6 +93,7 @@ def cluster_images(input_csv, output_dir, sample_size=2000, eps=0.1, min_samples
     
     # Compute distance matrix using GPU
     distances = compute_distance_matrix(target_images, device=device)
+    import pdb; pdb.set_trace()
     
     # Run DBSCAN
     print("\nRunning DBSCAN clustering...")
@@ -150,10 +152,11 @@ if __name__ == "__main__":
     output_dir = "clustering_results"
     
     # Parameters
-    sample_size = 2000  # Number of images to sample
-    eps = 0.1  # Maximum distance between two samples to be in same cluster
-    min_samples = 5  # Minimum number of samples in a cluster
+    sample_size = 8000  # Number of images to sample
+    eps = 0.01  # Maximum distance between two samples to be in same cluster
+    min_samples = 50  # Minimum number of samples in a cluster
     device = 'cuda'  # Use 'cpu' if no GPU available
+    device = 'cpu'  # Use 'cpu' if no GPU available
     
     clusters, distances, labels = cluster_images(
         input_csv, 

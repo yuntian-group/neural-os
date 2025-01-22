@@ -73,7 +73,7 @@ def check_sequence(row, cluster_center_path, threshold, device):
     return True
 
 def filter_cluster_sequences(input_csv, cluster_center_path, output_csv, output_dir, 
-                           threshold=0.01, device='cuda', history_length=3):
+                           threshold=0.01, device='cuda', history_length=3, debug=False):
     """Filter sequences where all previous images are within threshold distance of cluster center"""
     if device == 'cuda' and not torch.cuda.is_available():
         print("CUDA not available, falling back to CPU")
@@ -81,6 +81,10 @@ def filter_cluster_sequences(input_csv, cluster_center_path, output_csv, output_
     
     print(f"Reading dataset from {input_csv}")
     df = pd.read_csv(input_csv)
+    
+    if debug:
+        print("Debug mode: using first 1000 rows only")
+        df = df.head(1000)
     
     # Filter sequences using pandas
     print("\nFiltering sequences...")
@@ -106,8 +110,8 @@ if __name__ == "__main__":
     output_dir = "train_dataset/desktop_transitions"
     threshold = 0.01
     device = 'cuda'
-    device = 'cpu'
     history_length = 3  # Number of previous images to show in transition
+    debug = False  # Set to True to process only first 1000 rows
     
     filtered_df = filter_cluster_sequences(
         input_csv,
@@ -116,5 +120,6 @@ if __name__ == "__main__":
         output_dir,
         threshold=threshold,
         device=device,
-        history_length=history_length
+        history_length=history_length,
+        debug=debug
     )

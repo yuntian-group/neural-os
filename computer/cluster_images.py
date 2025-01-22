@@ -100,16 +100,29 @@ def cluster_images(input_csv, output_dir, sample_size=2000, eps=0.1, min_samples
     clustering = DBSCAN(eps=eps, min_samples=min_samples, metric='precomputed')
     labels = clustering.fit_predict(distances)
     
-    # Group images by cluster
+    # Group images by cluster and sort by size
     clusters = defaultdict(list)
     for img_path, label in zip(target_images, labels):
         clusters[label].append(img_path)
     
+    # Convert to regular dict and sort by size (excluding noise cluster -1)
+    sorted_clusters = {-1: clusters[-1]}  # Keep noise cluster first
+    sorted_clusters.update({
+        i: cluster_images
+        for i, (label, cluster_images) in enumerate(
+            sorted(
+                [(k, v) for k, v in clusters.items() if k != -1],
+                key=lambda x: len(x[1]),
+                reverse=True  # Largest clusters first
+            )
+        )
+    })
+    
     # Print clustering results
     print("\nClustering Results:")
-    print(f"Number of clusters found: {len(clusters)-1}")  # -1 because -1 is noise
+    print(f"Number of clusters found: {len(sorted_clusters)-1}")  # -1 because -1 is noise
     print("\nCluster sizes:")
-    for label, images in sorted(clusters.items()):
+    for label, images in sorted_clusters.items():
         if label == -1:
             print(f"Noise points: {len(images)}")
         else:
@@ -117,13 +130,18 @@ def cluster_images(input_csv, output_dir, sample_size=2000, eps=0.1, min_samples
     
     # Save representative examples
     print("\nSaving representative examples...")
-    for label, images in clusters.items():
+    for label, images in sorted_clusters.items():
         if label == -1:
             cluster_dir = output_dir / "noise"
         else:
-            cluster_dir = output_dir / f"cluster_{label}"
+            cluster_dir = output_dir / f"cluster_{label:02d}"  # Zero-pad for nice sorting
         
         cluster_dir.mkdir(exist_ok=True)
+        
+        # Save cluster size in the directory name
+        new_dir = cluster_dir.parent / f"{cluster_dir.name}_size_{len(images)}"
+        cluster_dir.rename(new_dir)
+        cluster_dir = new_dir
         
         # Compute cluster center (image with minimum average distance to other images in cluster)
         if len(images) > 1:
@@ -145,7 +163,7 @@ def cluster_images(input_csv, output_dir, sample_size=2000, eps=0.1, min_samples
             shutil.copy2(images[0], cluster_dir / "single_example.png")
     
     print(f"\nResults saved to {output_dir}")
-    return clusters, distances, labels
+    return sorted_clusters, distances, labels
 
 if __name__ == "__main__":
     input_csv = "train_dataset/filtered_dataset.csv"

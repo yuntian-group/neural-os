@@ -35,6 +35,8 @@ if __name__ == "__main__":
     #from_autoencoder = True
     from_autoencoder = False
     from_autoencoder = True
+    if 'eval' in args.config:
+        from_autoencoder = False
     if not from_autoencoder:
         assert 'eval' in args.config
     if from_autoencoder:
@@ -50,7 +52,8 @@ if __name__ == "__main__":
         #model = load_model_from_config(config, 'saved_bsz64_acc1_lr8e5_512_leftclick_histpos_512_384_cont2_ddd_difficult_only_withlstmencoder_without/model-step=990000.ckpt')
         #model = load_model_from_config(config, 'saved_bsz64_acc1_lr8e5_512_leftclick_histpos_512_384_cont2_ddd_difficult_only_withlstmencoder_without/model-step=990000.ckpt')
         #model = load_model_from_config(config, 'saved_bsz64_acc1_lr8e5_512_leftclick_histpos_512_384_cont2_ddd_difficult_only_withlstmencoder_8192_1layer/model-step=740000.ckpt')
-        model = load_model_from_config(config, 'saved_bsz64_acc1_lr8e5_512_leftclick_histpos_512_384_cont2_ddd_difficult_only_withlstmencoder_8192_1layer_trim/model-step=720000.ckpt')
+        #model = load_model_from_config(config, 'saved_bsz64_acc1_lr8e5_512_leftclick_histpos_512_384_cont2_ddd_difficult_only_withlstmencoder_8192_1layer_trim/model-step=720000.ckpt')
+        model = load_model_from_config(config, 'saved_bsz64_acc1_lr8e5_512_leftclick_histpos_512_384_cont2_ddd_difficult_only_withlstmencoder_without/model-step=740000.ckpt')
     # model = load_cond_from_config(model, "model_bert.ckpt")
 
     #model = load_model_from_config(config, 'oct29_fixcursor_test_15_no_deltas_1000_paths/model_test_15_no_deltas_1000_paths.ckpt')

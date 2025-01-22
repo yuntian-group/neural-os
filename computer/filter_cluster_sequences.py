@@ -106,12 +106,13 @@ def filter_cluster_sequences(input_csv, cluster_center_path, output_csv, output_
 if __name__ == "__main__":
     input_csv = "train_dataset/filtered_dataset.csv"
     cluster_center_path = "clustering_results/cluster_01_size_2728_desktop/cluster_center.png"
-    output_csv = "train_dataset/desktop_sequences.csv"
-    output_dir = "train_dataset/desktop_transitions"
+    output_csv = "desktop_sequences.csv"
+    output_dir = "desktop_transitions"
     threshold = 0.01
     device = 'cuda'
     history_length = 3  # Number of previous images to show in transition
     debug = False  # Set to True to process only first 1000 rows
+    debug = True # Set to True to process only first 1000 rows
     
     filtered_df = filter_cluster_sequences(
         input_csv,

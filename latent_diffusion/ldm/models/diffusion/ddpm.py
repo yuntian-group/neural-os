@@ -908,6 +908,9 @@ class LatentDiffusion(DDPM):
         exp_name = 'without'
         exp_name = '8192_1layer'
         exp_name = '8192_1layer_trim'
+
+        exp_name = 'without_comp_norm_none'
+        DEBUG = True
         os.makedirs(exp_name, exist_ok=True)
         if not hasattr(self, 'i'):
             self.i = 0

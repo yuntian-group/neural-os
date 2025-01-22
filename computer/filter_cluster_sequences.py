@@ -3,10 +3,14 @@ import numpy as np
 from PIL import Image
 import ast
 from tqdm.auto import tqdm
+from sklearn.cluster import DBSCAN
+from collections import defaultdict
 import os
+import shutil
+from pathlib import Path
 import torch
 from torchvision import transforms
-from pathlib import Path
+from multiprocessing import Pool, cpu_count
 
 tqdm.pandas()  # Enable progress_apply for pandas
 
@@ -52,7 +56,7 @@ def save_sample_transitions(filtered_df, output_dir, num_samples=20, history_len
         transition_image = create_transition_image(sequence_paths, target_path, history_length)
         transition_image.save(output_dir / f"transition_{i:03d}.png")
 
-def compute_frame_difference(img1_path, img2_path, device='cuda'):
+def compute_frame_difference(img1_path, img2_path, device='cpu'):
     """Compute MSE between two images using GPU"""
     transform = transforms.ToTensor()
     
@@ -63,22 +67,17 @@ def compute_frame_difference(img1_path, img2_path, device='cuda'):
         distance = torch.mean((img2 - img1) ** 2)
         return float(distance.cpu())
 
-def check_sequence(row, cluster_center_path, threshold, device):
-    """Check if all images in sequence are within threshold"""
-    sequence = ast.literal_eval(row['Image_seq_cond_path']) if isinstance(row['Image_seq_cond_path'], str) else row['Image_seq_cond_path']
-    
+def check_sequence_parallel(args):
+    """Parallel version of check_sequence"""
+    sequence, cluster_center_path, threshold = args
     for img_path in sequence:
-        if compute_frame_difference(cluster_center_path, img_path, device) > threshold:
+        if compute_frame_difference(cluster_center_path, img_path, 'cpu') > threshold:
             return False
     return True
 
 def filter_cluster_sequences(input_csv, cluster_center_path, output_csv, output_dir, 
-                           threshold=0.01, device='cuda', history_length=3, debug=False):
+                           threshold=0.01, device='cpu', history_length=3, debug=False):
     """Filter sequences where all previous images are within threshold distance of cluster center"""
-    if device == 'cuda' and not torch.cuda.is_available():
-        print("CUDA not available, falling back to CPU")
-        device = 'cpu'
-    
     print(f"Reading dataset from {input_csv}")
     df = pd.read_csv(input_csv)
     
@@ -86,9 +85,24 @@ def filter_cluster_sequences(input_csv, cluster_center_path, output_csv, output_
         print("Debug mode: using first 1000 rows only")
         df = df.head(1000)
     
-    # Filter sequences using pandas
-    print("\nFiltering sequences...")
-    filtered_df = df[df.progress_apply(lambda row: check_sequence(row, cluster_center_path, threshold, device), axis=1)]
+    # Prepare sequences for parallel processing
+    sequences = [ast.literal_eval(seq) if isinstance(seq, str) else seq 
+                for seq in df['Image_seq_cond_path']]
+    args = [(seq, cluster_center_path, threshold) for seq in sequences]
+    
+    # Use max(1, cpu_count() - 1) workers by default to leave one core free
+    num_workers = max(1, cpu_count() - 1)
+    print(f"\nFiltering sequences using {num_workers} CPU workers...")
+    
+    with Pool(num_workers) as pool:
+        results = list(tqdm(
+            pool.imap(check_sequence_parallel, args),
+            total=len(args),
+            desc="Filtering"
+        ))
+    
+    # Create filtered dataset
+    filtered_df = df[results].copy()
     
     # Save filtered dataset
     filtered_df.to_csv(output_csv, index=False)
@@ -109,10 +123,9 @@ if __name__ == "__main__":
     output_csv = "desktop_sequences.csv"
     output_dir = "desktop_transitions"
     threshold = 0.01
-    device = 'cuda'
+    device = 'cpu'
     history_length = 3  # Number of previous images to show in transition
     debug = False  # Set to True to process only first 1000 rows
-    debug = True # Set to True to process only first 1000 rows
     
     filtered_df = filter_cluster_sequences(
         input_csv,

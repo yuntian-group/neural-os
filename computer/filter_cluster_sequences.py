@@ -50,6 +50,28 @@ def save_sample_transitions(filtered_df, output_dir, num_samples=20, history_len
         transition_image = create_transition_image(sequence_paths, target_path, history_length)
         transition_image.save(output_dir / f"transition_{i:03d}.png")
 
+def compute_frame_difference_batch(img1_paths, img2_paths, device='cuda'):
+    """Compute MSE between batches of image pairs using GPU"""
+    transform = transforms.ToTensor()
+    
+    print("Loading all images...")
+    # Load reference image (cluster center)
+    img1 = transform(Image.open(img1_paths[0])).to(device)  # Assuming all img1_paths are the same
+    
+    # Load and process all comparison images at once
+    imgs2 = torch.stack([
+        transform(Image.open(path))
+        for path in tqdm(img2_paths, desc="Loading images")
+    ]).to(device)
+    
+    # Compute MSE
+    print("Computing distances...")
+    with torch.no_grad():
+        batch_distances = torch.mean((imgs2 - img1) ** 2, dim=(1, 2, 3))
+        distances = torch.clamp(batch_distances, min=0.0).cpu().numpy()
+    
+    return distances
+
 def filter_cluster_sequences(input_csv, cluster_center_path, output_csv, output_dir, 
                            threshold=0.01, device='cuda', history_length=3):
     """Filter sequences where all previous images are within threshold distance of cluster center"""

@@ -106,6 +106,7 @@ if __name__ == "__main__":
     output_dir = "train_dataset/desktop_transitions"
     threshold = 0.01
     device = 'cuda'
+    device = 'cpu'
     history_length = 3  # Number of previous images to show in transition
     
     filtered_df = filter_cluster_sequences(

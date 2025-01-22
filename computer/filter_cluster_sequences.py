@@ -50,27 +50,25 @@ def save_sample_transitions(filtered_df, output_dir, num_samples=20, history_len
         transition_image = create_transition_image(sequence_paths, target_path, history_length)
         transition_image.save(output_dir / f"transition_{i:03d}.png")
 
-def compute_frame_difference_batch(img1_paths, img2_paths, device='cuda'):
-    """Compute MSE between batches of image pairs using GPU"""
+def compute_frame_difference(img1_path, img2_path, device='cuda'):
+    """Compute MSE between two images using GPU"""
     transform = transforms.ToTensor()
     
-    print("Loading all images...")
-    # Load reference image (cluster center)
-    img1 = transform(Image.open(img1_paths[0])).to(device)  # Assuming all img1_paths are the same
+    img1 = transform(Image.open(img1_path)).to(device)
+    img2 = transform(Image.open(img2_path)).to(device)
     
-    # Load and process all comparison images at once
-    imgs2 = torch.stack([
-        transform(Image.open(path))
-        for path in tqdm(img2_paths, desc="Loading images")
-    ]).to(device)
-    
-    # Compute MSE
-    print("Computing distances...")
     with torch.no_grad():
-        batch_distances = torch.mean((imgs2 - img1) ** 2, dim=(1, 2, 3))
-        distances = torch.clamp(batch_distances, min=0.0).cpu().numpy()
+        distance = torch.mean((img2 - img1) ** 2)
+        return float(distance.cpu())
+
+def check_sequence(row, cluster_center_path, threshold, device):
+    """Check if all images in sequence are within threshold"""
+    sequence = ast.literal_eval(row['Image_seq_cond_path']) if isinstance(row['Image_seq_cond_path'], str) else row['Image_seq_cond_path']
     
-    return distances
+    for img_path in sequence:
+        if compute_frame_difference(cluster_center_path, img_path, device) > threshold:
+            return False
+    return True
 
 def filter_cluster_sequences(input_csv, cluster_center_path, output_csv, output_dir, 
                            threshold=0.01, device='cuda', history_length=3):
@@ -82,43 +80,9 @@ def filter_cluster_sequences(input_csv, cluster_center_path, output_csv, output_
     print(f"Reading dataset from {input_csv}")
     df = pd.read_csv(input_csv)
     
-    # Convert string representations to lists
-    df['Image_seq_cond_path'] = df['Image_seq_cond_path'].apply(ast.literal_eval)
-    
-    # Prepare all images for comparison
-    all_seq_images = []
-    seq_to_row_map = {}  # Map to track which sequences each image belongs to
-    
-    for idx, row in df.iterrows():
-        for img_path in row['Image_seq_cond_path']:
-            all_seq_images.append(img_path)
-            seq_to_row_map[img_path] = idx
-    
-    # Compute distances to cluster center
-    print("\nComputing distances to cluster center...")
-    distances = compute_frame_difference_batch(
-        [cluster_center_path] * len(all_seq_images),
-        all_seq_images,
-        device=device
-    )
-    
-    # Create distance lookup dictionary
-    distance_lookup = {img: dist for img, dist in zip(all_seq_images, distances)}
-    
-    # Filter sequences
+    # Filter sequences using pandas
     print("\nFiltering sequences...")
-    keep_rows = []
-    for idx, row in tqdm(df.iterrows(), total=len(df), desc="Filtering"):
-        # Check if all images in sequence are within threshold
-        sequence_ok = all(
-            distance_lookup[img_path] <= threshold 
-            for img_path in row['Image_seq_cond_path']
-        )
-        if sequence_ok:
-            keep_rows.append(idx)
-    
-    # Create filtered dataset
-    filtered_df = df.loc[keep_rows].copy()
+    filtered_df = df[df.apply(lambda row: check_sequence(row, cluster_center_path, threshold, device), axis=1)]
     
     # Save filtered dataset
     filtered_df.to_csv(output_csv, index=False)

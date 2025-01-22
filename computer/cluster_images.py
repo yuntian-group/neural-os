@@ -42,34 +42,31 @@ def compute_frame_difference_batch(img1_paths, img2_paths, batch_size=100, devic
     
     return np.array(distances)
 
-def compute_distance_matrix(image_paths, batch_size=100, device='cuda'):
-    """Compute pairwise distance matrix between all images using GPU"""
-    n = len(image_paths)
-    distances = np.zeros((n, n))
+def compute_distance_matrix(image_paths, device='cuda'):
+    """Compute pairwise distance matrix between all images using GPU in one shot"""
+    transform = transforms.ToTensor()
     
-    print("Computing pairwise distances...")
-    for i in tqdm(range(n)):
-        # Create pairs for current row
-        img1_paths = [image_paths[i]] * (n - i - 1)
-        img2_paths = image_paths[i+1:]
+    print("Loading all images...")
+    # Load all images into a single tensor [N, C, H, W]
+    images = torch.stack([
+        transform(Image.open(path)) 
+        for path in tqdm(image_paths)
+    ]).to(device)
+    
+    print("Computing all pairwise distances...")
+    with torch.no_grad():
+        # Compute squared differences for all pairs at once
+        # Using (a-b)^2 = a^2 + b^2 - 2ab formula
+        a2 = torch.sum(images**2, dim=(1,2,3))[:, None]  # [N, 1]
+        b2 = torch.sum(images**2, dim=(1,2,3))[None, :]  # [1, N]
+        ab = torch.mm(images.view(images.size(0), -1), 
+                     images.view(images.size(0), -1).t())  # [N, N]
+        distances = (a2 + b2 - 2*ab) / (images.size(1) * images.size(2) * images.size(3))
         
-        if len(img2_paths) > 0:
-            # Compute distances for current row
-            row_distances = compute_frame_difference_batch(
-                img1_paths, 
-                img2_paths, 
-                batch_size=batch_size,
-                device=device
-            )
-            
-            # Fill in the matrix (symmetric)
-            distances[i, i+1:] = row_distances
-            distances[i+1:, i] = row_distances
-    
-    return distances
+        return distances.cpu().numpy()
 
 def cluster_images(input_csv, output_dir, sample_size=2000, eps=0.1, min_samples=5, 
-                  random_seed=42, batch_size=2000, device='cuda'):
+                  random_seed=42, device='cuda'):
     """Cluster images and save representatives"""
     # Check if CUDA is available when device is 'cuda'
     if device == 'cuda' and not torch.cuda.is_available():
@@ -94,7 +91,7 @@ def cluster_images(input_csv, output_dir, sample_size=2000, eps=0.1, min_samples
         target_images = np.random.choice(target_images, sample_size, replace=False)
     
     # Compute distance matrix using GPU
-    distances = compute_distance_matrix(target_images, batch_size=batch_size, device=device)
+    distances = compute_distance_matrix(target_images, device=device)
     
     # Run DBSCAN
     print("\nRunning DBSCAN clustering...")
@@ -156,7 +153,6 @@ if __name__ == "__main__":
     sample_size = 2000  # Number of images to sample
     eps = 0.1  # Maximum distance between two samples to be in same cluster
     min_samples = 5  # Minimum number of samples in a cluster
-    batch_size = 2000  # Number of image pairs to process in parallel
     device = 'cuda'  # Use 'cpu' if no GPU available
     
     clusters, distances, labels = cluster_images(
@@ -165,6 +161,5 @@ if __name__ == "__main__":
         sample_size=sample_size,
         eps=eps, 
         min_samples=min_samples,
-        batch_size=batch_size,
         device=device
     )

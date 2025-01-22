@@ -152,11 +152,11 @@ if __name__ == "__main__":
     output_dir = "clustering_results"
     
     # Parameters
-    sample_size = 8000  # Number of images to sample
+    sample_size = 20000  # Number of images to sample
     eps = 0.01  # Maximum distance between two samples to be in same cluster
     min_samples = 50  # Minimum number of samples in a cluster
     device = 'cuda'  # Use 'cpu' if no GPU available
-    device = 'cpu'  # Use 'cpu' if no GPU available
+    #device = 'cpu'  # Use 'cpu' if no GPU available
     
     clusters, distances, labels = cluster_images(
         input_csv, 

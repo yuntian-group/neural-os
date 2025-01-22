@@ -18,6 +18,7 @@ def initialize_clean_state():
     # Start a container and let it initialize
     base_container_id = subprocess.check_output([
         'docker', 'run', '-d',
+        '--hostname', 'computer',
         '--env', f'SCREEN_WIDTH={SCREEN_WIDTH}',
         '--env', f'SCREEN_HEIGHT={SCREEN_HEIGHT}',
         'synthetic_data_generator',

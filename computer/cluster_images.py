@@ -34,7 +34,7 @@ def compute_distance_matrix(image_paths, num_workers=None):
     
     return distances
 
-def cluster_images(input_csv, output_dir, eps=0.1, min_samples=5):
+def cluster_images(input_csv, output_dir, sample_size=2000, eps=0.1, min_samples=5, random_seed=42):
     """Cluster images and save representatives"""
     # Create output directory
     output_dir = Path(output_dir)
@@ -44,9 +44,14 @@ def cluster_images(input_csv, output_dir, eps=0.1, min_samples=5):
     print("Reading dataset...")
     df = pd.read_csv(input_csv)
     
-    # Get unique target images
+    # Get unique target images and subsample
     target_images = df['Target_image'].unique()
     print(f"Found {len(target_images)} unique target images")
+    
+    if len(target_images) > sample_size:
+        print(f"Subsampling to {sample_size} images...")
+        np.random.seed(random_seed)
+        target_images = np.random.choice(target_images, sample_size, replace=False)
     
     # Compute distance matrix
     distances = compute_distance_matrix(target_images)
@@ -107,8 +112,15 @@ if __name__ == "__main__":
     input_csv = "train_dataset/filtered_dataset.csv"
     output_dir = "clustering_results"
     
-    # You might need to tune these parameters
+    # Parameters
+    sample_size = 2000  # Number of images to sample
     eps = 0.1  # Maximum distance between two samples to be in same cluster
     min_samples = 5  # Minimum number of samples in a cluster
     
-    clusters, distances, labels = cluster_images(input_csv, output_dir, eps, min_samples)
+    clusters, distances, labels = cluster_images(
+        input_csv, 
+        output_dir, 
+        sample_size=sample_size,
+        eps=eps, 
+        min_samples=min_samples
+    )

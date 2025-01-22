@@ -69,7 +69,7 @@ def compute_distance_matrix(image_paths, batch_size=100, device='cuda'):
     return distances
 
 def cluster_images(input_csv, output_dir, sample_size=2000, eps=0.1, min_samples=5, 
-                  random_seed=42, batch_size=100, device='cuda'):
+                  random_seed=42, batch_size=2000, device='cuda'):
     """Cluster images and save representatives"""
     # Check if CUDA is available when device is 'cuda'
     if device == 'cuda' and not torch.cuda.is_available():
@@ -156,7 +156,7 @@ if __name__ == "__main__":
     sample_size = 2000  # Number of images to sample
     eps = 0.1  # Maximum distance between two samples to be in same cluster
     min_samples = 5  # Minimum number of samples in a cluster
-    batch_size = 100  # Number of image pairs to process in parallel
+    batch_size = 2000  # Number of image pairs to process in parallel
     device = 'cuda'  # Use 'cpu' if no GPU available
     
     clusters, distances, labels = cluster_images(

@@ -918,8 +918,20 @@ class LatentDiffusion(DDPM):
             self.i = 0
 
         if DEBUG:
+            data_mean = -0.54
+            data_std = 6.78
+            data_min = -27.681446075439453
+            data_max = 30.854148864746094
             self.eval()
             #import pdb; pdb.set_trace()
+            if exp_name == 'without_comp_norm_standard':
+                batch['image_processed'] = batch['image_processed'] * data_std + data_mean
+                batch['c_concat_processed'] = batch['c_concat_processed'] * data_std + data_mean
+            elif exp_name == 'without_comp_norm_minmax':
+                batch['image_processed'] = batch['image_processed'].clamp(-1, 1) * (data_max - data_min) + data_min
+                batch['c_concat_processed'] = batch['c_concat_processed'].clamp(-1, 1) * (data_max - data_min) + data_min
+            elif exp_name == 'without_comp_norm_none':
+                pass
             z_vis = self.decode_first_stage(batch['image_processed'])
             prev_frames = self.decode_first_stage(batch['c_concat_processed'][:, -1])
             for i, zz in enumerate(z_vis):
@@ -934,12 +946,10 @@ class LatentDiffusion(DDPM):
                 c_i['c_crossattn'] = c['c_crossattn'][i:i+1]
                 c_i = self.get_learned_conditioning(c_i)
                 sample_i = self.p_sample_loop(cond=c_i, shape=[1, 4, 48, 64], return_intermediates=False, verbose=True)
-                data_mean = -0.54
-                data_std = 6.78
-                data_min = -27.681446075439453
-                data_max = 30.854148864746094
+                
                 if exp_name == 'without_comp_norm_standard':
                     sample_i = sample_i * data_std + data_mean
+                    #prev_frame_img = prev_frame_img * data_std + data_mean
                 elif exp_name == 'without_comp_norm_minmax':
                     sample_i = sample_i.clamp(-1, 1) * (data_max - data_min) + data_min
                 elif exp_name == 'without_comp_norm_none':

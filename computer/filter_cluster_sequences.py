@@ -82,7 +82,7 @@ def filter_cluster_sequences(input_csv, cluster_center_path, output_csv, output_
     
     # Filter sequences using pandas
     print("\nFiltering sequences...")
-    filtered_df = df[df.apply(lambda row: check_sequence(row, cluster_center_path, threshold, device), axis=1)]
+    filtered_df = df[df.progress_apply(lambda row: check_sequence(row, cluster_center_path, threshold, device), axis=1)]
     
     # Save filtered dataset
     filtered_df.to_csv(output_csv, index=False)

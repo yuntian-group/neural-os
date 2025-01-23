@@ -139,6 +139,17 @@ def cluster_transitions(input_csv, output_dir, sample_size=2000, eps=0.01, min_s
         # Find sequences for this cluster's target images
         cluster_sequences = df[df['Target_image'].isin(target_images)]
         
+        # Compute and save cluster center (image with minimum average distance to other images)
+        if len(target_images) > 1 and label != -1:  # Don't compute for noise cluster
+            indices = [list(target_images).index(img) for img in target_images]
+            cluster_distances = distances[indices][:, indices]
+            avg_distances = cluster_distances.mean(axis=1)
+            center_idx = indices[np.argmin(avg_distances)]
+            center_image = target_images[center_idx]
+            
+            # Save cluster center
+            shutil.copy2(center_image, cluster_dir / "cluster_center.png")
+        
         # Save representative transitions
         num_examples = min(5, len(cluster_sequences))
         for i, (_, row) in enumerate(cluster_sequences.sample(n=num_examples, random_state=random_seed).iterrows()):

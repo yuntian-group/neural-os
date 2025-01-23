@@ -34,15 +34,16 @@ def check_sequence_parallel(args):
         # Check if ALL images in sequence AND target are close to THIS cluster center
         sequence_ok = True
         
+        # Check target image
+        if sequence_ok and compute_frame_difference(center_path, target_image, 'cpu') > threshold:
+            sequence_ok = False
+            break
+
         # Check all conditional images
         for img_path in sequence:
             if compute_frame_difference(desktop_center_path, img_path, 'cpu') > threshold:
                 sequence_ok = False
                 break
-        
-        # Check target image
-        if sequence_ok and compute_frame_difference(center_path, target_image, 'cpu') > threshold:
-            sequence_ok = False
         
         # If all images are close to this cluster center, accept sequence
         if sequence_ok:
@@ -141,7 +142,7 @@ def create_transition_image(sequence_paths, target_path, history_length=3):
     
     return combined_image
 
-def save_sample_transitions(filtered_df, output_dir, num_samples=20, history_length=3, seed=42):
+def save_sample_transitions(filtered_df, output_dir, num_samples=200, history_length=3, seed=42):
     """Save sample transitions as horizontal image strips"""
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -173,8 +174,8 @@ if __name__ == "__main__":
     threshold = 0.01
     device = 'cpu'
     history_length = 3  # Number of previous images to show in transition
-    debug = True # Set to True to process only first 1000 rows
-    load_existing = False # Set to True to load from existing CSV
+    debug = False # Set to True to process only first 1000 rows
+    load_existing = True # Set to True to load from existing CSV
     
     filtered_df = filter_cluster_sequences_multi(
         input_csv,

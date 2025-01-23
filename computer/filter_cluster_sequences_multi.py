@@ -27,6 +27,7 @@ def compute_frame_difference(img1_path, img2_path, device='cpu'):
 def check_sequence_parallel(args):
     """Parallel version of check_sequence"""
     sequence, target_image, cluster_centers, threshold = args
+    desktop_center_path = 'clustering_results/cluster_01_size_2728_desktop/cluster_center.png'
     
     # For each cluster center
     for center_path in cluster_centers:
@@ -35,7 +36,7 @@ def check_sequence_parallel(args):
         
         # Check all conditional images
         for img_path in sequence:
-            if compute_frame_difference(center_path, img_path, 'cpu') > threshold:
+            if compute_frame_difference(desktop_center_path, img_path, 'cpu') > threshold:
                 sequence_ok = False
                 break
         
@@ -149,8 +150,8 @@ if __name__ == "__main__":
     threshold = 0.01
     device = 'cpu'
     history_length = 3  # Number of previous images to show in transition
-    debug = False  # Set to True to process only first 1000 rows
-    load_existing = True  # Set to True to load from existing CSV
+    debug = True # Set to True to process only first 1000 rows
+    load_existing = False # Set to True to load from existing CSV
     
     filtered_df = filter_cluster_sequences_multi(
         input_csv,

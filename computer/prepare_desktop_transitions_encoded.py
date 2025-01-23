@@ -4,6 +4,14 @@ import shutil
 from pathlib import Path
 from tqdm import tqdm
 import ast
+from multiprocessing import Pool, cpu_count
+
+def copy_file(args):
+    """Helper function to copy a single file"""
+    src_path, dst_path = args
+    dst_path.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(src_path, dst_path)
+    return True
 
 def prepare_desktop_data_both(input_csv, output_dir):
     """Prepare desktop transition data by copying both original and encoded files"""
@@ -44,31 +52,41 @@ def prepare_desktop_data_both(input_csv, output_dir):
         for x in required_images
     }
     
-    # Copy original images
-    print(f"\nCopying {len(required_images)} original PNG files...")
-    for src_path in tqdm(required_images, desc="Copying PNGs"):
-        src_path = Path(src_path)
-        rel_path = src_path.relative_to(Path(src_path).parent.parent)  # Remove parent of train_dataset
-        dst_path = image_dir / rel_path
-        
-        # Create parent directories if they don't exist
-        dst_path.parent.mkdir(parents=True, exist_ok=True)
-        
-        # Copy the file
-        shutil.copy2(src_path, dst_path)
+    # Prepare copy tasks for original images
+    png_copy_tasks = [
+        (Path(src_path), 
+         image_dir / Path(src_path).relative_to(Path(src_path).parent.parent))
+        for src_path in required_images
+    ]
     
-    # Copy encoded images
-    print(f"\nCopying {len(required_encoded)} encoded NPY files...")
-    for src_path in tqdm(required_encoded, desc="Copying NPYs"):
-        src_path = Path(src_path)
-        rel_path = src_path.relative_to(Path(src_path).parent.parent)  # Remove parent of train_dataset_encoded
-        dst_path = encoded_dir / rel_path
+    # Prepare copy tasks for encoded images
+    npy_copy_tasks = [
+        (Path(src_path), 
+         encoded_dir / Path(src_path).relative_to(Path(src_path).parent.parent))
+        for src_path in required_encoded
+    ]
+    
+    # Use max(1, cpu_count() - 1) workers to leave one core free
+    num_workers = max(1, cpu_count() - 1)
+    print(f"\nUsing {num_workers} CPU workers for parallel copying...")
+    
+    # Copy files in parallel
+    with Pool(num_workers) as pool:
+        # Copy PNG files
+        print(f"\nCopying {len(png_copy_tasks)} original PNG files...")
+        list(tqdm(
+            pool.imap(copy_file, png_copy_tasks),
+            total=len(png_copy_tasks),
+            desc="Copying PNGs"
+        ))
         
-        # Create parent directories if they don't exist
-        dst_path.parent.mkdir(parents=True, exist_ok=True)
-        
-        # Copy the file
-        shutil.copy2(src_path, dst_path)
+        # Copy NPY files
+        print(f"\nCopying {len(npy_copy_tasks)} encoded NPY files...")
+        list(tqdm(
+            pool.imap(copy_file, npy_copy_tasks),
+            total=len(npy_copy_tasks),
+            desc="Copying NPYs"
+        ))
     
     # Create a manifest file
     print("\nCreating manifest file...")

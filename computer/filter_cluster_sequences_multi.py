@@ -118,7 +118,30 @@ def filter_cluster_sequences_multi(input_csv, cluster_dirs, output_csv, output_d
     
     return filtered_df
 
-def save_sample_transitions(filtered_df, output_dir, num_samples=50, history_length=3, seed=42):
+def create_transition_image(sequence_paths, target_path, history_length=3):
+    """Create a horizontal strip of images showing the transition"""
+    # Take last history_length images from sequence
+    sequence_paths = sequence_paths[-history_length:]
+    
+    # Load all images
+    images = [Image.open(path) for path in sequence_paths]
+    images.append(Image.open(target_path))  # Add target image
+    
+    # Get dimensions
+    width = images[0].width
+    height = images[0].height
+    
+    # Create new image
+    total_width = width * len(images)
+    combined_image = Image.new('RGB', (total_width, height))
+    
+    # Paste images horizontally
+    for i, img in enumerate(images):
+        combined_image.paste(img, (i * width, 0))
+    
+    return combined_image
+
+def save_sample_transitions(filtered_df, output_dir, num_samples=20, history_length=3, seed=42):
     """Save sample transitions as horizontal image strips"""
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)

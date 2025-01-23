@@ -51,8 +51,20 @@ def check_sequence_parallel(args):
     return False
 
 def filter_cluster_sequences_multi(input_csv, cluster_dirs, output_csv, output_dir, 
-                                 threshold=0.01, device='cpu', history_length=3, debug=False):
+                                 threshold=0.01, device='cpu', history_length=3, debug=False,
+                                 load_existing=True):
     """Filter sequences where all images (conditional and target) are within threshold distance of the same cluster center"""
+    
+    if load_existing and os.path.exists(output_csv):
+        print(f"Loading existing filtered dataset from {output_csv}")
+        filtered_df = pd.read_csv(output_csv)
+        print(f"Loaded {len(filtered_df)} sequences")
+        
+        # Save sample transitions
+        save_sample_transitions(filtered_df, output_dir, history_length=history_length)
+        
+        return filtered_df
+    
     print(f"Reading dataset from {input_csv}")
     df = pd.read_csv(input_csv)
     
@@ -105,6 +117,25 @@ def filter_cluster_sequences_multi(input_csv, cluster_dirs, output_csv, output_d
     
     return filtered_df
 
+def save_sample_transitions(filtered_df, output_dir, num_samples=50, history_length=3, seed=42):
+    """Save sample transitions as horizontal image strips"""
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Sample random sequences
+    np.random.seed(seed)
+    sample_indices = np.random.choice(len(filtered_df), min(num_samples, len(filtered_df)), replace=False)
+    
+    print(f"\nSaving {len(sample_indices)} sample transitions...")
+    for i, idx in enumerate(sample_indices):
+        row = filtered_df.iloc[idx]
+        sequence_paths = ast.literal_eval(row['Image_seq_cond_path']) if isinstance(row['Image_seq_cond_path'], str) else row['Image_seq_cond_path']
+        target_path = row['Target_image']
+        
+        # Create and save transition image
+        transition_image = create_transition_image(sequence_paths, target_path, history_length)
+        transition_image.save(output_dir / f"transition_{i:03d}.png")
+
 if __name__ == "__main__":
     input_csv = "desktop_sequences.csv"
     cluster_dirs = [
@@ -119,6 +150,7 @@ if __name__ == "__main__":
     device = 'cpu'
     history_length = 3  # Number of previous images to show in transition
     debug = False  # Set to True to process only first 1000 rows
+    load_existing = True  # Set to True to load from existing CSV
     
     filtered_df = filter_cluster_sequences_multi(
         input_csv,
@@ -128,5 +160,6 @@ if __name__ == "__main__":
         threshold=threshold,
         device=device,
         history_length=history_length,
-        debug=debug
+        debug=debug,
+        load_existing=load_existing
     )

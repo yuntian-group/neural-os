@@ -26,25 +26,33 @@ def compute_frame_difference(img1_path, img2_path, device='cpu'):
 
 def check_sequence_parallel(args):
     """Parallel version of check_sequence"""
-    sequence, cluster_centers, threshold = args
+    sequence, target_image, cluster_centers, threshold = args
     
-    # For each image in sequence
-    for img_path in sequence:
-        # Check if image is close to ANY cluster center
-        min_distance = float('inf')
-        for center_path in cluster_centers:
-            distance = compute_frame_difference(center_path, img_path, 'cpu')
-            min_distance = min(min_distance, distance)
+    # For each cluster center
+    for center_path in cluster_centers:
+        # Check if ALL images in sequence AND target are close to THIS cluster center
+        sequence_ok = True
         
-        # If image is not close to any cluster center, reject sequence
-        if min_distance > threshold:
-            return False
+        # Check all conditional images
+        for img_path in sequence:
+            if compute_frame_difference(center_path, img_path, 'cpu') > threshold:
+                sequence_ok = False
+                break
+        
+        # Check target image
+        if sequence_ok and compute_frame_difference(center_path, target_image, 'cpu') > threshold:
+            sequence_ok = False
+        
+        # If all images are close to this cluster center, accept sequence
+        if sequence_ok:
+            return True
     
-    return True
+    # If no cluster center matches all images, reject sequence
+    return False
 
 def filter_cluster_sequences_multi(input_csv, cluster_dirs, output_csv, output_dir, 
                                  threshold=0.01, device='cpu', history_length=3, debug=False):
-    """Filter sequences where all previous images are within threshold distance of any cluster center"""
+    """Filter sequences where all images (conditional and target) are within threshold distance of the same cluster center"""
     print(f"Reading dataset from {input_csv}")
     df = pd.read_csv(input_csv)
     
@@ -66,7 +74,9 @@ def filter_cluster_sequences_multi(input_csv, cluster_dirs, output_csv, output_d
     # Prepare sequences for parallel processing
     sequences = [ast.literal_eval(seq) if isinstance(seq, str) else seq 
                 for seq in df['Image_seq_cond_path']]
-    args = [(seq, cluster_centers, threshold) for seq in sequences]
+    target_images = df['Target_image']
+    args = [(seq, target, cluster_centers, threshold) 
+            for seq, target in zip(sequences, target_images)]
     
     # Use max(1, cpu_count() - 1) workers by default to leave one core free
     num_workers = max(1, cpu_count() - 1)

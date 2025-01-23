@@ -38,11 +38,11 @@ def check_sequence_parallel(args):
         if sequence_ok and compute_frame_difference(center_path, target_image, 'cpu') > threshold:
             continue
 
-        # Check all conditional images
-        for img_path in sequence:
-            if compute_frame_difference(desktop_center_path, img_path, 'cpu') > threshold:
-                sequence_ok = False
-                break
+        ## Check all conditional images
+        #for img_path in sequence:
+        #    if compute_frame_difference(desktop_center_path, img_path, 'cpu') > threshold:
+        #        sequence_ok = False
+        #        break
         
         # If all images are close to this cluster center, accept sequence
         if sequence_ok:

@@ -36,8 +36,7 @@ def check_sequence_parallel(args):
         
         # Check target image
         if sequence_ok and compute_frame_difference(center_path, target_image, 'cpu') > threshold:
-            sequence_ok = False
-            break
+            continue
 
         # Check all conditional images
         for img_path in sequence:
@@ -175,7 +174,7 @@ if __name__ == "__main__":
     device = 'cpu'
     history_length = 3  # Number of previous images to show in transition
     debug = False # Set to True to process only first 1000 rows
-    load_existing = True # Set to True to load from existing CSV
+    load_existing = False # Set to True to load from existing CSV
     
     filtered_df = filter_cluster_sequences_multi(
         input_csv,

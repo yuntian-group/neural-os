@@ -180,4 +180,5 @@ def analyze_sequences(csv_path, output_dir="analysis_results"):
 
 if __name__ == "__main__":
     csv_path = "desktop_sequences_filtered.csv"
-    results_df, error_cases = analyze_sequences(csv_path)
+    output_dir = "desktop_analysis_results"
+    results_df, error_cases = analyze_sequences(csv_path, output_dir)

@@ -61,10 +61,10 @@ def parse_action(action_str):
     return action_type, (coords[0], coords[1])
 
 def is_double_click(actions, time_threshold=0.3):
-    """Detect double click by finding two clicks close in time/space, focusing on the last occurrence"""
+    """Detect double click by finding two clicks close in time/space, focusing on the last valid occurrence"""
     click_actions = [(i, parse_action(a)) for i, a in enumerate(actions) if parse_action(a)[0] == 'L']
     
-    # Traverse clicks in reverse to find the last double click
+    # Traverse clicks in reverse to find the last valid double click
     for i in range(len(click_actions)-1, 0, -1):  # Start from the end
         curr_idx, (_, curr_pos) = click_actions[i]
         prev_idx, (_, prev_pos) = click_actions[i-1]
@@ -74,7 +74,11 @@ def is_double_click(actions, time_threshold=0.3):
         dist = np.sqrt(sum((a-b)**2 for a, b in zip(curr_pos, prev_pos)))
         
         if time_diff <= time_threshold and dist < 10:  # 10 pixels threshold
-            return True, curr_pos  # Return position of the second (later) click
+            # Check if this double click is on any icon
+            for name, icon in ICONS.items():
+                icon_dist = np.sqrt(sum((a-b)**2 for a, b in zip(curr_pos, icon['center'])))
+                if icon_dist <= icon['radius']:
+                    return True, curr_pos  # Return position of the second (later) click
     
     return False, None
 
@@ -96,6 +100,10 @@ def predict_target(action_sequence):
             min_dist = dist
             closest_icon = name
     
+    # Only return if we found a valid icon
+    if closest_icon is None:
+        return None
+        
     return closest_icon
 
 def visualize_sequence(image_paths, action_sequence, save_path, history_length=7):

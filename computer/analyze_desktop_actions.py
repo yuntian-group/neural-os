@@ -106,7 +106,7 @@ def predict_target(action_sequence):
         
     return closest_icon
 
-def visualize_sequence(image_paths, action_sequence, save_path, history_length=7):
+def visualize_sequence(image_paths, target_image, action_sequence, save_path, history_length=7):
     """Visualize action sequence with cursor positions and clicks"""
     images = []
     
@@ -123,21 +123,21 @@ def visualize_sequence(image_paths, action_sequence, save_path, history_length=7
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         
         # Get corresponding action for this frame
-        if 0 <= action_start_idx + i < len(action_sequence):
-            action = action_sequence[action_start_idx + i]
-            action_type, (x, y) = parse_action(action)
-            
-            # Draw cursor position
-            cv2.circle(img, (x, y), 3, (255, 255, 255), -1)
-            
-            # Draw click if present
-            if action_type == 'L':
-                cv2.circle(img, (x, y), 10, (255, 0, 0), 2)
+        #if 0 <= action_start_idx + i < len(action_sequence):
+        action = action_sequence[-len(frame_paths) + i]
+        action_type, (x, y) = parse_action(action)
+        
+        # Draw cursor position
+        cv2.circle(img, (x, y), 3, (255, 255, 255), -1)
+        
+        # Draw click if present
+        if action_type == 'L':
+            cv2.circle(img, (x, y), 10, (255, 0, 0), 2)
         
         images.append(img)
     
     # Add target image
-    target_img = cv2.imread(image_paths[-1])
+    target_img = cv2.imread(target_image)
     target_img = cv2.cvtColor(target_img, cv2.COLOR_BGR2RGB)
     images.append(target_img)
     
@@ -192,6 +192,7 @@ def analyze_sequences(csv_path, output_dir="analysis_results", debug=False, hist
             
             visualize_sequence(
                 image_seq,
+                target_image,
                 action_seq,
                 error_case_dir / "sequence.png",
                 history_length=history_length

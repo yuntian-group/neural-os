@@ -185,10 +185,20 @@ def analyze_sequences(csv_path, output_dir="analysis_results", debug=False, hist
     
     print(f"\nOverall Accuracy: {accuracy:.2%}")
     print("\nConfusion Matrix:")
+    
+    # Print confusion matrix in a clearer format
     for true_class in ICONS.keys():
         true_cases = results_df[results_df['ground_truth'] == true_class]
-        print(f"\nTrue {true_class}:")
-        print(true_cases['prediction'].value_counts(normalize=True))
+        if len(true_cases) == 0:
+            print(f"\nTrue {true_class}: No examples found")
+        else:
+            print(f"\nTrue {true_class}:")
+            predictions = true_cases['prediction'].value_counts(normalize=True)
+            for pred_class, proportion in predictions.items():
+                if pd.isna(pred_class):
+                    print(f"  No prediction: {proportion:.1%}")
+                else:
+                    print(f"  Predicted {pred_class}: {proportion:.1%}")
     
     # Save error cases summary
     pd.DataFrame(error_cases).to_csv(output_dir / "error_cases.csv", index=False)

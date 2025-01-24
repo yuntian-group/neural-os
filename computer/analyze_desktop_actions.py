@@ -51,19 +51,20 @@ def parse_action(action_str):
     return action_type, (coords[0], coords[1])
 
 def is_double_click(actions, time_threshold=0.3):
-    """Detect double click by finding two clicks close in time/space"""
+    """Detect double click by finding two clicks close in time/space, focusing on the last occurrence"""
     click_actions = [(i, parse_action(a)) for i, a in enumerate(actions) if parse_action(a)[0] == 'L']
     
-    for i in range(len(click_actions)-1):
+    # Traverse clicks in reverse to find the last double click
+    for i in range(len(click_actions)-1, 0, -1):  # Start from the end
         curr_idx, (_, curr_pos) = click_actions[i]
-        next_idx, (_, next_pos) = click_actions[i+1]
+        prev_idx, (_, prev_pos) = click_actions[i-1]
         
         # Check if clicks are close in time (frames) and space
-        time_diff = (next_idx - curr_idx) * 0.1  # 10 fps -> 0.1s per frame
-        dist = np.sqrt(sum((a-b)**2 for a, b in zip(curr_pos, next_pos)))
+        time_diff = (curr_idx - prev_idx) * 0.1  # 10 fps -> 0.1s per frame
+        dist = np.sqrt(sum((a-b)**2 for a, b in zip(curr_pos, prev_pos)))
         
         if time_diff <= time_threshold and dist < 10:  # 10 pixels threshold
-            return True, curr_pos
+            return True, curr_pos  # Return position of the second (later) click
     
     return False, None
 

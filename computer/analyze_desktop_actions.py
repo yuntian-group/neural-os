@@ -87,10 +87,10 @@ def predict_target(action_sequence):
     
     return closest_icon
 
-def visualize_sequence(image_paths, action_sequence, save_path):
+def visualize_sequence(image_paths, action_sequence, save_path, history_length=7):
     """Visualize action sequence with cursor positions and clicks"""
     images = []
-    for img_path in image_paths[-3:]:  # Last 3 frames
+    for img_path in image_paths[-history_length:]:  # Last N frames
         img = cv2.imread(img_path)
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         
@@ -108,7 +108,7 @@ def visualize_sequence(image_paths, action_sequence, save_path):
         images.append(img)
     
     # Create horizontal strip
-    fig, axes = plt.subplots(1, 3, figsize=(15, 5))
+    fig, axes = plt.subplots(1, len(images), figsize=(5*len(images), 5))
     for i, (ax, img) in enumerate(zip(axes, images)):
         ax.imshow(img)
         ax.axis('off')
@@ -118,9 +118,14 @@ def visualize_sequence(image_paths, action_sequence, save_path):
     plt.savefig(save_path)
     plt.close()
 
-def analyze_sequences(csv_path, output_dir="analysis_results"):
+def analyze_sequences(csv_path, output_dir="analysis_results", debug=False, history_length=7):
     """Analyze all sequences and compute accuracy"""
     df = pd.read_csv(csv_path)
+    
+    if debug:
+        print("Debug mode: using first 100 rows only")
+        df = df.head(100)
+    
     output_dir = Path(output_dir)
     output_dir.mkdir(exist_ok=True)
     
@@ -151,7 +156,8 @@ def analyze_sequences(csv_path, output_dir="analysis_results"):
             visualize_sequence(
                 image_seq,
                 action_seq,
-                error_case_dir / "sequence.png"
+                error_case_dir / "sequence.png",
+                history_length=history_length
             )
             
             error_cases.append({
@@ -181,4 +187,12 @@ def analyze_sequences(csv_path, output_dir="analysis_results"):
 if __name__ == "__main__":
     csv_path = "desktop_sequences_filtered.csv"
     output_dir = "desktop_analysis_results"
-    results_df, error_cases = analyze_sequences(csv_path, output_dir)
+    history_length = 7  # Number of previous frames to show in transitions
+    debug = False  # Set to True to process only first 100 rows
+    
+    results_df, error_cases = analyze_sequences(
+        csv_path, 
+        output_dir,
+        debug=debug,
+        history_length=history_length
+    )

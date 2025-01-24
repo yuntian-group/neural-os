@@ -82,6 +82,7 @@ def predict_target(action_sequence):
     """Predict target based on action sequence"""
     # Check for double click
     has_double_click, click_pos = is_double_click(action_sequence)
+    #import pdb; pdb.set_trace()
     if not has_double_click:
         return None
     
@@ -198,7 +199,7 @@ if __name__ == "__main__":
     csv_path = "desktop_sequences_filtered.csv"
     output_dir = "desktop_analysis_results"
     history_length = 7  # Number of previous frames to show in transitions
-    debug = False  # Set to True to process only first 100 rows
+    debug = True # Set to True to process only first 100 rows
     
     results_df, error_cases = analyze_sequences(
         csv_path, 

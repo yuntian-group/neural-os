@@ -45,9 +45,19 @@ def get_ground_truth(target_image):
 
 def parse_action(action_str):
     """Parse action string into type and coordinates"""
-    parts = action_str.split('+')
-    action_type = parts[0].strip()
-    coords = [int(x) for x in re.findall(r'\d+', parts[1])]
+    # Remove all spaces
+    action_str = action_str.replace(" ", "")
+    
+    # First character is action type, rest is coordinates
+    action_type, action_str = action_str[0], action_str[1:]
+    
+    # Split by ':' and convert to integers
+    coords = action_str.split(':')
+    coords = [int(item) for item in coords]
+    
+    # Assert we have exactly two coordinates
+    assert len(coords) == 2, f"Expected 2 coordinates, got {len(coords)} from action string: {action_str}"
+    
     return action_type, (coords[0], coords[1])
 
 def is_double_click(actions, time_threshold=0.3):

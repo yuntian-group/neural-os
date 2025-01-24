@@ -192,13 +192,27 @@ def analyze_sequences(csv_path, output_dir="analysis_results", debug=False, hist
         if len(true_cases) == 0:
             print(f"\nTrue {true_class}: No examples found")
         else:
-            print(f"\nTrue {true_class}:")
+            print(f"\nTrue {true_class}: ({len(true_cases)} examples)")
             predictions = true_cases['prediction'].value_counts(normalize=True)
             for pred_class, proportion in predictions.items():
                 if pd.isna(pred_class):
                     print(f"  No prediction: {proportion:.1%}")
                 else:
                     print(f"  Predicted {pred_class}: {proportion:.1%}")
+    
+    # Add detailed statistics
+    print("\nDetailed Statistics:")
+    print(f"Total examples: {len(results_df)}")
+    print("\nGround truth distribution:")
+    print(results_df['ground_truth'].value_counts())
+    print("\nPrediction distribution:")
+    print(results_df['prediction'].value_counts())
+    print("\nCorrect predictions by class:")
+    for true_class in ICONS.keys():
+        class_cases = results_df[results_df['ground_truth'] == true_class]
+        if len(class_cases) > 0:
+            correct = class_cases['correct'].sum()
+            print(f"{true_class}: {correct}/{len(class_cases)} ({correct/len(class_cases):.1%})")
     
     # Save error cases summary
     pd.DataFrame(error_cases).to_csv(output_dir / "error_cases.csv", index=False)

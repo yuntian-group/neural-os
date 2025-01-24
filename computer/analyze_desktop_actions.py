@@ -109,12 +109,22 @@ def predict_target(action_sequence):
 def visualize_sequence(image_paths, action_sequence, save_path, history_length=7):
     """Visualize action sequence with cursor positions and clicks"""
     images = []
-    for img_path in image_paths[-history_length:]:  # Last N frames
+    
+    # Take last history_length frames and corresponding actions
+    frame_paths = image_paths[-history_length:]
+    total_frames = len(frame_paths)
+    
+    # Calculate starting index for actions to align with frames
+    action_start_idx = len(action_sequence) - total_frames
+    
+    # Process each frame with its corresponding action
+    for i, img_path in enumerate(frame_paths):
         img = cv2.imread(img_path)
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         
-        # Draw all cursor positions and clicks
-        for action in action_sequence:
+        # Get corresponding action for this frame
+        if 0 <= action_start_idx + i < len(action_sequence):
+            action = action_sequence[action_start_idx + i]
             action_type, (x, y) = parse_action(action)
             
             # Draw cursor position
@@ -126,12 +136,20 @@ def visualize_sequence(image_paths, action_sequence, save_path, history_length=7
         
         images.append(img)
     
+    # Add target image
+    target_img = cv2.imread(image_paths[-1])
+    target_img = cv2.cvtColor(target_img, cv2.COLOR_BGR2RGB)
+    images.append(target_img)
+    
     # Create horizontal strip
     fig, axes = plt.subplots(1, len(images), figsize=(5*len(images), 5))
     for i, (ax, img) in enumerate(zip(axes, images)):
         ax.imshow(img)
         ax.axis('off')
-        ax.set_title(f'Frame {i+1}')
+        if i < len(images) - 1:
+            ax.set_title(f'Frame {i+1}')
+        else:
+            ax.set_title('Target')
     
     plt.tight_layout()
     plt.savefig(save_path)

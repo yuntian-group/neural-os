@@ -106,7 +106,7 @@ def predict_target(action_sequence):
         
     return closest_icon
 
-def visualize_sequence(image_paths, target_image, action_sequence, save_path, history_length=7):
+def visualize_sequence(image_paths, target_image, action_sequence, save_path, history_length=14):
     """Visualize action sequence with cursor positions and clicks"""
     images = []
     
@@ -114,16 +114,21 @@ def visualize_sequence(image_paths, target_image, action_sequence, save_path, hi
     frame_paths = image_paths[-history_length:]
     total_frames = len(frame_paths)
     
-    # Calculate starting index for actions to align with frames
-    action_start_idx = len(action_sequence) - total_frames
-    
     # Process each frame with its corresponding action
     for i, img_path in enumerate(frame_paths):
         img = cv2.imread(img_path)
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         
+        # Draw icon centers and boundaries
+        for name, icon in ICONS.items():
+            center = icon['center']
+            radius = icon['radius']
+            # Draw center point
+            cv2.circle(img, center, 2, (0, 255, 0), -1)  # Green dot for center
+            # Draw radius boundary
+            cv2.circle(img, center, radius, (255, 255, 0), 1)  # Yellow circle for boundary
+        
         # Get corresponding action for this frame
-        #if 0 <= action_start_idx + i < len(action_sequence):
         action = action_sequence[-len(frame_paths) + i]
         action_type, (x, y) = parse_action(action)
         
@@ -139,10 +144,21 @@ def visualize_sequence(image_paths, target_image, action_sequence, save_path, hi
     # Add target image
     target_img = cv2.imread(target_image)
     target_img = cv2.cvtColor(target_img, cv2.COLOR_BGR2RGB)
+    
+    # Draw icon centers and boundaries on target image too
+    for name, icon in ICONS.items():
+        center = icon['center']
+        radius = icon['radius']
+        cv2.circle(target_img, center, 2, (0, 255, 0), -1)
+        cv2.circle(target_img, center, radius, (255, 255, 0), 1)
+    
     images.append(target_img)
     
-    # Create horizontal strip
-    fig, axes = plt.subplots(1, len(images), figsize=(5*len(images), 5))
+    # Create 2x7 grid (or 2x8 if including target)
+    fig, axes = plt.subplots(2, 8, figsize=(20, 6))  # Adjusted figure size
+    axes = axes.flatten()
+    
+    # Plot images
     for i, (ax, img) in enumerate(zip(axes, images)):
         ax.imshow(img)
         ax.axis('off')
@@ -150,6 +166,10 @@ def visualize_sequence(image_paths, target_image, action_sequence, save_path, hi
             ax.set_title(f'Frame {i+1}')
         else:
             ax.set_title('Target')
+    
+    # Hide any empty subplots
+    for ax in axes[len(images):]:
+        ax.axis('off')
     
     plt.tight_layout()
     plt.savefig(save_path)

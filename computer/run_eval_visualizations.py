@@ -32,8 +32,9 @@ for step, ckpt in ckpts:
             else:
                 print(line, end='')
     
-    # Replace lines in ddpm.py
-    ddpm_replacement = f'        exp_name = \'without_comp_norm_standard_ckpt{step}\'\n        DEBUG = True'
+    # Run for training set
+    # Replace lines in ddpm.py for training set
+    ddpm_replacement = f'        exp_name = \'without_comp_norm_standard_ckpt{step}/train\'\n        DEBUG = True'
     
     with fileinput.FileInput('../latent_diffusion/ldm/models/diffusion/ddpm.py', inplace=True, backup='.bak') as file:
         for line in file:
@@ -42,14 +43,38 @@ for step, ckpt in ckpts:
             else:
                 print(line, end='')
     
-    # Run the config twice
-    for _ in range(2):
-        subprocess.run(['python', 'main.py', '--config', config_file])
+    # Run with original config (training set)
+    subprocess.run(['python', 'main.py', '--config', config_file])
+    
+    # Now modify config for test set
+    with fileinput.FileInput(config_file, inplace=True, backup='.bak') as file:
+        for line in file:
+            if 'data_csv_path: train_dataset/desktop_sequences_filtered_removelast100.csv' in line:
+                print('    data_csv_path: train_dataset/desktop_sequences_filtered_last100.csv')
+            else:
+                print(line, end='')
+    
+    # Replace lines in ddpm.py for test set
+    ddpm_replacement = f'        exp_name = \'without_comp_norm_standard_ckpt{step}/test\'\n        DEBUG = True'
+    
+    with fileinput.FileInput('../latent_diffusion/ldm/models/diffusion/ddpm.py', inplace=True, backup='.bak') as file:
+        for line in file:
+            if '#### REPLACEMENT_LINE' in line:
+                print(ddpm_replacement)
+            else:
+                print(line, end='')
+    
+    # Run with modified config (test set)
+    subprocess.run(['python', 'main.py', '--config', config_file])
+    
+    # Restore original config
+    if os.path.exists(f'{config_file}.bak'):
+        os.replace(f'{config_file}.bak', config_file)
     
     print(f"Completed checkpoint: {ckpt}\n")
 
 # Restore original files from backups
-if os.path.exists('computer/main.py.bak'):
-    os.replace('computer/main.py.bak', 'computer/main.py')
-if os.path.exists('latent_diffusion/ldm/models/diffusion/ddpm.py.bak'):
-    os.replace('latent_diffusion/ldm/models/diffusion/ddpm.py.bak', 'latent_diffusion/ldm/models/diffusion/ddpm.py')
+if os.path.exists('./main.py.bak'):
+    os.replace('./main.py.bak', './main.py')
+if os.path.exists('../latent_diffusion/ldm/models/diffusion/ddpm.py.bak'):
+    os.replace('../latent_diffusion/ldm/models/diffusion/ddpm.py.bak', '../latent_diffusion/ldm/models/diffusion/ddpm.py')

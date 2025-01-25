@@ -265,7 +265,7 @@ def analyze_sequences(csv_path, output_dir="analysis_results", debug=False, hist
 if __name__ == "__main__":
     csv_path = "desktop_sequences_filtered.csv"
     output_dir = "desktop_analysis_results"
-    history_length = 7  # Number of previous frames to show in transitions
+    history_length = 14  # Number of previous frames to show in transitions
     debug = True # Set to True to process only first 100 rows
     
     results_df, error_cases = analyze_sequences(

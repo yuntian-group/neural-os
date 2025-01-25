@@ -9,6 +9,7 @@ from torchvision import transforms
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 import re
+from collections import defaultdict
 
 # Constants
 ICONS = {
@@ -119,14 +120,18 @@ def visualize_sequence(image_paths, target_image, action_sequence, save_path, hi
         img = cv2.imread(img_path)
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         
-        # Draw icon centers and boundaries
+        # Draw icon centers and square boundaries
         for name, icon in ICONS.items():
             center = icon['center']
             radius = icon['radius']
             # Draw center point
             cv2.circle(img, center, 2, (0, 255, 0), -1)  # Green dot for center
-            # Draw radius boundary
-            cv2.circle(img, center, radius, (255, 255, 0), 2)  # Thicker yellow circle for boundary
+            # Draw square boundary
+            x1 = center[0] - radius
+            y1 = center[1] - radius
+            x2 = center[0] + radius
+            y2 = center[1] + radius
+            cv2.rectangle(img, (x1, y1), (x2, y2), (255, 255, 0), 2)  # Yellow square for boundary
         
         # Get corresponding action for this frame
         action = action_sequence[-len(frame_paths) + i]
@@ -141,21 +146,13 @@ def visualize_sequence(image_paths, target_image, action_sequence, save_path, hi
         
         images.append(img)
     
-    # Add target image
+    # Add target image (without icon visualizations)
     target_img = cv2.imread(target_image)
     target_img = cv2.cvtColor(target_img, cv2.COLOR_BGR2RGB)
-    
-    # Draw icon centers and boundaries on target image too
-    for name, icon in ICONS.items():
-        center = icon['center']
-        radius = icon['radius']
-        cv2.circle(target_img, center, 2, (0, 255, 0), -1)
-        cv2.circle(target_img, center, radius, (255, 255, 0), 2)
-    
     images.append(target_img)
     
     # Create 3x5 grid for 14 frames + target
-    fig, axes = plt.subplots(3, 5, figsize=(20, 12))  # Adjusted figure size for 3x5
+    fig, axes = plt.subplots(3, 5, figsize=(20, 12))
     
     # Plot all images
     for i in range(15):
@@ -184,7 +181,7 @@ def analyze_sequences(csv_path, output_dir="analysis_results", debug=False, hist
     output_dir.mkdir(exist_ok=True)
     
     results = []
-    error_cases = []
+    error_cases = defaultdict(list)
     
     for idx, row in tqdm(df.iterrows(), total=len(df)):
         image_seq = ast.literal_eval(row['Image_seq_cond_path'])
@@ -202,25 +199,14 @@ def analyze_sequences(csv_path, output_dir="analysis_results", debug=False, hist
             'correct': prediction == ground_truth
         })
         
-        # Save error cases
+        # Save error cases grouped by confusion type
         if prediction != ground_truth:
-            error_case_dir = output_dir / f"error_{idx}"
-            error_case_dir.mkdir(exist_ok=True)
-            
-            visualize_sequence(
-                image_seq,
-                target_image,
-                action_seq,
-                error_case_dir / "sequence.png",
-                history_length=history_length
-            )
-            
-            error_cases.append({
+            error_key = f"{ground_truth}_{prediction if prediction else 'None'}"
+            error_cases[error_key].append({
                 'idx': idx,
-                'prediction': prediction,
-                'ground_truth': ground_truth,
                 'image_seq': image_seq,
-                'action_seq': action_seq
+                'action_seq': action_seq,
+                'target_image': target_image
             })
     
     # Compute and print metrics
@@ -238,7 +224,7 @@ def analyze_sequences(csv_path, output_dir="analysis_results", debug=False, hist
             print(f"\nTrue {true_class}: No examples found")
         else:
             print(f"\nTrue {true_class}: ({len(true_cases)} examples)")
-            predictions = true_cases['prediction'].value_counts(dropna=False)  # Include None values
+            predictions = true_cases['prediction'].value_counts(dropna=False)
             for pred_class, count in predictions.items():
                 if pd.isna(pred_class):
                     print(f"  No prediction: {count}/{len(true_cases)} ({count/len(true_cases):.1%})")
@@ -248,8 +234,20 @@ def analyze_sequences(csv_path, output_dir="analysis_results", debug=False, hist
     print("\nPrediction distribution:")
     print(results_df['prediction'].value_counts(dropna=False))
     
-    # Save error cases summary
-    pd.DataFrame(error_cases).to_csv(output_dir / "error_cases.csv", index=False)
+    # Save error cases by confusion type
+    for error_key, cases in error_cases.items():
+        if cases:  # Only create directories for error types that exist
+            error_dir = output_dir / error_key
+            error_dir.mkdir(exist_ok=True)
+            
+            for i, case in enumerate(cases):
+                visualize_sequence(
+                    case['image_seq'],
+                    case['target_image'],
+                    case['action_seq'],
+                    error_dir / f"sequence_{i}.png",
+                    history_length=history_length
+                )
     
     return results_df, error_cases
 

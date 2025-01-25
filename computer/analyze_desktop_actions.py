@@ -223,12 +223,13 @@ def analyze_sequences(csv_path, output_dir="analysis_results", debug=False, hist
         # Save error cases grouped by confusion type
         if prediction != ground_truth:
             error_key = f"{ground_truth}_{prediction if prediction else 'None'}"
-            error_cases[error_key].append({
-                'idx': idx,
-                'image_seq': image_seq,
-                'action_seq': action_seq,
-                'target_image': target_image
-            })
+            if len(error_cases[error_key]) < 100:  # Only store up to 100 cases per error type
+                error_cases[error_key].append({
+                    'idx': idx,
+                    'image_seq': image_seq,
+                    'action_seq': action_seq,
+                    'target_image': target_image
+                })
     
     # Compute and print metrics
     results_df = pd.DataFrame(results)

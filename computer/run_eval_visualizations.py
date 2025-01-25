@@ -45,16 +45,21 @@ for step, ckpt in tqdm(ckpts, desc="Processing checkpoints"):
                 print(line, end='')
     
     # Run with original config (training set)
-    subprocess.run(f'python main.py --config {config_file}', shell=True)
+    try:
+        subprocess.run(f'python main.py --config {config_file}', shell=True)
+    except Exception as e:
+        pass
     
     # Now modify config for test set
     with fileinput.FileInput(config_file, inplace=True, backup='.bak') as file:
         for line in file:
             if 'data_csv_path: train_dataset/desktop_sequences_filtered_removelast100.csv' in line:
-                print('    data_csv_path: train_dataset/desktop_sequences_filtered_last100.csv')
+                print('        data_csv_path: train_dataset/desktop_sequences_filtered_last100.csv')
             else:
                 print(line, end='')
     
+    if os.path.exists('../latent_diffusion/ldm/models/diffusion/ddpm.py.bak'):
+        os.replace('../latent_diffusion/ldm/models/diffusion/ddpm.py.bak', '../latent_diffusion/ldm/models/diffusion/ddpm.py')
     # Replace lines in ddpm.py for test set
     ddpm_replacement = f'        exp_name = \'without_comp_norm_standard_ckpt{step}/test\'\n        DEBUG = True'
     

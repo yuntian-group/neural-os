@@ -6,6 +6,7 @@ https://github.com/CompVis/taming-transformers
 -- merci
 """
 import os
+import sys
 import torch
 import random
 import torch.nn as nn
@@ -980,7 +981,7 @@ class LatentDiffusion(DDPM):
                     f.write(f"First action (0): {action_0}\n")
                 
                 self.i += 1
-                if self.i > 40:
+                if self.i > 20:
                     sys.exit(1)
             #import pdb; pdb.set_trace()
 

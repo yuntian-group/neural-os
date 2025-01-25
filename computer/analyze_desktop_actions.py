@@ -90,7 +90,6 @@ def predict_target(action_sequence, time_threshold):
     """Predict target based on action sequence"""
     # Check for double click
     has_double_click, click_pos = is_double_click(action_sequence, time_threshold)
-    #import pdb; pdb.set_trace()
     if not has_double_click:
         return None
     
@@ -99,15 +98,15 @@ def predict_target(action_sequence, time_threshold):
     closest_icon = None
     
     for name, icon in ICONS.items():
-        dist = np.sqrt(sum((a-b)**2 for a, b in zip(click_pos, icon['center'])))
-        if dist < min_dist and dist <= icon['radius']:
-            min_dist = dist
-            closest_icon = name
+        # Check if click is within square boundary
+        if (abs(click_pos[0] - icon['center'][0]) <= icon['radius'] and 
+            abs(click_pos[1] - icon['center'][1]) <= icon['radius']):
+            dist = max(abs(click_pos[0] - icon['center'][0]), 
+                      abs(click_pos[1] - icon['center'][1]))
+            if dist < min_dist:
+                min_dist = dist
+                closest_icon = name
     
-    # Only return if we found a valid icon
-    if closest_icon is None:
-        return None
-        
     return closest_icon
 
 def visualize_sequence(image_paths, target_image, action_sequence, save_path, history_length=14):

@@ -126,7 +126,7 @@ def visualize_sequence(image_paths, target_image, action_sequence, save_path, hi
             # Draw center point
             cv2.circle(img, center, 2, (0, 255, 0), -1)  # Green dot for center
             # Draw radius boundary
-            cv2.circle(img, center, radius, (255, 255, 0), 1)  # Yellow circle for boundary
+            cv2.circle(img, center, radius, (255, 255, 0), 2)  # Thicker yellow circle for boundary
         
         # Get corresponding action for this frame
         action = action_sequence[-len(frame_paths) + i]
@@ -137,7 +137,7 @@ def visualize_sequence(image_paths, target_image, action_sequence, save_path, hi
         
         # Draw click if present
         if action_type == 'L':
-            cv2.circle(img, (x, y), 10, (255, 0, 0), 2)
+            cv2.circle(img, (x, y), 10, (255, 0, 0), 3)  # Thicker blue circle for clicks
         
         images.append(img)
     
@@ -150,32 +150,23 @@ def visualize_sequence(image_paths, target_image, action_sequence, save_path, hi
         center = icon['center']
         radius = icon['radius']
         cv2.circle(target_img, center, 2, (0, 255, 0), -1)
-        cv2.circle(target_img, center, radius, (255, 255, 0), 1)
+        cv2.circle(target_img, center, radius, (255, 255, 0), 2)
     
     images.append(target_img)
     
-    # Create 2x8 grid for 14 frames + target
-    fig, axes = plt.subplots(2, 8, figsize=(20, 6))  # Adjusted figure size
+    # Create 3x5 grid for 14 frames + target
+    fig, axes = plt.subplots(3, 5, figsize=(20, 12))  # Adjusted figure size for 3x5
     
-    # Plot first row (first 7 frames)
-    for i in range(7):
-        axes[0, i].imshow(images[i])
-        axes[0, i].axis('off')
-        axes[0, i].set_title(f'Frame {i+1}')
-    
-    # Plot second row (next 7 frames)
-    for i in range(7):
-        axes[1, i].imshow(images[i+7])
-        axes[1, i].axis('off')
-        axes[1, i].set_title(f'Frame {i+8}')
-    
-    # Plot target in last position
-    axes[1, 7].imshow(images[-1])
-    axes[1, 7].axis('off')
-    axes[1, 7].set_title('Target')
-    
-    # Hide last subplot in first row
-    axes[0, 7].axis('off')
+    # Plot all images
+    for i in range(15):
+        row = i // 5
+        col = i % 5
+        axes[row, col].imshow(images[i])
+        axes[row, col].axis('off')
+        if i < 14:
+            axes[row, col].set_title(f'Frame {i+1}')
+        else:
+            axes[row, col].set_title('Target')
     
     plt.tight_layout()
     plt.savefig(save_path)

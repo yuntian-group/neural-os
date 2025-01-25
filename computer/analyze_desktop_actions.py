@@ -70,18 +70,21 @@ def is_double_click(actions, time_threshold=0.3):
         curr_idx, (_, curr_pos) = click_actions[i]
         prev_idx, (_, prev_pos) = click_actions[i-1]
         
-        # Check if clicks are close in time (frames) and space
+        # Check if clicks are close in time
         time_diff = (curr_idx - prev_idx) * 0.1  # 10 fps -> 0.1s per frame
-        dist = np.sqrt(sum((a-b)**2 for a, b in zip(curr_pos, prev_pos)))
         
-        if time_diff <= time_threshold and dist < 10:  # 10 pixels threshold
-            # Check if this double click is on any icon
+        if time_diff <= time_threshold:
+            # Check if both clicks are on the same icon
             for name, icon in ICONS.items():
                 center = icon['center']
                 radius = icon['radius']
-                # Check if click is within square boundary
-                if (abs(curr_pos[0] - center[0]) <= radius and 
-                    abs(curr_pos[1] - center[1]) <= radius):
+                # Check if both clicks are within this icon's boundary
+                curr_in_icon = (abs(curr_pos[0] - center[0]) <= radius and 
+                              abs(curr_pos[1] - center[1]) <= radius)
+                prev_in_icon = (abs(prev_pos[0] - center[0]) <= radius and 
+                              abs(prev_pos[1] - center[1]) <= radius)
+                
+                if curr_in_icon and prev_in_icon:
                     return True, curr_pos  # Return position of the second (later) click
     
     return False, None

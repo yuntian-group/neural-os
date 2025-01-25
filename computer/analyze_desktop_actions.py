@@ -12,10 +12,10 @@ import re
 
 # Constants
 ICONS = {
-    'firefox': {'center': (66, 332), 'radius': 22},
-    'root': {'center': (66, 185), 'radius': 22},
-    'terminal': {'center': (191, 60), 'radius': 22},
-    'trash': {'center': (66, 60), 'radius': 22}
+    'firefox': {'center': (66, 332-20), 'radius': int(22*1.2)},
+    'root': {'center': (66, 185-20), 'radius': int(22*1.2)},
+    'terminal': {'center': (191, 60-20), 'radius': int(22*1.2)},
+    'trash': {'center': (66, 60-20), 'radius': int(22*1.2)}
 }
 
 CLUSTER_PATHS = {
@@ -154,22 +154,28 @@ def visualize_sequence(image_paths, target_image, action_sequence, save_path, hi
     
     images.append(target_img)
     
-    # Create 2x7 grid (or 2x8 if including target)
+    # Create 2x8 grid for 14 frames + target
     fig, axes = plt.subplots(2, 8, figsize=(20, 6))  # Adjusted figure size
-    axes = axes.flatten()
     
-    # Plot images
-    for i, (ax, img) in enumerate(zip(axes, images)):
-        ax.imshow(img)
-        ax.axis('off')
-        if i < len(images) - 1:
-            ax.set_title(f'Frame {i+1}')
-        else:
-            ax.set_title('Target')
+    # Plot first row (first 7 frames)
+    for i in range(7):
+        axes[0, i].imshow(images[i])
+        axes[0, i].axis('off')
+        axes[0, i].set_title(f'Frame {i+1}')
     
-    # Hide any empty subplots
-    for ax in axes[len(images):]:
-        ax.axis('off')
+    # Plot second row (next 7 frames)
+    for i in range(7):
+        axes[1, i].imshow(images[i+7])
+        axes[1, i].axis('off')
+        axes[1, i].set_title(f'Frame {i+8}')
+    
+    # Plot target in last position
+    axes[1, 7].imshow(images[-1])
+    axes[1, 7].axis('off')
+    axes[1, 7].set_title('Target')
+    
+    # Hide last subplot in first row
+    axes[0, 7].axis('off')
     
     plt.tight_layout()
     plt.savefig(save_path)

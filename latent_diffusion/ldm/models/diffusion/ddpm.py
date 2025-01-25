@@ -913,7 +913,8 @@ class LatentDiffusion(DDPM):
         exp_name = 'without_comp_norm_none'
         exp_name = 'without_comp_norm_standard'
         DEBUG = False
-        #### REPLACEMENT_LINE
+        exp_name = 'without_comp_norm_standard_ckpt10000'
+        DEBUG = True
         os.makedirs(exp_name, exist_ok=True)
         if not hasattr(self, 'i'):
             self.i = 0
@@ -980,7 +981,7 @@ class LatentDiffusion(DDPM):
                     f.write(f"First action (0): {action_0}\n")
                 
                 self.i += 1
-                if self.i > 1000:
+                if self.i > 100:
                     sys.exit(1)
             #import pdb; pdb.set_trace()
 

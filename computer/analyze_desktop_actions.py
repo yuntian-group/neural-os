@@ -13,10 +13,10 @@ from collections import defaultdict
 
 # Constants
 ICONS = {
-    'firefox': {'center': (66, 332-20), 'radius': int(22*1.4)},
-    'root': {'center': (66, 185), 'radius': int(22*1.4)},
-    'terminal': {'center': (191, 60-20), 'radius': int(22*1.4)},
-    'trash': {'center': (66, 60-20), 'radius': int(22*1.4)}
+    'firefox': {'center': (66, 332-20), 'radius': int(22*1.7)},
+    'root': {'center': (66, 185), 'radius': int(22*1.7)},
+    'terminal': {'center': (191, 60), 'radius': int(22*1.7)},
+    'trash': {'center': (66, 60-20), 'radius': int(22*1.7)}
 }
 
 CLUSTER_PATHS = {

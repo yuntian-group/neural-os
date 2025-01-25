@@ -13,10 +13,10 @@ from collections import defaultdict
 
 # Constants
 ICONS = {
-    'firefox': {'center': (66, 332-20), 'radius': int(22*1.9)},
-    'root': {'center': (66, 185), 'radius': int(22*1.9)},
-    'terminal': {'center': (191, 60), 'radius': int(22*1.9)},
-    'trash': {'center': (66, 60-20), 'radius': int(22*1.9)}
+    'firefox': {'center': (66, 332-30), 'radius': int(22*1.95)},
+    'root': {'center': (66, 185), 'radius': int(22*1.95)},
+    'terminal': {'center': (191, 60), 'radius': int(22*1.95)},
+    'trash': {'center': (66, 60), 'radius': int(22*1.95)}
 }
 
 CLUSTER_PATHS = {
@@ -277,7 +277,7 @@ if __name__ == "__main__":
     output_dir = "desktop_analysis_results"
     history_length = 14  # Number of previous frames to show in transitions
     time_threshold = 0.5
-    debug = True # Set to True to process only first 100 rows
+    debug = False # Set to True to process only first 100 rows
     
     results_df, error_cases = analyze_sequences(
         csv_path, 

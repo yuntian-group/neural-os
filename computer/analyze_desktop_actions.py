@@ -13,10 +13,10 @@ from collections import defaultdict
 
 # Constants
 ICONS = {
-    'firefox': {'center': (66, 332-20), 'radius': int(22*1.7)},
-    'root': {'center': (66, 185), 'radius': int(22*1.7)},
-    'terminal': {'center': (191, 60), 'radius': int(22*1.7)},
-    'trash': {'center': (66, 60-20), 'radius': int(22*1.7)}
+    'firefox': {'center': (66, 332-20), 'radius': int(22*1.9)},
+    'root': {'center': (66, 185), 'radius': int(22*1.9)},
+    'terminal': {'center': (191, 60), 'radius': int(22*1.9)},
+    'trash': {'center': (66, 60-20), 'radius': int(22*1.9)}
 }
 
 CLUSTER_PATHS = {
@@ -86,10 +86,10 @@ def is_double_click(actions, time_threshold=0.3):
     
     return False, None
 
-def predict_target(action_sequence):
+def predict_target(action_sequence, time_threshold):
     """Predict target based on action sequence"""
     # Check for double click
-    has_double_click, click_pos = is_double_click(action_sequence)
+    has_double_click, click_pos = is_double_click(action_sequence, time_threshold)
     #import pdb; pdb.set_trace()
     if not has_double_click:
         return None
@@ -184,7 +184,7 @@ def visualize_sequence(image_paths, target_image, action_sequence, save_path, hi
     plt.savefig(save_path)
     plt.close()
 
-def analyze_sequences(csv_path, output_dir="analysis_results", debug=False, history_length=7):
+def analyze_sequences(csv_path, output_dir="analysis_results", debug=False, history_length=7, time_threshold=0.5):
     """Analyze all sequences and compute accuracy"""
     # Clean up previous results
     output_dir = Path(output_dir)
@@ -208,7 +208,7 @@ def analyze_sequences(csv_path, output_dir="analysis_results", debug=False, hist
         target_image = row['Target_image']
         
         # Get prediction and ground truth
-        prediction = predict_target(action_seq)
+        prediction = predict_target(action_seq, time_threshold)
         ground_truth = get_ground_truth(target_image)
         
         results.append({
@@ -274,11 +274,13 @@ if __name__ == "__main__":
     csv_path = "desktop_sequences_filtered.csv"
     output_dir = "desktop_analysis_results"
     history_length = 14  # Number of previous frames to show in transitions
+    time_threshold = 0.5
     debug = True # Set to True to process only first 100 rows
     
     results_df, error_cases = analyze_sequences(
         csv_path, 
         output_dir,
         debug=debug,
-        history_length=history_length
+        history_length=history_length,
+        time_threshold=time_threshold
     )

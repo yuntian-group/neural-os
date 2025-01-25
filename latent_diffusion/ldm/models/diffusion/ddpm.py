@@ -913,6 +913,7 @@ class LatentDiffusion(DDPM):
         exp_name = 'without_comp_norm_none'
         exp_name = 'without_comp_norm_standard'
         DEBUG = False
+        #### REPLACEMENT_LINE
         os.makedirs(exp_name, exist_ok=True)
         if not hasattr(self, 'i'):
             self.i = 0

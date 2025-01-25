@@ -77,8 +77,11 @@ def is_double_click(actions, time_threshold=0.3):
         if time_diff <= time_threshold and dist < 10:  # 10 pixels threshold
             # Check if this double click is on any icon
             for name, icon in ICONS.items():
-                icon_dist = np.sqrt(sum((a-b)**2 for a, b in zip(curr_pos, icon['center'])))
-                if icon_dist <= icon['radius']:
+                center = icon['center']
+                radius = icon['radius']
+                # Check if click is within square boundary
+                if (abs(curr_pos[0] - center[0]) <= radius and 
+                    abs(curr_pos[1] - center[1]) <= radius):
                     return True, curr_pos  # Return position of the second (later) click
     
     return False, None

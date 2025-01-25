@@ -145,7 +145,19 @@ def visualize_sequence(image_paths, target_image, action_sequence, save_path, hi
         
         # Draw click if present
         if action_type == 'L':
-            cv2.circle(img, (x, y), 10, (255, 0, 0), 3)  # Thicker blue circle for clicks
+            # Check if click is inside any icon boundary
+            inside_icon = False
+            for name, icon in ICONS.items():
+                center = icon['center']
+                radius = icon['radius']
+                if (abs(x - center[0]) <= radius and 
+                    abs(y - center[1]) <= radius):
+                    inside_icon = True
+                    break
+            
+            # Green circle for clicks inside icons, red for clicks outside
+            color = (0, 255, 0) if inside_icon else (255, 0, 0)
+            cv2.circle(img, (x, y), 10, color, 3)
         
         images.append(img)
     

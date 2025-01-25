@@ -174,14 +174,18 @@ def visualize_sequence(image_paths, target_image, action_sequence, save_path, hi
 
 def analyze_sequences(csv_path, output_dir="analysis_results", debug=False, history_length=7):
     """Analyze all sequences and compute accuracy"""
+    # Clean up previous results
+    output_dir = Path(output_dir)
+    if output_dir.exists():
+        import shutil
+        shutil.rmtree(output_dir)
+    output_dir.mkdir(exist_ok=True)
+    
     df = pd.read_csv(csv_path)
     
     if debug:
         print("Debug mode: using first 100 rows only")
         df = df.head(100)
-    
-    output_dir = Path(output_dir)
-    output_dir.mkdir(exist_ok=True)
     
     results = []
     error_cases = defaultdict(list)

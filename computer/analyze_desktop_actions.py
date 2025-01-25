@@ -10,12 +10,12 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 import re
 from collections import defaultdict
-
+EPS = 1e-5
 # Constants
 ICONS = {
     'firefox': {'center': (66, 332-30), 'radius': int(22*1.95)},
     'root': {'center': (66, 185), 'radius': int(22*1.95)},
-    'terminal': {'center': (191, 60), 'radius': int(22*1.95)},
+    'terminal': {'center': (191, 60), 'radius': int(22*2)},
     'trash': {'center': (66, 60), 'radius': int(22*1.95)}
 }
 
@@ -73,7 +73,7 @@ def is_double_click(actions, time_threshold=0.3):
         # Check if clicks are close in time
         time_diff = (curr_idx - prev_idx) * 0.1  # 10 fps -> 0.1s per frame
         
-        if time_diff <= time_threshold:
+        if time_diff <= time_threshold + EPS:
             # Check if both clicks are on the same icon
             for name, icon in ICONS.items():
                 center = icon['center']
@@ -186,7 +186,7 @@ def visualize_sequence(image_paths, target_image, action_sequence, save_path, hi
     plt.savefig(save_path)
     plt.close()
 
-def analyze_sequences(csv_path, output_dir="analysis_results", debug=False, history_length=7, time_threshold=0.5):
+def analyze_sequences(csv_path, output_dir="analysis_results", debug=False, history_length=7, time_threshold=0.6):
     """Analyze all sequences and compute accuracy"""
     # Clean up previous results
     output_dir = Path(output_dir)
@@ -277,7 +277,7 @@ if __name__ == "__main__":
     csv_path = "desktop_sequences_filtered.csv"
     output_dir = "desktop_analysis_results"
     history_length = 14  # Number of previous frames to show in transitions
-    time_threshold = 0.5
+    time_threshold = 0.6
     debug = False # Set to True to process only first 100 rows
     
     results_df, error_cases = analyze_sequences(

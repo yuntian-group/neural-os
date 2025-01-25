@@ -925,13 +925,13 @@ class LatentDiffusion(DDPM):
             data_max = 30.854148864746094
             self.eval()
             #import pdb; pdb.set_trace()
-            if exp_name == 'without_comp_norm_standard':
+            if 'without_comp_norm_standard' in exp_name:
                 batch['image_processed'] = batch['image_processed'] * data_std + data_mean
                 batch['c_concat_processed'] = batch['c_concat_processed'] * data_std + data_mean
-            elif exp_name == 'without_comp_norm_minmax':
+            elif 'without_comp_norm_minmax' in exp_name:
                 batch['image_processed'] = (batch['image_processed'].clamp(-1, 1) + 1) * (data_max - data_min) / 2 + data_min
                 batch['c_concat_processed'] = (batch['c_concat_processed'].clamp(-1, 1) + 1) * (data_max - data_min) / 2 + data_min
-            elif exp_name == 'without_comp_norm_none':
+            else:
                 pass
             z_vis = self.decode_first_stage(batch['image_processed'])
             prev_frames = self.decode_first_stage(batch['c_concat_processed'][:, -1])
@@ -948,12 +948,12 @@ class LatentDiffusion(DDPM):
                 c_i = self.get_learned_conditioning(c_i)
                 sample_i = self.p_sample_loop(cond=c_i, shape=[1, 4, 48, 64], return_intermediates=False, verbose=True)
                 
-                if exp_name == 'without_comp_norm_standard':
+                if 'without_comp_norm_standard' in exp_name:
                     sample_i = sample_i * data_std + data_mean
                     #prev_frame_img = prev_frame_img * data_std + data_mean
-                elif exp_name == 'without_comp_norm_minmax':
+                elif 'without_comp_norm_minmax' in exp_name:
                     sample_i = (sample_i.clamp(-1, 1) + 1) * (data_max - data_min) / 2 + data_min
-                elif exp_name == 'without_comp_norm_none':
+                else:
                     pass
                 sample_i = self.decode_first_stage(sample_i)
                 sample_i = sample_i.squeeze(0).clamp(-1, 1)
@@ -980,7 +980,7 @@ class LatentDiffusion(DDPM):
                     f.write(f"First action (0): {action_0}\n")
                 
                 self.i += 1
-                if self.i > 100:
+                if self.i > 40:
                     sys.exit(1)
             #import pdb; pdb.set_trace()
 

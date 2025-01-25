@@ -3,6 +3,7 @@ import re
 import fileinput
 import subprocess
 from pathlib import Path
+from tqdm import tqdm
 
 # Directory containing checkpoints
 ckpt_dir = 'saved_bsz64_acc1_lr8e5_512_leftclick_histpos_512_384_cont2_ddd_difficult_only_withlstmencoder_without_standard_filtered'
@@ -18,7 +19,7 @@ ckpts.sort()  # Sort by step number
 # Config file to run
 config_file = 'configs/pssearch_bsz64_acc1_lr8e5_512_leftclick_histpos_512_384_difficult_only_withlstmencoder_without_norm_standard_filtered_eval.yaml'
 
-for step, ckpt in ckpts:
+for step, ckpt in tqdm(ckpts, desc="Processing checkpoints"):
     print(f"Processing checkpoint: {ckpt}")
     
     # Replace line in main.py
@@ -44,7 +45,7 @@ for step, ckpt in ckpts:
                 print(line, end='')
     
     # Run with original config (training set)
-    subprocess.run(['python', 'main.py', '--config', config_file])
+    subprocess.run(f'python main.py --config {config_file}', shell=True)
     
     # Now modify config for test set
     with fileinput.FileInput(config_file, inplace=True, backup='.bak') as file:

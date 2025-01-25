@@ -13,10 +13,10 @@ from collections import defaultdict
 EPS = 1e-5
 # Constants
 ICONS = {
-    'firefox': {'center': (66, 332-30), 'radius': int(22*1.95)},
-    'root': {'center': (66, 185), 'radius': int(22*1.95)},
-    'terminal': {'center': (191, 60), 'radius': int(22*2)},
-    'trash': {'center': (66, 60), 'radius': int(22*1.95)}
+    'firefox': {'center': (66, 332-20), 'width': int(22*1.4), 'height': int(22*1.4)},
+    'root': {'center': (66, 185), 'width': int(22*1.4), 'height': int(22*1.4)},
+    'terminal': {'center': (191, 60-20), 'width': int(22*1.4), 'height': int(22*1.4)},
+    'trash': {'center': (66, 60-20), 'width': int(22*1.4), 'height': int(22*1.4)}
 }
 
 CLUSTER_PATHS = {
@@ -77,12 +77,13 @@ def is_double_click(actions, time_threshold=0.3):
             # Check if both clicks are on the same icon
             for name, icon in ICONS.items():
                 center = icon['center']
-                radius = icon['radius']
+                width = icon['width']
+                height = icon['height']
                 # Check if both clicks are within this icon's boundary
-                curr_in_icon = (abs(curr_pos[0] - center[0]) <= radius and 
-                              abs(curr_pos[1] - center[1]) <= radius)
-                prev_in_icon = (abs(prev_pos[0] - center[0]) <= radius and 
-                              abs(prev_pos[1] - center[1]) <= radius)
+                curr_in_icon = (abs(curr_pos[0] - center[0]) <= width and 
+                              abs(curr_pos[1] - center[1]) <= height)
+                prev_in_icon = (abs(prev_pos[0] - center[0]) <= width and 
+                              abs(prev_pos[1] - center[1]) <= height)
                 
                 if curr_in_icon and prev_in_icon:
                     return True, curr_pos  # Return position of the second (later) click
@@ -101,11 +102,11 @@ def predict_target(action_sequence, time_threshold):
     closest_icon = None
     
     for name, icon in ICONS.items():
-        # Check if click is within square boundary
-        if (abs(click_pos[0] - icon['center'][0]) <= icon['radius'] and 
-            abs(click_pos[1] - icon['center'][1]) <= icon['radius']):
-            dist = max(abs(click_pos[0] - icon['center'][0]), 
-                      abs(click_pos[1] - icon['center'][1]))
+        # Check if click is within rectangular boundary
+        if (abs(click_pos[0] - icon['center'][0]) <= icon['width'] and 
+            abs(click_pos[1] - icon['center'][1]) <= icon['height']):
+            dist = max(abs(click_pos[0] - icon['center'][0]) / icon['width'], 
+                      abs(click_pos[1] - icon['center'][1]) / icon['height'])
             if dist < min_dist:
                 min_dist = dist
                 closest_icon = name
@@ -125,18 +126,19 @@ def visualize_sequence(image_paths, target_image, action_sequence, save_path, hi
         img = cv2.imread(img_path)
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         
-        # Draw icon centers and square boundaries
+        # Draw icon centers and rectangular boundaries
         for name, icon in ICONS.items():
             center = icon['center']
-            radius = icon['radius']
+            width = icon['width']
+            height = icon['height']
             # Draw center point
             cv2.circle(img, center, 2, (0, 255, 0), -1)  # Green dot for center
-            # Draw square boundary
-            x1 = center[0] - radius
-            y1 = center[1] - radius
-            x2 = center[0] + radius
-            y2 = center[1] + radius
-            cv2.rectangle(img, (x1, y1), (x2, y2), (255, 255, 0), 2)  # Yellow square for boundary
+            # Draw rectangular boundary
+            x1 = center[0] - width
+            y1 = center[1] - height
+            x2 = center[0] + width
+            y2 = center[1] + height
+            cv2.rectangle(img, (x1, y1), (x2, y2), (255, 255, 0), 2)  # Yellow rectangle for boundary
         
         # Get corresponding action for this frame
         action = action_sequence[-len(frame_paths) + i]
@@ -151,9 +153,10 @@ def visualize_sequence(image_paths, target_image, action_sequence, save_path, hi
             inside_icon = False
             for name, icon in ICONS.items():
                 center = icon['center']
-                radius = icon['radius']
-                if (abs(x - center[0]) <= radius and 
-                    abs(y - center[1]) <= radius):
+                width = icon['width']
+                height = icon['height']
+                if (abs(x - center[0]) <= width and 
+                    abs(y - center[1]) <= height):
                     inside_icon = True
                     break
             

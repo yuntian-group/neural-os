@@ -10,6 +10,7 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 import re
 from collections import defaultdict
+import pickle
 EPS = 1e-5
 # Constants
 ICONS = {
@@ -189,8 +190,31 @@ def visualize_sequence(image_paths, target_image, action_sequence, save_path, hi
     plt.savefig(save_path)
     plt.close()
 
-def analyze_sequences(csv_path, output_dir="analysis_results", debug=False, history_length=7, time_threshold=0.6):
+def get_previous_frames(record_num, image_num, history_length):
+    """Get paths of previous frames"""
+    frames = []
+    for i in range(history_length, 0, -1):
+        prev_num = image_num - i
+        if prev_num >= 0:  # Make sure we don't go below image_0
+            frames.append(f"train_dataset/record_{record_num}/image_{prev_num}.png")
+    return frames
+
+def get_actions_for_sequence(mapping_dict, record_num, image_nums):
+    """Get actions for a sequence of frames"""
+    actions = []
+    for img_num in image_nums:
+        key = (record_num, img_num)
+        actions.append(mapping_dict.get(key))
+    return actions
+
+def analyze_sequences(csv_path, output_dir="analysis_results", debug=False, history_length=14, time_threshold=0.6):
     """Analyze all sequences and compute accuracy"""
+    # Load mapping and target frames
+    print("Loading mapping dictionary...")
+    with open('image_action_mapping.pkl', 'rb') as f:
+        mapping_dict = pickle.load(f)
+    target_df = pd.read_csv('target_frames.csv')
+    
     # Clean up previous results
     output_dir = Path(output_dir)
     if output_dir.exists():
@@ -198,22 +222,28 @@ def analyze_sequences(csv_path, output_dir="analysis_results", debug=False, hist
         shutil.rmtree(output_dir)
     output_dir.mkdir(exist_ok=True)
     
-    df = pd.read_csv(csv_path)
-    
     if debug:
         print("Debug mode: using first 100 rows only")
-        df = df.head(100)
+        target_df = target_df.head(100)
     
     results = []
     error_cases = defaultdict(list)
     
-    for idx, row in tqdm(df.iterrows(), total=len(df)):
-        image_seq = ast.literal_eval(row['Image_seq_cond_path'])
-        action_seq = ast.literal_eval(row['Action_seq'])
-        target_image = row['Target_image']
+    for idx, row in tqdm(target_df.iterrows(), total=len(target_df)):
+        record_num = row['record_num']
+        image_num = row['image_num']
+        
+        # Get previous frames
+        image_seq = get_previous_frames(record_num, image_num, history_length)
+        target_image = f"train_dataset/record_{record_num}/image_{image_num}.png"
+        
+        # Get corresponding actions
+        prev_img_nums = [int(re.search(r'image_(\d+)', img).group(1)) if 'padding' not in img else -1 
+                        for img in image_seq]
+        action_seq = get_actions_for_sequence(mapping_dict, record_num, prev_img_nums + [image_num])
         
         # Get prediction and ground truth
-        prediction = predict_target(action_seq, time_threshold)
+        prediction = predict_target(action_sequence=action_seq, time_threshold=time_threshold)
         ground_truth = get_ground_truth(target_image)
         
         results.append({

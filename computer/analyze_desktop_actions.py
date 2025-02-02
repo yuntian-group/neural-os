@@ -14,10 +14,10 @@ import pickle
 EPS = 1e-5
 # Constants
 ICONS = {
-    'firefox': {'center': (66, 332-20), 'width': int(22*1.4), 'height': int(22*1.4)},
-    'root': {'center': (66, 185), 'width': int(22*1.4), 'height': int(22*1.4)},
-    'terminal': {'center': (191, 60-20), 'width': int(22*1.4), 'height': int(22*1.4)},
-    'trash': {'center': (66, 60-20), 'width': int(22*1.4), 'height': int(22*1.4)}
+    'firefox': {'center': (66, 332-30), 'width': int(22*1.4), 'height': int(22*1.95)},
+    'root': {'center': (66, 185), 'width': int(22*1.95), 'height': int(22*1.95)},
+    'terminal': {'center': (191, 60), 'width': int(22*2), 'height': int(22*2)},
+    'trash': {'center': (66, 60), 'width': int(22*1.95), 'height': int(22*1.95)}
 }
 
 CLUSTER_PATHS = {
@@ -213,7 +213,7 @@ def analyze_sequences(csv_path, output_dir="analysis_results", debug=False, hist
     print("Loading mapping dictionary...")
     with open('image_action_mapping.pkl', 'rb') as f:
         mapping_dict = pickle.load(f)
-    target_df = pd.read_csv('target_frames.csv')
+    target_df = pd.read_csv('desktop_sequences_filtered_target_frames.csv')
     
     # Clean up previous results
     output_dir = Path(output_dir)
@@ -309,7 +309,7 @@ def analyze_sequences(csv_path, output_dir="analysis_results", debug=False, hist
 if __name__ == "__main__":
     csv_path = "desktop_sequences_filtered.csv"
     output_dir = "desktop_analysis_results"
-    history_length = 14  # Number of previous frames to show in transitions
+    history_length = 28  # Number of previous frames to show in transitions
     time_threshold = 0.6
     debug = False # Set to True to process only first 100 rows
     

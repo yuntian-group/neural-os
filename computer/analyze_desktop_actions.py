@@ -145,10 +145,8 @@ def visualize_sequence(image_paths, target_image, action_sequence, save_path, hi
         action = action_sequence[-len(frame_paths) + i]
         action_type, (x, y) = parse_action(action)
         
-        # Draw cursor position
+        # Draw cursor position and clicks
         cv2.circle(img, (x, y), 3, (255, 255, 255), -1)
-        
-        # Draw click if present
         if action_type == 'L':
             # Check if click is inside any icon boundary
             inside_icon = False
@@ -172,19 +170,31 @@ def visualize_sequence(image_paths, target_image, action_sequence, save_path, hi
     target_img = cv2.cvtColor(target_img, cv2.COLOR_BGR2RGB)
     images.append(target_img)
     
-    # Create 3x5 grid for 14 frames + target
-    fig, axes = plt.subplots(3, 5, figsize=(20, 12))
+    # Calculate grid dimensions (roughly 2:1 aspect ratio)
+    total_images = history_length + 1  # including target
+    cols = int(np.sqrt(total_images * 2))  # multiply by 2 for 2:1 aspect ratio
+    rows = (total_images + cols - 1) // cols  # ceiling division
+    
+    # Create the grid
+    fig, axes = plt.subplots(rows, cols, figsize=(cols * 4, rows * 3))
+    if rows == 1:
+        axes = [axes]
+    if cols == 1:
+        axes = [[ax] for ax in axes]
     
     # Plot all images
-    for i in range(15):
-        row = i // 5
-        col = i % 5
-        axes[row, col].imshow(images[i])
-        axes[row, col].axis('off')
-        if i < 14:
-            axes[row, col].set_title(f'Frame {i+1}')
+    for i in range(rows * cols):
+        row = i // cols
+        col = i % cols
+        if i < len(images):
+            axes[row][col].imshow(images[i])
+            axes[row][col].axis('off')
+            if i < history_length:
+                axes[row][col].set_title(f'Frame {i+1}')
+            else:
+                axes[row][col].set_title('Target')
         else:
-            axes[row, col].set_title('Target')
+            axes[row][col].axis('off')  # Hide empty subplots
     
     plt.tight_layout()
     plt.savefig(save_path)

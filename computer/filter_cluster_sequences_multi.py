@@ -114,15 +114,9 @@ def filter_cluster_sequences_multi(input_csv, cluster_dirs, output_csv, output_d
     accepted = [r[0] for r in results]
     matched_clusters = [r[1] for r in results]
     
-    # Create filtered dataset with matched clusters
-    filtered_df = pd.DataFrame({
-        'data': df[accepted].values,
-        'matched_cluster': matched_clusters
-    })
-    
-    # Convert the data column back to DataFrame
-    filtered_df = pd.concat([pd.DataFrame(filtered_df['data'].tolist(), columns=df.columns), 
-                           filtered_df['matched_cluster']], axis=1)
+    # Create filtered dataset
+    filtered_df = df[accepted].copy()  # First filter the original dataframe
+    filtered_df['matched_cluster'] = [c for i, c in enumerate(matched_clusters) if accepted[i]]  # Only use clusters from accepted rows
     
     # Subsample desktop transitions to 1.5K
     desktop_mask = filtered_df['matched_cluster'].str.contains('desktop_desktop', na=False)

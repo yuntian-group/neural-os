@@ -46,10 +46,10 @@ def check_sequence_parallel(args):
         
         # If all images are close to this cluster center, accept sequence
         if sequence_ok:
-            return True
+            return True, center_path  # Return both acceptance and which cluster center matched
     
     # If no cluster center matches all images, reject sequence
-    return False
+    return False, None
 
 def filter_cluster_sequences_multi(input_csv, cluster_dirs, output_csv, output_dir, 
                                  threshold=0.01, device='cpu', history_length=3, debug=False,
@@ -75,12 +75,20 @@ def filter_cluster_sequences_multi(input_csv, cluster_dirs, output_csv, output_d
     
     # Collect all cluster center paths
     cluster_centers = []
+    desktop_center = None
     for cluster_dir in cluster_dirs:
         center_path = Path(cluster_dir) / "cluster_center.png"
         if center_path.exists():
-            cluster_centers.append(str(center_path))
+            if "desktop_desktop" in str(center_path):
+                desktop_center = str(center_path)
+            else:
+                cluster_centers.append(str(center_path))
         else:
             print(f"Warning: No cluster center found in {cluster_dir}")
+    
+    # Add desktop center at the end
+    if desktop_center:
+        cluster_centers.append(desktop_center)
     
     print(f"Found {len(cluster_centers)} cluster centers")
     
@@ -102,8 +110,26 @@ def filter_cluster_sequences_multi(input_csv, cluster_dirs, output_csv, output_d
             desc="Filtering"
         ))
     
+    # Split results into acceptance and cluster info
+    accepted = [r[0] for r in results]
+    matched_clusters = [r[1] for r in results]
+    
     # Create filtered dataset
-    filtered_df = df[results].copy()
+    filtered_df = df[accepted].copy()
+    filtered_df['matched_cluster'] = matched_clusters
+    
+    # Subsample desktop transitions to 1.5K
+    desktop_mask = filtered_df['matched_cluster'].str.contains('desktop_desktop', na=False)
+    non_desktop_df = filtered_df[~desktop_mask]
+    desktop_df = filtered_df[desktop_mask]
+    
+    if len(desktop_df) > 1500:
+        print(f"\nSubsampling desktop transitions from {len(desktop_df)} to 1500")
+        desktop_df = desktop_df.sample(n=1500, random_state=42)
+    
+    # Combine and shuffle
+    filtered_df = pd.concat([non_desktop_df, desktop_df])
+    filtered_df = filtered_df.sample(frac=1, random_state=42).reset_index(drop=True)
     
     # Save filtered dataset
     filtered_df.to_csv(output_csv, index=False)
@@ -111,6 +137,8 @@ def filter_cluster_sequences_multi(input_csv, cluster_dirs, output_csv, output_d
     print(f"\nFiltering complete!")
     print(f"Original dataset size: {len(df)}")
     print(f"Filtered dataset size: {len(filtered_df)}")
+    print(f"Desktop transitions: {len(desktop_df)}")
+    print(f"Non-desktop transitions: {len(non_desktop_df)}")
     print(f"Filtered dataset saved to: {output_csv}")
     
     # Save sample transitions
@@ -166,10 +194,11 @@ if __name__ == "__main__":
         "desktop_transition_clusters/cluster_01_size_1499_desktop_terminal",
         "desktop_transition_clusters/cluster_03_size_1275_desktop_firefox",
         "desktop_transition_clusters/cluster_04_size_799_desktop_root",
-        "desktop_transition_clusters/cluster_05_size_738_desktop_trash"
+        "desktop_transition_clusters/cluster_05_size_738_desktop_trash",
+        "desktop_transition_clusters/cluster_00_size_24373_desktop_desktop"
     ]
-    output_csv = "desktop_sequences_filtered.csv"
-    output_dir = "desktop_transitions_filtered"
+    output_csv = "desktop_sequences_filtered_with_desktop_1.5k.csv"
+    output_dir = "desktop_transitions_filtered_with_desktop_1.5k"
     threshold = 0.01
     device = 'cpu'
     history_length = 3  # Number of previous images to show in transition

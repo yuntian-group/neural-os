@@ -1,4 +1,4 @@
-save_path: luke_experiments/pssearch_bsz64_acc1_lr8e5_512_leftclick_histpos_512_384_difficult_only_withlstmencoder_without_norm_standard_filtered
+save_path: saved_bsz64_acc1_lr8e5_512_leftclick_histpos_512_384_cont2_ddd_difficult_only_withlstmencoder_without_standard_filtered_with_desktop_1.5k
 
 model:
   base_learning_rate: 8.0e-05
@@ -73,8 +73,8 @@ model:
 data:
   target: data.data_processing.datasets.DataModule
   params:
-    batch_size: 32
-    num_workers: 8
+    batch_size: 8
+    num_workers: 4
     wrap: false
     shuffle: True
     drop_last: True

@@ -14,10 +14,10 @@ import pickle
 EPS = 1e-5
 # Constants
 ICONS = {
-    'firefox': {'center': (66, 332-30), 'width': int(22*1.4), 'height': int(22*1.95)},
-    'root': {'center': (66, 185), 'width': int(22*1.95), 'height': int(22*1.95)},
-    'terminal': {'center': (191, 60), 'width': int(22*2), 'height': int(22*2)},
-    'trash': {'center': (66, 60), 'width': int(22*1.95), 'height': int(22*1.95)}
+    'firefox': {'center': (66, 332-30), 'width': int(22*1.4), 'height': 44},
+    'root': {'center': (66, 185), 'width': int(22*1.95), 'height': 42},
+    'terminal': {'center': (191, 60), 'width': int(22*2), 'height': 44},
+    'trash': {'center': (66, 60), 'width': int(22*1.95), 'height': 42}
 }
 
 CLUSTER_PATHS = {

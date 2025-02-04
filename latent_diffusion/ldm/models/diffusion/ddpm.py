@@ -19,6 +19,8 @@ from functools import partial
 from tqdm import tqdm
 from torchvision.utils import make_grid
 from pytorch_lightning.utilities.distributed import rank_zero_only
+import re
+import cv2
 
 from latent_diffusion.ldm.util import log_txt_as_img, exists, default, ismap, isimage, mean_flat, count_params, instantiate_from_config
 from latent_diffusion.ldm.modules.ema import LitEma
@@ -965,13 +967,14 @@ class LatentDiffusion(DDPM):
                 sample_img = ((sample_i[:3].transpose(0,1).transpose(1,2).cpu().float().numpy() + 1) * 127.5).astype(np.uint8)
                 
                 # Create a new image with twice the width to hold both images
-                combined_img = np.zeros((48*8, 64*8*3, 3), dtype=np.uint8)
-                combined_img[:, :64*8] = prev_frame_img  # Original on left
-                combined_img[:, 64*8:64*8*2] = zz_img  # Generated on right
-                combined_img[:, 64*8*2:] = sample_img  # Generated on right
+                #combined_img = np.zeros((48*8, 64*8*3, 3), dtype=np.uint8)
+                #combined_img = np.zeros((48*8, 64*8*2, 3), dtype=np.uint8)
+                #combined_img[:, :64*8] = prev_frame_img  # Original on left
+                #combined_img[:, 64*8:64*8*2] = zz_img  # Generated on right
+                # combined_img[:, 64*8*2:] = sample_img  # Generated on right
                 
                 # Save the combined image
-                Image.fromarray(combined_img).save(f'{exp_name}/real_vs_generated_debug_comparison_{self.i}.png')
+                #Image.fromarray(combined_img).save(f'{exp_name}/real_vs_generated_debug_comparison_{self.i}.png')
                 
                 # Save the corresponding action texts
                 with open(f'{exp_name}/real_vs_generated_debug_comparison_{self.i}.txt', 'w') as f:
@@ -979,6 +982,55 @@ class LatentDiffusion(DDPM):
                     action_0 = batch['action_0'][i]
                     f.write(f"Current action (7): {action_7}\n")
                     f.write(f"First action (0): {action_0}\n")
+
+                # Parse action sequence
+                def parse_action_sequence(action_str):
+                    # Remove all spaces
+                    action_str = action_str.replace(" ", "")
+                    # Use regex to find all actions
+                    actions = re.findall(r'([NL])\+(\d+):\+(\d+)', action_str)
+                    return [(action_type, int(x), int(y)) for action_type, x, y in actions]
+
+                actions = parse_action_sequence(action_7)
+                assert len(actions) == 7
+                
+                # Calculate grid dimensions (roughly 2:1 aspect ratio)
+                total_images = 7 + 2  # 7 history frames + target + prediction
+                cols = int(np.sqrt(total_images * 2))  # multiply by 2 for 2:1 aspect ratio
+                rows = (total_images + cols - 1) // cols  # ceiling division
+                
+                # Create combined image with proper dimensions
+                frame_height, frame_width = 48*8, 64*8
+                combined_img = np.zeros((frame_height * rows, frame_width * cols, 3), dtype=np.uint8)
+                
+                def draw_action_on_frame(img, action_type, x, y):
+                    img = img.copy()
+                    
+                    if action_type == 'L':
+                        # Red circle for clicks
+                        cv2.circle(img, (x, y), 5, (255, 0, 0), -1)
+                    else:
+                        # Green circle for moves
+                        cv2.circle(img, (x, y), 5, (0, 255, 0), -1)
+                    return img
+
+                # Draw all frames in grid
+                for j in range(rows * cols):
+                    row = j // cols
+                    col = j % cols
+                    if j < 7:  # History frames
+                        frame = np.zeros((frame_height, frame_width, 3), dtype=np.uint8)
+                        frame = draw_action_on_frame(frame, *actions[j])
+                        combined_img[row*frame_height:(row+1)*frame_height, 
+                                   col*frame_width:(col+1)*frame_width] = frame
+                    elif j == 7:  # Target frame
+                        combined_img[row*frame_height:(row+1)*frame_height, 
+                                   col*frame_width:(col+1)*frame_width] = zz_img
+                    elif j == 8:  # Prediction frame
+                        combined_img[row*frame_height:(row+1)*frame_height, 
+                                   col*frame_width:(col+1)*frame_width] = sample_img
+
+                Image.fromarray(combined_img).save(f'{exp_name}/real_vs_generated_debug_comparison_{self.i}.png')
                 
                 self.i += 1
                 if self.i > 100:

@@ -1001,10 +1001,10 @@ class LatentDiffusion(DDPM):
 
                 actions = parse_action_sequence(action_7)
                 assert len(actions) == 8, (action_7, actions)
-                actions = actions[-7:]
+                #actions = actions[-7:]
                 
                 # Calculate grid dimensions (roughly 2:1 aspect ratio)
-                total_images = 7 + 2  # 7 history frames + target + prediction
+                total_images = 7 + 2 + 1  # 7 history frames + target + prediction
                 cols = int(np.sqrt(total_images * 2))  # multiply by 2 for 2:1 aspect ratio
                 rows = (total_images + cols - 1) // cols  # ceiling division
                 
@@ -1053,18 +1053,23 @@ class LatentDiffusion(DDPM):
                     
                     row = j // cols
                     col = j % cols
-                    if j < 7:  # History frames
-                        prev_frame = prev_frames[j]
+                    if j == 0:
+                        frame = np.zeros((frame_height, frame_width, 3), dtype=np.uint8)
+                        frame = draw_action_on_frame(frame, *actions[j])
+                        combined_img[row*frame_height:(row+1)*frame_height, 
+                                   col*frame_width:(col+1)*frame_width] = frame
+                    elif j < 8:  # History frames
+                        prev_frame = prev_frames[j-1]
                         prev_frame_img = ((prev_frame.transpose(0,1).transpose(1,2).cpu().float().numpy()+1)*255/2).astype(np.uint8)
                         frame = prev_frame_img
                         #frame = np.zeros((frame_height, frame_width, 3), dtype=np.uint8)
                         frame = draw_action_on_frame(frame, *actions[j])
                         combined_img[row*frame_height:(row+1)*frame_height, 
                                    col*frame_width:(col+1)*frame_width] = frame
-                    elif j == 7:  # Target frame
+                    elif j == 8:  # Target frame
                         combined_img[row*frame_height:(row+1)*frame_height, 
                                    col*frame_width:(col+1)*frame_width] = zz_img
-                    elif j == 8:  # Prediction frame
+                    elif j == 9:  # Prediction frame
                         combined_img[row*frame_height:(row+1)*frame_height, 
                                    col*frame_width:(col+1)*frame_width] = sample_img
 

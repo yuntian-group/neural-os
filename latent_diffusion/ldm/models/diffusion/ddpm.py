@@ -1018,12 +1018,13 @@ class LatentDiffusion(DDPM):
 
                 # Draw all frames in grid
                 for j in range(rows * cols):
-                    prev_frame = prev_frames[j]
-                    prev_frame_img = ((prev_frame.transpose(0,1).transpose(1,2).cpu().float().numpy()+1)*255/2).astype(np.uint8)
-                    frame = prev_frame_img
+                    
                     row = j // cols
                     col = j % cols
                     if j < 7:  # History frames
+                        prev_frame = prev_frames[j]
+                        prev_frame_img = ((prev_frame.transpose(0,1).transpose(1,2).cpu().float().numpy()+1)*255/2).astype(np.uint8)
+                        frame = prev_frame_img
                         #frame = np.zeros((frame_height, frame_width, 3), dtype=np.uint8)
                         frame = draw_action_on_frame(frame, *actions[j])
                         combined_img[row*frame_height:(row+1)*frame_height, 

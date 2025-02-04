@@ -1041,10 +1041,10 @@ class LatentDiffusion(DDPM):
                         
                         # Green circle for clicks inside icons, red for clicks outside
                         color = (0, 255, 0) if inside_icon else (255, 0, 0)
-                        cv2.circle(img, (x_scaled, y_scaled), 10, color, 3)
+                        cv2.circle(img, (x, y), 10, color, 3)
                     else:
                         # White dot for moves
-                        cv2.circle(img, (x_scaled, y_scaled), 5, (255, 255, 255), -1)
+                        cv2.circle(img, (x, y), 5, (255, 255, 255), -1)
                     
                     return img
 

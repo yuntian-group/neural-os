@@ -25,13 +25,16 @@ def signal_handler(sig, frame):
 signal.signal(signal.SIGINT, signal_handler)
 
 # Directory containing checkpoints
-ckpt_dir = 'saved_bsz64_acc1_lr8e5_512_leftclick_histpos_512_384_cont2_ddd_difficult_only_withlstmencoder_without_standard_filtered'
+#ckpt_dir = 'saved_bsz64_acc1_lr8e5_512_leftclick_histpos_512_384_cont2_ddd_difficult_only_withlstmencoder_without_standard_filtered'
+ckpt_dir = 'saved_bsz64_acc1_lr8e5_512_leftclick_histpos_512_384_cont2_ddd_difficult_only_withlstmencoder_without_standard_filtered_with_desktop_1.5k/'
 
 # Get all checkpoint files and sort them
 ckpts = []
 for f in os.listdir(ckpt_dir):
     if f.endswith('.ckpt'):
         step = int(re.search(r'step=(\d+)', f).group(1))
+        if step != 530000:
+            continue
         ckpts.append((step, f))
 ckpts.sort()  # Sort by step number
 
@@ -76,8 +79,8 @@ for step, ckpt in tqdm(ckpts, desc="Processing checkpoints"):
     # Now modify config for test set
     with fileinput.FileInput(config_file, inplace=True, backup='.bak') as file:
         for line in file:
-            if 'data_csv_path: train_dataset/desktop_sequences_filtered_removelast100.csv' in line:
-                print('        data_csv_path: train_dataset/desktop_sequences_filtered_last100.csv')
+            if 'data_csv_path: desktop_sequences_filtered_with_desktop_1.5k_removelast100.csv' in line:
+                print('        data_csv_path: desktop_sequences_filtered_with_desktop_1.5k_last100.csv')
             else:
                 print(line, end='')
     

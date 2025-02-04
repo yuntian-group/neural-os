@@ -981,7 +981,7 @@ class LatentDiffusion(DDPM):
                     f.write(f"First action (0): {action_0}\n")
                 
                 self.i += 1
-                if self.i > 20:
+                if self.i > 100:
                     sys.exit(1)
             #import pdb; pdb.set_trace()
 

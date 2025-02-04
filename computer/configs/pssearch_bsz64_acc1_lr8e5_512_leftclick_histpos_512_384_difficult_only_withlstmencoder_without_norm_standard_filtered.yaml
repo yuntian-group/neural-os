@@ -84,7 +84,7 @@ data:
     train:
       target: data.data_processing.datasets.ActionsData
       params:
-        data_csv_path: train_dataset/desktop_sequences_filtered_removelast100.csv
+        data_csv_path: desktop_sequences_filtered_with_desktop_1.5k_removelast100.csv
         normalization: standard
         #validation:
         #  target: data.data_processing.datasets.ActionsData

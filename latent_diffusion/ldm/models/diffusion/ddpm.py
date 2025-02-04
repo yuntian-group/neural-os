@@ -937,10 +937,11 @@ class LatentDiffusion(DDPM):
             else:
                 pass
             z_vis = self.decode_first_stage(batch['image_processed'])
-            prev_frames = self.decode_first_stage(batch['c_concat_processed'][:, -1])
+            #prev_frames = self.decode_first_stage(batch['c_concat_processed'][:, -1])
             for i, zz in enumerate(z_vis):
-                prev_frame = prev_frames[i].clamp(-1, 1)
-                prev_frame_img = ((prev_frame.transpose(0,1).transpose(1,2).cpu().float().numpy()+1)*255/2).astype(np.uint8)
+                prev_frames = self.decode_first_stage(batch['c_concat_processed'][i, :])
+                prev_frames = prev_frames.clamp(-1, 1)
+                #prev_frame = prev_frames[i].clamp(-1, 1)
                 from PIL import Image
                 import copy
                 #Image.fromarray(((zz.transpose(0,1).transpose(1,2).cpu().float().numpy()+1)*255/2).astype(np.uint8)).save(f'leftclick_debug_image_{i}.png')
@@ -1017,10 +1018,13 @@ class LatentDiffusion(DDPM):
 
                 # Draw all frames in grid
                 for j in range(rows * cols):
+                    prev_frame = prev_frames[j]
+                    prev_frame_img = ((prev_frame.transpose(0,1).transpose(1,2).cpu().float().numpy()+1)*255/2).astype(np.uint8)
+                    frame = prev_frame_img
                     row = j // cols
                     col = j % cols
                     if j < 7:  # History frames
-                        frame = np.zeros((frame_height, frame_width, 3), dtype=np.uint8)
+                        #frame = np.zeros((frame_height, frame_width, 3), dtype=np.uint8)
                         frame = draw_action_on_frame(frame, *actions[j])
                         combined_img[row*frame_height:(row+1)*frame_height, 
                                    col*frame_width:(col+1)*frame_width] = frame

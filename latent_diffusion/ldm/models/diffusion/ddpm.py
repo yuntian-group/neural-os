@@ -926,6 +926,13 @@ class LatentDiffusion(DDPM):
             data_std = 6.78
             data_min = -27.681446075439453
             data_max = 30.854148864746094
+            # Define icon boundaries
+            ICONS = {
+                    'firefox': {'center': (66, 332-30), 'width': int(22*1.4), 'height': 44},
+                    'root': {'center': (66, 185), 'width': int(22*1.95), 'height': 42},
+                    'terminal': {'center': (191, 60), 'width': int(22*2), 'height': 44},
+                    'trash': {'center': (66, 60), 'width': int(22*1.95), 'height': 42}
+                }
             self.eval()
             #import pdb; pdb.set_trace()
             if 'without_comp_norm_standard' in exp_name:
@@ -1007,13 +1014,38 @@ class LatentDiffusion(DDPM):
                 
                 def draw_action_on_frame(img, action_type, x, y):
                     img = img.copy()
+                    for name, icon in ICONS.items():
+                        center = (int(icon['center'][0]), int(icon['center'][1]))
+                        width = int(icon['width'])
+                        height = int(icon['height'])
+                        
+                        
+                        x1 = center[0] - width
+                        y1 = center[1] - height
+                        x2 = center[0] + width
+                        y2 = center[1] + height
+                        cv2.rectangle(img, (x1, y1), (x2, y2), (255, 255, 0), 2)  # Yellow rectangle
+                    
                     
                     if action_type == 'L':
                         # Red circle for clicks
-                        cv2.circle(img, (x, y), 5, (255, 0, 0), -1)
+                        inside_icon = False
+                        for name, icon in ICONS.items():
+                            center = (int(icon['center'][0]), int(icon['center'][1]))
+                            width = int(icon['width'])
+                            height = int(icon['height'])
+                            if (abs(x - center[0]) <= width and 
+                                abs(y - center[1]) <= height):
+                                inside_icon = True
+                                break
+                        
+                        # Green circle for clicks inside icons, red for clicks outside
+                        color = (0, 255, 0) if inside_icon else (255, 0, 0)
+                        cv2.circle(img, (x_scaled, y_scaled), 10, color, 3)
                     else:
-                        # Green circle for moves
-                        cv2.circle(img, (x, y), 5, (0, 255, 0), -1)
+                        # White dot for moves
+                        cv2.circle(img, (x_scaled, y_scaled), 5, (255, 255, 255), -1)
+                    
                     return img
 
                 # Draw all frames in grid

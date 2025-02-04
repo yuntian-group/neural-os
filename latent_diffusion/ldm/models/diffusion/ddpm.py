@@ -992,7 +992,8 @@ class LatentDiffusion(DDPM):
                     return [(action_type, int(x), int(y)) for action_type, x, y in actions]
 
                 actions = parse_action_sequence(action_7)
-                assert len(actions) == 7, (action_7, actions)
+                assert len(actions) == 8, (action_7, actions)
+                actions = actions[-7:]
                 
                 # Calculate grid dimensions (roughly 2:1 aspect ratio)
                 total_images = 7 + 2  # 7 history frames + target + prediction

@@ -21,6 +21,8 @@ from torchvision.utils import make_grid
 from pytorch_lightning.utilities.distributed import rank_zero_only
 import re
 import cv2
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 from latent_diffusion.ldm.util import log_txt_as_img, exists, default, ismap, isimage, mean_flat, count_params, instantiate_from_config
 from latent_diffusion.ldm.modules.ema import LitEma
@@ -991,6 +993,56 @@ class LatentDiffusion(DDPM):
                     f.write(f"Current action (7): {action_7}\n")
                     f.write(f"First action (0): {action_0}\n")
 
+                # Define cluster directories
+                cluster_paths = {
+                    'terminal': "desktop_transition_clusters/cluster_01_size_1499_desktop_terminal",
+                    'firefox': "desktop_transition_clusters/cluster_03_size_1275_desktop_firefox",
+                    'root': "desktop_transition_clusters/cluster_04_size_799_desktop_root",
+                    'trash': "desktop_transition_clusters/cluster_05_size_738_desktop_trash",
+                    'desktop': "desktop_transition_clusters/cluster_00_size_24373_desktop_desktop"
+                }
+                
+                # Load cluster centers
+                cluster_centers = {}
+                for name, dir in cluster_paths.items():
+                    center_path = os.path.join(dir, "cluster_center.png")
+                    center = cv2.imread(center_path)
+                    center = cv2.cvtColor(center, cv2.COLOR_BGR2RGB)
+                    cluster_centers[name] = center
+
+                # Initialize confusion matrix if not exists
+                if not hasattr(self, 'confusion_matrix'):
+                    cluster_names = list(cluster_paths.keys())
+                    self.confusion_matrix = np.zeros((len(cluster_names), len(cluster_names)), dtype=int)
+                    self.cluster_names = cluster_names
+                
+                # Function to find closest cluster
+                def get_closest_cluster(img):
+                    min_mse = float('inf')
+                    closest_name = None
+                    img_np = ((img.transpose(0,1).transpose(1,2).cpu().float().numpy() + 1) * 127.5).astype(np.uint8)
+                    
+                    for name, center in cluster_centers.items():
+                        mse = np.mean((img_np - center) ** 2)
+                        if mse < min_mse:
+                            min_mse = mse
+                            closest_name = name
+                    return closest_name
+
+                # Get cluster assignments
+                target_cluster = get_closest_cluster(zz)
+                pred_cluster = get_closest_cluster(sample_i)
+                
+                # Update confusion matrix
+                target_idx = self.cluster_names.index(target_cluster)
+                pred_idx = self.cluster_names.index(pred_cluster)
+                self.confusion_matrix[target_idx][pred_idx] += 1
+                
+                # Create directory for this pair
+                pair_dir = f'{exp_name}/target_{target_cluster}_pred_{pred_cluster}'
+                os.makedirs(pair_dir, exist_ok=True)
+
+                # [Keep existing visualization code here]
                 # Parse action sequence
                 def parse_action_sequence(action_str):
                     # Remove all spaces
@@ -1073,8 +1125,21 @@ class LatentDiffusion(DDPM):
                         combined_img[row*frame_height:(row+1)*frame_height, 
                                    col*frame_width:(col+1)*frame_width] = sample_img
 
-                Image.fromarray(combined_img).save(f'{exp_name}/real_vs_generated_debug_comparison_{self.i}.png')
+                Image.fromarray(combined_img).save(f'{pair_dir}/comparison_{self.i}.png')
                 
+                # Save confusion matrix periodically
+                if self.i % 10 == 0:
+                    plt.figure(figsize=(10,8))
+                    sns.heatmap(self.confusion_matrix, 
+                               xticklabels=self.cluster_names,
+                               yticklabels=self.cluster_names,
+                               annot=True, fmt='d')
+                    plt.title('Prediction Confusion Matrix')
+                    plt.xlabel('Predicted')
+                    plt.ylabel('Target')
+                    plt.savefig(f'{exp_name}/confusion_matrix.png')
+                    plt.close()
+
                 self.i += 1
                 if self.i > 100:
                     sys.exit(1)

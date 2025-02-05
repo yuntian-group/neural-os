@@ -27,13 +27,14 @@ signal.signal(signal.SIGINT, signal_handler)
 # Directory containing checkpoints
 #ckpt_dir = 'saved_bsz64_acc1_lr8e5_512_leftclick_histpos_512_384_cont2_ddd_difficult_only_withlstmencoder_without_standard_filtered'
 ckpt_dir = 'saved_bsz64_acc1_lr8e5_512_leftclick_histpos_512_384_cont2_ddd_difficult_only_withlstmencoder_without_standard_filtered_with_desktop_1.5k/'
+ckpt_dir = 'saved_bsz64_acc1_lr8e5_512_leftclick_histpos_512_384_cont2_ddd_difficult_only_withlstmencoder_without_standard_filtered_with_desktop_1.5k_maskprev0/'
 
 # Get all checkpoint files and sort them
 ckpts = []
 for f in os.listdir(ckpt_dir):
     if f.endswith('.ckpt'):
         step = int(re.search(r'step=(\d+)', f).group(1))
-        if step != 530000:
+        if step != 180000:
             continue
         ckpts.append((step, f))
 ckpts.sort()  # Sort by step number
@@ -66,12 +67,12 @@ for step, ckpt in tqdm(ckpts, desc="Processing checkpoints"):
             else:
                 print(line, end='')
     
-    # Run with original config (training set)
-    try:
-        subprocess.run(f'python main.py --config {config_file}', shell=True)
-    except Exception as e:
-        print(f"Error in training run: {e}")
-        pass
+    #### Run with original config (training set)
+    ###try:
+    ###    subprocess.run(f'python main.py --config {config_file}', shell=True)
+    ###except Exception as e:
+    ###    print(f"Error in training run: {e}")
+    ###    pass
     
     if os.path.exists('../latent_diffusion/ldm/models/diffusion/ddpm.py.bak'):
         os.replace('../latent_diffusion/ldm/models/diffusion/ddpm.py.bak', '../latent_diffusion/ldm/models/diffusion/ddpm.py')
@@ -80,7 +81,8 @@ for step, ckpt in tqdm(ckpts, desc="Processing checkpoints"):
     with fileinput.FileInput(config_file, inplace=True, backup='.bak') as file:
         for line in file:
             if 'data_csv_path: desktop_sequences_filtered_with_desktop_1.5k_removelast100.csv' in line:
-                print('        data_csv_path: desktop_sequences_filtered_with_desktop_1.5k_last100.csv')
+                #print('        data_csv_path: desktop_sequences_filtered_with_desktop_1.5k_last100.csv')
+                print('        data_csv_path: debug.csv')
             else:
                 print(line, end='')
     

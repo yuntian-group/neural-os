@@ -894,7 +894,7 @@ class LatentDiffusion(DDPM):
                             c[hkey][:, 7*4+j*4:7*4+j*4+4] = torch.where(mask, z_samples, c[hkey][:, 7*4+j*4:7*4+j*4+4])
                             break
 
-                c[hkey] = c[hkey][:, 4*7:]
+                c[hkey] = c[hkey][:, 4*7:] * 0 # TODO: remove
                 #import pdb; pdb.set_trace()
                 pos_map = batch['position_map_7']
                 #leftclick_map = batch['leftclick_map_7']

@@ -12,7 +12,8 @@ def extract_numbers(path):
 def extract_targets():
     # Read the filtered sequences
     print("Reading filtered sequences...")
-    df = pd.read_csv('desktop_sequences_filtered.csv')
+    #df = pd.read_csv('desktop_sequences_filtered.csv')
+    df = pd.read_csv('desktop_sequences_filtered_with_desktop_1.5k.csv')
     
     # Extract target frames
     target_data = []
@@ -29,7 +30,7 @@ def extract_targets():
     # Create DataFrame and save
     print("Saving results...")
     target_df = pd.DataFrame(target_data)
-    target_df.to_csv('desktop_sequences_filtered_target_frames.csv', index=False)
+    target_df.to_csv('desktop_sequences_filtered_with_desktop_1.5k_target_frames.csv', index=False)
     print(f"Extracted {len(target_df)} target frames")
 
 if __name__ == "__main__":

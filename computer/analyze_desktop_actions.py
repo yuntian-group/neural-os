@@ -21,6 +21,7 @@ ICONS = {
 }
 
 CLUSTER_PATHS = {
+    'desktop': "desktop_transition_clusters/cluster_00_size_24373_desktop_desktop/cluster_center.png",
     'terminal': "desktop_transition_clusters/cluster_01_size_1499_desktop_terminal/cluster_center.png",
     'firefox': "desktop_transition_clusters/cluster_03_size_1275_desktop_firefox/cluster_center.png",
     'root': "desktop_transition_clusters/cluster_04_size_799_desktop_root/cluster_center.png",
@@ -96,11 +97,11 @@ def predict_target(action_sequence, time_threshold):
     # Check for double click
     has_double_click, click_pos = is_double_click(action_sequence, time_threshold)
     if not has_double_click:
-        return None
+        return 'desktop'
     
     # Find closest icon to click position
     min_dist = float('inf')
-    closest_icon = None
+    closest_icon = 'desktop'
     
     for name, icon in ICONS.items():
         # Check if click is within rectangular boundary
@@ -223,7 +224,7 @@ def analyze_sequences(csv_path, output_dir="analysis_results", debug=False, hist
     print("Loading mapping dictionary...")
     with open('image_action_mapping.pkl', 'rb') as f:
         mapping_dict = pickle.load(f)
-    target_df = pd.read_csv('desktop_sequences_filtered_target_frames.csv')
+    target_df = pd.read_csv('desktop_sequences_filtered_with_desktop_1.5k_target_frames.csv')
     
     # Clean up previous results
     output_dir = Path(output_dir)
@@ -283,7 +284,7 @@ def analyze_sequences(csv_path, output_dir="analysis_results", debug=False, hist
     
     print("\nConfusion Matrix:")
     # Print confusion matrix in a clearer format
-    for true_class in ICONS.keys():
+    for true_class in CLUSTER_PATHS.keys():
         true_cases = results_df[results_df['ground_truth'] == true_class]
         if len(true_cases) == 0:
             print(f"\nTrue {true_class}: No examples found")
@@ -317,8 +318,8 @@ def analyze_sequences(csv_path, output_dir="analysis_results", debug=False, hist
     return results_df, error_cases
 
 if __name__ == "__main__":
-    csv_path = "desktop_sequences_filtered.csv"
-    output_dir = "desktop_analysis_results"
+    csv_path = "desktop_sequences_filtered_with_desktop_1.5k.csv"
+    output_dir = "desktop_analysis_results_with_desktop_1.5k"
     history_length = 28  # Number of previous frames to show in transitions
     time_threshold = 0.6
     debug = False # Set to True to process only first 100 rows

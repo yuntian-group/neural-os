@@ -252,7 +252,7 @@ class ActionsData(Dataset):
         elif self.normalization == 'minmax':
             # Normalize to [-1, 1]
             return 2.0 * (x - self.data_min) / (self.data_max - self.data_min) - 1.0
-        elif self.normalization == 'standard':
+        elif self.normalization == 'standard' or 'standard' in self.normalization:
             # Standardize to mean=0, std=1
             return (x - self.data_mean) / self.data_std
         else:
@@ -419,6 +419,8 @@ class ActionsData(Dataset):
             position_map, leftclick_map = create_position_and_click_map((x,y), action_type)
             example[f"position_map_{j}"] = position_map
             example[f"leftclick_map_{j}"] = leftclick_map
+        if self.normalization == 'standard_maskprev0':
+            example['c_concat_processed'] = example['c_concat_processed'] * 0
 
         return example 
 

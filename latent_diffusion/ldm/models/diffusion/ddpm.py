@@ -19,6 +19,10 @@ from functools import partial
 from tqdm import tqdm
 from torchvision.utils import make_grid
 from pytorch_lightning.utilities.distributed import rank_zero_only
+import re
+import cv2
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 from latent_diffusion.ldm.util import log_txt_as_img, exists, default, ismap, isimage, mean_flat, count_params, instantiate_from_config
 from latent_diffusion.ldm.modules.ema import LitEma
@@ -890,7 +894,7 @@ class LatentDiffusion(DDPM):
                             c[hkey][:, 7*4+j*4:7*4+j*4+4] = torch.where(mask, z_samples, c[hkey][:, 7*4+j*4:7*4+j*4+4])
                             break
 
-                c[hkey] = c[hkey][:, 4*7:]
+                c[hkey] = c[hkey][:, 4*7:] #* 0 # TODO: remove
                 #import pdb; pdb.set_trace()
                 pos_map = batch['position_map_7']
                 #leftclick_map = batch['leftclick_map_7']
@@ -924,6 +928,13 @@ class LatentDiffusion(DDPM):
             data_std = 6.78
             data_min = -27.681446075439453
             data_max = 30.854148864746094
+            # Define icon boundaries
+            ICONS = {
+                    'firefox': {'center': (66, 332-30), 'width': int(22*1.4), 'height': 44},
+                    'root': {'center': (66, 185), 'width': int(22*1.95), 'height': 42},
+                    'terminal': {'center': (191, 60), 'width': int(22*2), 'height': 44},
+                    'trash': {'center': (66, 60), 'width': int(22*1.95), 'height': 42}
+                }
             self.eval()
             #import pdb; pdb.set_trace()
             if 'without_comp_norm_standard' in exp_name:
@@ -935,10 +946,11 @@ class LatentDiffusion(DDPM):
             else:
                 pass
             z_vis = self.decode_first_stage(batch['image_processed'])
-            prev_frames = self.decode_first_stage(batch['c_concat_processed'][:, -1])
+            #prev_frames = self.decode_first_stage(batch['c_concat_processed'][:, -1])
             for i, zz in enumerate(z_vis):
-                prev_frame = prev_frames[i].clamp(-1, 1)
-                prev_frame_img = ((prev_frame.transpose(0,1).transpose(1,2).cpu().float().numpy()+1)*255/2).astype(np.uint8)
+                prev_frames = self.decode_first_stage(batch['c_concat_processed'][i, -7:])
+                prev_frames = prev_frames.clamp(-1, 1)
+                #prev_frame = prev_frames[i].clamp(-1, 1)
                 from PIL import Image
                 import copy
                 #Image.fromarray(((zz.transpose(0,1).transpose(1,2).cpu().float().numpy()+1)*255/2).astype(np.uint8)).save(f'leftclick_debug_image_{i}.png')
@@ -965,13 +977,14 @@ class LatentDiffusion(DDPM):
                 sample_img = ((sample_i[:3].transpose(0,1).transpose(1,2).cpu().float().numpy() + 1) * 127.5).astype(np.uint8)
                 
                 # Create a new image with twice the width to hold both images
-                combined_img = np.zeros((48*8, 64*8*3, 3), dtype=np.uint8)
-                combined_img[:, :64*8] = prev_frame_img  # Original on left
-                combined_img[:, 64*8:64*8*2] = zz_img  # Generated on right
-                combined_img[:, 64*8*2:] = sample_img  # Generated on right
+                #combined_img = np.zeros((48*8, 64*8*3, 3), dtype=np.uint8)
+                #combined_img = np.zeros((48*8, 64*8*2, 3), dtype=np.uint8)
+                #combined_img[:, :64*8] = prev_frame_img  # Original on left
+                #combined_img[:, 64*8:64*8*2] = zz_img  # Generated on right
+                # combined_img[:, 64*8*2:] = sample_img  # Generated on right
                 
                 # Save the combined image
-                Image.fromarray(combined_img).save(f'{exp_name}/real_vs_generated_debug_comparison_{self.i}.png')
+                #Image.fromarray(combined_img).save(f'{exp_name}/real_vs_generated_debug_comparison_{self.i}.png')
                 
                 # Save the corresponding action texts
                 with open(f'{exp_name}/real_vs_generated_debug_comparison_{self.i}.txt', 'w') as f:
@@ -979,14 +992,163 @@ class LatentDiffusion(DDPM):
                     action_0 = batch['action_0'][i]
                     f.write(f"Current action (7): {action_7}\n")
                     f.write(f"First action (0): {action_0}\n")
+
+                # Define cluster directories
+                cluster_paths = {
+                    'terminal': "desktop_transition_clusters/cluster_01_size_1499_desktop_terminal",
+                    'firefox': "desktop_transition_clusters/cluster_03_size_1275_desktop_firefox",
+                    'root': "desktop_transition_clusters/cluster_04_size_799_desktop_root",
+                    'trash': "desktop_transition_clusters/cluster_05_size_738_desktop_trash",
+                    'desktop': "desktop_transition_clusters/cluster_00_size_24373_desktop_desktop"
+                }
                 
+                # Load cluster centers
+                cluster_centers = {}
+                for name, dir in cluster_paths.items():
+                    center_path = os.path.join(dir, "cluster_center.png")
+                    center = cv2.imread(center_path)
+                    center = cv2.cvtColor(center, cv2.COLOR_BGR2RGB)
+                    cluster_centers[name] = center
+
+                # Initialize confusion matrix if not exists
+                if not hasattr(self, 'confusion_matrix'):
+                    cluster_names = list(cluster_paths.keys())
+                    self.confusion_matrix = np.zeros((len(cluster_names), len(cluster_names)), dtype=int)
+                    self.cluster_names = cluster_names
+                
+                # Function to find closest cluster
+                def get_closest_cluster(img):
+                    min_mse = float('inf')
+                    closest_name = None
+                    img_np = ((img.transpose(0,1).transpose(1,2).cpu().float().numpy() + 1) * 127.5).astype(np.uint8)
+                    
+                    for name, center in cluster_centers.items():
+                        mse = np.mean((img_np - center) ** 2)
+                        if mse < min_mse:
+                            min_mse = mse
+                            closest_name = name
+                    return closest_name
+
+                # Get cluster assignments
+                target_cluster = get_closest_cluster(zz)
+                pred_cluster = get_closest_cluster(sample_i)
+                
+                # Update confusion matrix
+                target_idx = self.cluster_names.index(target_cluster)
+                pred_idx = self.cluster_names.index(pred_cluster)
+                self.confusion_matrix[target_idx][pred_idx] += 1
+                
+                # Create directory for this pair
+                pair_dir = f'{exp_name}/target_{target_cluster}_pred_{pred_cluster}'
+                os.makedirs(pair_dir, exist_ok=True)
+
+                # [Keep existing visualization code here]
+                # Parse action sequence
+                def parse_action_sequence(action_str):
+                    # Remove all spaces
+                    action_str = action_str.replace(" ", "")
+                    # Use regex to find all actions
+                    actions = re.findall(r'([NL])\+(\d+):\+(\d+)', action_str)
+                    return [(action_type, int(x), int(y)) for action_type, x, y in actions]
+
+                actions = parse_action_sequence(action_7)
+                assert len(actions) == 8, (action_7, actions)
+                #actions = actions[-7:]
+                
+                # Calculate grid dimensions (roughly 2:1 aspect ratio)
+                total_images = 7 + 2 + 1  # 7 history frames + target + prediction
+                cols = int(np.sqrt(total_images * 2))  # multiply by 2 for 2:1 aspect ratio
+                rows = (total_images + cols - 1) // cols  # ceiling division
+                
+                # Create combined image with proper dimensions
+                frame_height, frame_width = 48*8, 64*8
+                combined_img = np.zeros((frame_height * rows, frame_width * cols, 3), dtype=np.uint8)
+                
+                def draw_action_on_frame(img, action_type, x, y):
+                    img = img.copy()
+                    for name, icon in ICONS.items():
+                        center = (int(icon['center'][0]), int(icon['center'][1]))
+                        width = int(icon['width'])
+                        height = int(icon['height'])
+                        
+                        
+                        x1 = center[0] - width
+                        y1 = center[1] - height
+                        x2 = center[0] + width
+                        y2 = center[1] + height
+                        cv2.rectangle(img, (x1, y1), (x2, y2), (255, 255, 0), 2)  # Yellow rectangle
+                    
+                    
+                    if action_type == 'L':
+                        # Red circle for clicks
+                        inside_icon = False
+                        for name, icon in ICONS.items():
+                            center = (int(icon['center'][0]), int(icon['center'][1]))
+                            width = int(icon['width'])
+                            height = int(icon['height'])
+                            if (abs(x - center[0]) <= width and 
+                                abs(y - center[1]) <= height):
+                                inside_icon = True
+                                break
+                        
+                        # Green circle for clicks inside icons, red for clicks outside
+                        color = (0, 255, 0) if inside_icon else (255, 0, 0)
+                        cv2.circle(img, (x, y), 10, color, 3)
+                    else:
+                        # White dot for moves
+                        cv2.circle(img, (x, y), 5, (255, 255, 255), -1)
+                    
+                    return img
+
+                # Draw all frames in grid
+                for j in range(rows * cols):
+                    
+                    row = j // cols
+                    col = j % cols
+                    if j == 0:
+                        frame = np.zeros((frame_height, frame_width, 3), dtype=np.uint8)
+                        frame = draw_action_on_frame(frame, *actions[j])
+                        combined_img[row*frame_height:(row+1)*frame_height, 
+                                   col*frame_width:(col+1)*frame_width] = frame
+                    elif j < 8:  # History frames
+                        prev_frame = prev_frames[j-1]
+                        prev_frame_img = ((prev_frame.transpose(0,1).transpose(1,2).cpu().float().numpy()+1)*255/2).astype(np.uint8)
+                        frame = prev_frame_img
+                        #frame = np.zeros((frame_height, frame_width, 3), dtype=np.uint8)
+                        frame = draw_action_on_frame(frame, *actions[j])
+                        combined_img[row*frame_height:(row+1)*frame_height, 
+                                   col*frame_width:(col+1)*frame_width] = frame
+                    elif j == 8:  # Target frame
+                        combined_img[row*frame_height:(row+1)*frame_height, 
+                                   col*frame_width:(col+1)*frame_width] = zz_img
+                    elif j == 9:  # Prediction frame
+                        combined_img[row*frame_height:(row+1)*frame_height, 
+                                   col*frame_width:(col+1)*frame_width] = sample_img
+
+                Image.fromarray(combined_img).save(f'{pair_dir}/comparison_{self.i}.png')
+                
+                # Save confusion matrix periodically
+                if self.i % 10 == 0:
+                    plt.figure(figsize=(10,8))
+                    sns.heatmap(self.confusion_matrix, 
+                               xticklabels=self.cluster_names,
+                               yticklabels=self.cluster_names,
+                               annot=True, fmt='d')
+                    plt.title('Prediction Confusion Matrix')
+                    plt.xlabel('Predicted')
+                    plt.ylabel('Target')
+                    plt.savefig(f'{exp_name}/confusion_matrix.png')
+                    plt.close()
+
                 self.i += 1
-                if self.i > 20:
+                if self.i > 100:
                     sys.exit(1)
             #import pdb; pdb.set_trace()
 
 
         out = [z, c]
+        #import pdb; pdb.set_trace()
+        c['c_crossattn'] = [' '.join(['N' for item in items.split()]) for items in c['c_crossattn']] # TODO: note that encoder is not used
         #import pdb; pdb.set_trace()
         if return_first_stage_outputs:
             xrec = self.decode_first_stage(z)

@@ -2,8 +2,9 @@ import pandas as pd
 import re
 import numpy as np
 import pickle
-input_file = 'desktop_sequences_filtered_with_desktop_1.5k_last100.csv'
+offset = 25
 input_file = 'desktop_sequences_filtered_with_desktop_1.5k_removelast100.csv'
+input_file = 'desktop_sequences_filtered_with_desktop_1.5k_last100.csv'
 output_file = input_file[:-4] + '.challenging.csv'
 # Load the action mapping dictionary
 with open('image_action_mapping.pkl', 'rb') as f:
@@ -29,13 +30,13 @@ def create_firefox_row(row):
     record_num = int(match.group(1))
     
     # Create new paths
-    padding_paths = ['train_dataset/padding.png'] * 7
-    image_paths = [f'train_dataset/record_{record_num}/image_{i}.png' for i in range(7)]
-    new_seq_path = padding_paths + image_paths
+    #padding_paths = ['train_dataset/padding.png'] * 7
+    image_paths = [f'train_dataset/record_{record_num}/image_{i}.png' for i in range(offset-7, offset+7)]
+    new_seq_path = image_paths
     
     # Generate new action sequence using mapping_dict
     new_action_seq = []
-    for img_path in new_seq_path + [f'train_dataset/record_{record_num}/image_7.png']:  # include target image
+    for img_path in new_seq_path + [f'train_dataset/record_{record_num}/image_{offset+7}.png']:  # include target image
         if 'padding.png' in img_path:
             new_action_seq.append('N + 0 0 0 0 : + 0 0 0 0')  # dummy action for padding
         else:
@@ -50,9 +51,9 @@ def create_firefox_row(row):
         'Unnamed: 0': row['Unnamed: 0'],
         'Image_seq_cond_path': new_seq_path,
         'Action_seq': new_action_seq,
-        'Target_image': f'train_dataset/record_{record_num}/image_7.png',
+        'Target_image': f'train_dataset/record_{record_num}/image_{offset+7}.png',
         'frame_difference': row['frame_difference'],
-        'matched_cluster': None
+        'matched_cluster': 'None'
     }
 
 # Create new rows for firefox cases

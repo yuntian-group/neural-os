@@ -894,7 +894,7 @@ class LatentDiffusion(DDPM):
                             c[hkey][:, 7*4+j*4:7*4+j*4+4] = torch.where(mask, z_samples, c[hkey][:, 7*4+j*4:7*4+j*4+4])
                             break
 
-                c[hkey] = c[hkey][:, 4*7:] * 0 # TODO: remove
+                c[hkey] = c[hkey][:, 4*7:] #* 0 # TODO: remove
                 #import pdb; pdb.set_trace()
                 pos_map = batch['position_map_7']
                 #leftclick_map = batch['leftclick_map_7']
@@ -1147,6 +1147,8 @@ class LatentDiffusion(DDPM):
 
 
         out = [z, c]
+        #import pdb; pdb.set_trace()
+        c['c_crossattn'] = [' '.join(['N' for item in items.split()]) for items in c['c_crossattn']] # TODO: note that encoder is not used
         #import pdb; pdb.set_trace()
         if return_first_stage_outputs:
             xrec = self.decode_first_stage(z)

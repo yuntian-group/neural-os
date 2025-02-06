@@ -23,6 +23,7 @@ import numpy as np
 from PIL import Image, ImageDraw
 from io import BytesIO
 from cairosvg import svg2png  # You might need to pip install cairosvg
+import pickle
 
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
@@ -185,13 +186,19 @@ class ActionsData(Dataset):
     def __init__(self,
                  data_csv_path,
                  debug_mode=False,
-                 normalization='none'  # Options: 'none', 'minmax', 'standard'
+                 normalization='none',  # Options: 'none', 'minmax', 'standard'
+                 context_length=7  # New parameter for flexible context length
                  ):
         self.data_path = data_csv_path
         self.debug_mode = debug_mode
         self._length = None  # Will be set in setup
         self.use_processed = False  # Will be set in setup
         self.normalization = normalization
+        self.context_length = context_length
+        
+        # Load action mapping
+        with open('image_action_mapping.pkl', 'rb') as f:
+            self.mapping_dict = pickle.load(f)
         
         # Constants for normalization (based on your analysis)
         self.data_mean = -0.54
@@ -199,32 +206,28 @@ class ActionsData(Dataset):
         self.data_min = -27.681446075439453
         self.data_max = 30.854148864746094
         
-        # Don't load data in __init__, just store the path
-        
     def setup(self):
         print ('setup called')
-        """Called by Lightning when setting up the dataset"""
         if self.data_path not in ActionsData._shared_data:
             print(f"Loading data from {self.data_path}")
-            # Read only the necessary columns
-            data = pd.read_csv(self.data_path, usecols=["Image_seq_cond_path", "Action_seq", "Target_image"])
+            # Read target frames data
+            data = pd.read_csv(self.data_path)
             ActionsData._shared_data[self.data_path] = {
-                'image_seq_paths': data["Image_seq_cond_path"].apply(ast.literal_eval).to_list(),
-                'actions_seq': data['Action_seq'].apply(ast.literal_eval).to_list(),
-                'targets': data['Target_image'].to_list()
+                'record_nums': data['record_num'].tolist(),
+                'image_nums': data['image_num'].tolist()
             }
-            del data  # Clear the dataframe from memory
+            del data
             
         # Get data from cache
         cached_data = ActionsData._shared_data[self.data_path]
-        self.image_seq_paths = cached_data['image_seq_paths']
-        self.actions_seq = cached_data['actions_seq']
-        self.targets = cached_data['targets']
-        self._length = len(self.image_seq_paths)
+        self.record_nums = cached_data['record_nums']
+        self.image_nums = cached_data['image_nums']
+        self._length = len(self.record_nums)
         
-        # Check if processed data exists by checking first image
-        first_img = self.image_seq_paths[0][0]
-        processed_path = first_img.replace('train_dataset/', 'train_dataset_encoded/').replace('.png', '.npy')
+        # Check for processed data
+        first_record = self.record_nums[0]
+        first_frame = self.image_nums[0]
+        processed_path = f'train_dataset_encoded/record_{first_record}/image_{first_frame}.npy'
         self.use_processed = os.path.exists(processed_path)
         if self.use_processed:
             print("Found processed data in train_dataset_encoded/")
@@ -260,6 +263,7 @@ class ActionsData(Dataset):
 
     def __len__(self):
         if self.debug_mode:
+            assert False
             return 10000000
         else:
             return self._length
@@ -302,125 +306,57 @@ class ActionsData(Dataset):
             return latent
 
     def __getitem__(self, i):
-        """
-        takes a sequence of cond. images and actions and a single target.
-        Always loads original images, and loads processed versions if available
-        """
-        #print ('getitem', i)
         example = dict()
         i = i % self._length
-        #self.debug_mode = True
         
-        if self.debug_mode:
-            # Create a blank 64x48 image
-            image = np.ones((48, 64, 3), dtype=np.uint8) * 255
-            
-            # Generate synthetic action sequence with potential double clicks
-            action_seq = []
-            #x, y = 32, 24  # Start at center
-            last_click_pos = None
-            last_click_time = -float('inf')
-            double_click_pos = None
-            double_click_time = -float('inf')
-            
-            for t in range(15):  # Generate 15 actions
-                # Random movement
-                x = np.random.randint(0, 64)
-                y = np.random.randint(0, 48)
-                #x = max(0, min(63, x + dx))
-                #y = max(0, min(47, y + dy))
-                
-                # Random click with 20% probability
-                if np.random.random() < 0.2:
-                    action_type = 'L'
-                    # Check for double click
-                    if last_click_pos is not None and (t - last_click_time) <= 2:
-                        #dx = abs(x - last_click_pos[0])
-                        #dy = abs(y - last_click_pos[1])
-                        #if dx <= 2 and dy <= 2 and (t - last_click_time) <= 2:
-                        double_click_pos = (x, y)
-                        double_click_time = t
-                    last_click_pos = (x, y)
-                    last_click_time = t
-                else:
-                    action_type = 'N'
-                
-                # Format action string
-                action_str = f"{action_type}+{int(x)*8:04d}:+{int(y)*8:04d}"
-                action_str = ' '.join(action_str)
-                action_seq.append(action_str)
-                
-                # Draw circle for double click after 2 frames
-            if double_click_pos is not None and (double_click_time == 14-2):
-                cx, cy = double_click_pos
-                cv2.circle(image, (int(cx), int(cy)), 8, (0, 255, 0), 2)
-            
-            # Draw final cursor position
-            #image = draw_cursor(image, x, y, left_click=(action_type=='L'))
-            
-            image = draw_cursor(image, x, y, left_click=False)
-            DEBUG = False
-            #print (image.shape)
-            #import pdb; pdb.set_trace()
-            if DEBUG and double_click_pos is not None and (double_click_time == 14-2):
-                print (action_seq)
-                Image.fromarray(image).save('debug_image.png')
-                import pdb; pdb.set_trace()
-            example["image_processed"] = torch.cat([normalize_image(Image.fromarray(image)), torch.zeros((48, 64, 1))], dim=-1)
-            example["image_processed"] = rearrange(example["image_processed"], 'h w c -> c h w')
-            example["c_concat_processed"] = torch.zeros((14, 4, 48, 64))
-            # Get the last action (current position)
-            #action = self.actions_seq[i][-1]
-            #coords = parse_action_string(action)
-            
-            #if coords is not None:
-            #    x, y = coords
-            #    # Scale coordinates from 1024x640 to 64x64
-            #    x_scaled = int((x / 1024) * 64)
-            #    y_scaled = int((y / 640) * 64)
-            #    # Draw cursor at scaled position
-            #    image = draw_cursor(image, x_scaled, y_scaled, scaling_factor=1)
-            
-            #example["image"] = normalize_image(Image.fromarray(image))
-        else:
-            #assert False
-            # Always load original images
-            
-            
-            # Load processed versions if available
-            if self.use_processed:
-                example['image_processed'] = self.normalize_features(
-                    self.load_processed_image(self.targets[i])
-                )
-                example['c_concat_processed'] = torch.stack([
-                    self.normalize_features(self.load_processed_image(image_path))
-                    for image_path in self.image_seq_paths[i]
-                ])
+        # Get target record and frame
+        record_num = self.record_nums[i]
+        target_frame = self.image_nums[i]
+        
+        # Generate sequence of frame numbers
+        frame_numbers = list(range(target_frame - self.context_length*2, target_frame))
+        
+        # Generate image paths and actions
+        image_paths = []
+        actions = []
+        
+        for frame_num in frame_numbers:
+            if frame_num < 0:
+                # Use padding for negative frame numbers
+                image_paths.append('train_dataset/padding.png')
+                actions.append('N N N N N N : N N N N N')
             else:
-                assert False
-                example["image"] = normalize_image(self.targets[i])
-                example['c_concat'] = torch.stack([normalize_image(image_path) 
-                                                for image_path in self.image_seq_paths[i]])
-        # Rest of the original code...
-            action_seq = self.actions_seq[i]
-        #if len(action_seq) > 15:
-        #action_seq = action_seq[-15:]
-        assert len(action_seq) == 15, "Action sequence must be 15 actions long"
-        for j in range(8):
-            example[f"action_{j}"] = action_seq[j:j+8]
-            assert len(example[f"action_{j}"]) == 8, f"Action sequence {j} must be 8 actions long"
+                # Use actual image and look up action
+                image_paths.append(f'train_dataset/record_{record_num}/image_{frame_num}.png')
+                actions.append(self.mapping_dict.get((record_num, frame_num), 'N N N N N N : N N N N N'))
+        
+        # Add target frame action
+        actions.append(self.mapping_dict.get((record_num, target_frame), 'N N N N N N : N N N N N'))
+        assert len(actions) == self.context_length*2+1, f"Action sequence must be {self.context_length*2+1} actions long"
+        
+        example["image_processed"] = self.load_processed_image(f'train_dataset/record_{record_num}/image_{target_frame}.png')
+        example["c_concat_processed"] = torch.stack([
+            self.load_processed_image(path) for path in image_paths
+        ])
+        
+        # Rest of action processing remains the same
+        for j in range(self.context_length + 1):
+            example[f"action_{j}"] = actions[j:j+self.context_length+1]
+            assert len(example[f"action_{j}"]) == self.context_length+1, f"Action sequence {j} must be 8 actions long"
             example[f"action_{j}"] = ' '.join(example[f"action_{j}"])
-            x, y, action_type = parse_action_string(action_seq[j+7])
+            x, y, action_type = parse_action_string(actions[j+self.context_length])
             position_map, leftclick_map = create_position_and_click_map((x,y), action_type)
             example[f"position_map_{j}"] = position_map
             example[f"leftclick_map_{j}"] = leftclick_map
-        for j in range(-1, -8, -1):
-            x, y, action_type = parse_action_string(action_seq[j+7])
+
+        for j in range(-1, -(self.context_length + 1), -1):
+            x, y, action_type = parse_action_string(actions[j+self.context_length])
             position_map, leftclick_map = create_position_and_click_map((x,y), action_type)
             example[f"position_map_{j}"] = position_map
             example[f"leftclick_map_{j}"] = leftclick_map
         if self.normalization == 'standard_maskprev0':
             example['c_concat_processed'] = example['c_concat_processed'] * 0
+            assert False
 
         return example 
 

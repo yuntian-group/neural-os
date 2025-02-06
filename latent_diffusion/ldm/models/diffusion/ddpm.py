@@ -760,9 +760,10 @@ class LatentDiffusion(DDPM):
         if self.model.conditioning_key is not None:
             if cond_key is None:
                 cond_key = self.cond_stage_key
-            cond_key = 'action_7'
+            self.context_length = self.trainer.datamodule.datasets['train'].context_length
+            cond_key = f'action_{self.context_length}'
             if cond_key != self.first_stage_key:
-                if cond_key in ['caption', 'coordinates_bbox', 'action_7']:
+                if cond_key in ['caption', 'coordinates_bbox', f'action_{self.context_length}']:
                     xc = batch[cond_key]
 
                 elif cond_key == 'class_label':
@@ -802,6 +803,7 @@ class LatentDiffusion(DDPM):
             c, is_padding = self.enc_concat_seq(c, batch, hkey)
             #return the dict of conds with cattn for the learnable cond. and cconcat for latent cond.
             if self.temporal_encoder is not None:
+                assert False, "Temporal encoder is not implemented"
                 assert f'{hkey}_processed' in batch, "Processed sequence is required for temporal encoder"
                 #import pdb; pdb.set_trace()
                 # c_concat_processed: previous image sequences, shape: [B, L, C, H, W], with L being 14.
@@ -894,17 +896,17 @@ class LatentDiffusion(DDPM):
                             c[hkey][:, 7*4+j*4:7*4+j*4+4] = torch.where(mask, z_samples, c[hkey][:, 7*4+j*4:7*4+j*4+4])
                             break
 
-                c[hkey] = c[hkey][:, 4*7:] #* 0 # TODO: remove
+                c[hkey] = c[hkey][:, 4*self.context_length:] #* 0 # TODO: remove
                 #import pdb; pdb.set_trace()
-                pos_map = batch['position_map_7']
+                pos_map = batch[f'position_map_{self.context_length}']
                 #leftclick_map = batch['leftclick_map_7']
                 #c[hkey] = torch.cat([c[hkey], pos_map], dim=1)
                 #c[hkey] = torch.cat([c[hkey], pos_map, leftclick_map], dim=1)
-                inputs = [c[hkey], pos_map] + [batch[f'leftclick_map_{j}'] for j in range(7, -1, -1)]
+                inputs = [c[hkey], pos_map] + [batch[f'leftclick_map_{j}'] for j in range(self.context_length, -1, -1)]
                 #import pdb; pdb.set_trace()
                 c[hkey] = torch.cat(inputs, dim=1)
                 # concatenate with the position map.
-                assert c[hkey].shape[1] == 4*7 + 2 + 7
+                assert c[hkey].shape[1] == 4*self.context_length + 2 + self.context_length
         else:
             assert False, "Only concat conditioning is supported for now"
 
@@ -1147,7 +1149,7 @@ class LatentDiffusion(DDPM):
 
 
         out = [z, c]
-        #import pdb; pdb.set_trace()
+        import pdb; pdb.set_trace()
         c['c_crossattn'] = [' '.join(['N' for item in items.split()]) for items in c['c_crossattn']] # TODO: note that encoder is not used
         #import pdb; pdb.set_trace()
         if return_first_stage_outputs:

@@ -321,8 +321,9 @@ def analyze_sequences(csv_path, output_dir="analysis_results", debug=False, hist
 if __name__ == "__main__":
     csv_path = "desktop_sequences_filtered_with_desktop_1.5k.csv"
     csv_path = "desktop_sequences_filtered_with_desktop_1.5k_last100.challenging.csv"
+    csv_path = "desktop_sequences_filtered_with_desktop_1.5k.challenging.test.csv"
     output_dir = "desktop_analysis_results_with_desktop_1.5k_last100_challenging"
-    history_length = 28  # Number of previous frames to show in transitions
+    output_dir = "desktop_analysis_results_with_desktop_1.5k_challenging_test"
     time_threshold = 0.6
     debug = False # Set to True to process only first 100 rows
     results_data = []
@@ -355,7 +356,7 @@ if __name__ == "__main__":
                         'total_cases': len(icon_cases)
                     })
         # Save to CSV
-        pd.DataFrame(results_data).to_csv('icon_accuracy_vs_history.csv', index=False)
+        pd.DataFrame(results_data).to_csv('icon_accuracy_vs_history_challenging_test.csv', index=False)
 
     # Part 2: Create plot
     import pandas as pd
@@ -363,7 +364,7 @@ if __name__ == "__main__":
     import seaborn as sns
 
     # Read results
-    df = pd.read_csv('icon_accuracy_vs_history.csv')
+    df = pd.read_csv('icon_accuracy_vs_history_challenging_test.csv')
 
     # Create plot
     plt.figure(figsize=(10, 6))
@@ -385,5 +386,5 @@ if __name__ == "__main__":
     plt.axhline(y=1.0, color='gray', linestyle='--', alpha=0.3)
 
     plt.tight_layout()
-    plt.savefig('icon_accuracy_vs_history.png')
+    plt.savefig('icon_accuracy_vs_history_challenging_test.png')
     plt.close()

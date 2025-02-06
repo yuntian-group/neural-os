@@ -1,4 +1,4 @@
-save_path: saved_standard_challenging_context8
+save_path: saved_standard_challenging_context16
 
 model:
   base_learning_rate: 8.0e-05
@@ -23,7 +23,7 @@ model:
       target: latent_diffusion.ldm.modules.diffusionmodules.openaimodel.UNetModel
       params:
         image_size: [64, 48]
-        in_channels: 46
+        in_channels: 86
         out_channels: 4
         model_channels: 192
         attention_resolutions:
@@ -86,7 +86,7 @@ data:
       params:
         data_csv_path: desktop_sequences_filtered_with_desktop_1.5k.challenging.train.target_frames.csv
         normalization: standard
-        context_length: 8
+        context_length: 16
         #validation:
         #  target: data.data_processing.datasets.ActionsData
         #  params:

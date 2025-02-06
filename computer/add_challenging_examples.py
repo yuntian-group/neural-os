@@ -5,6 +5,7 @@ import pickle
 offset = 25
 input_file = 'desktop_sequences_filtered_with_desktop_1.5k_removelast100.csv'
 input_file = 'desktop_sequences_filtered_with_desktop_1.5k_last100.csv'
+input_file = 'desktop_sequences_filtered_with_desktop_1.5k.csv'
 output_file = input_file[:-4] + '.challenging.csv'
 # Load the action mapping dictionary
 with open('image_action_mapping.pkl', 'rb') as f:

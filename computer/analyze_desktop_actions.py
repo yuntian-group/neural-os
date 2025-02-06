@@ -330,6 +330,7 @@ if __name__ == "__main__":
     rerun = True
     if rerun:
         for history_length in [2, 4, 8, 16, 32, 64, 128]:
+            print (f"Running for history length {history_length}")
             results_df, error_cases = analyze_sequences(
                 csv_path, 
                 output_dir,

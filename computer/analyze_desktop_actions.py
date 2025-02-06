@@ -327,7 +327,7 @@ if __name__ == "__main__":
     results_data = []
 
 
-    rerun = False
+    rerun = True
     if rerun:
         for history_length in [2, 4, 8, 16, 32, 64, 128]:
             results_df, error_cases = analyze_sequences(

@@ -224,7 +224,8 @@ def analyze_sequences(csv_path, output_dir="analysis_results", debug=False, hist
     print("Loading mapping dictionary...")
     with open('image_action_mapping.pkl', 'rb') as f:
         mapping_dict = pickle.load(f)
-    target_df = pd.read_csv('desktop_sequences_filtered_with_desktop_1.5k_target_frames.csv')
+    #target_df = pd.read_csv('desktop_sequences_filtered_with_desktop_1.5k_target_frames.csv')
+    target_df = pd.read_csv(csv_path[:-4] + '.target_frames.csv')
     
     # Clean up previous results
     output_dir = Path(output_dir)

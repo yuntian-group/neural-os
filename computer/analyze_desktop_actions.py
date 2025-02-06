@@ -319,15 +319,16 @@ def analyze_sequences(csv_path, output_dir="analysis_results", debug=False, hist
 
 if __name__ == "__main__":
     csv_path = "desktop_sequences_filtered_with_desktop_1.5k.csv"
-    output_dir = "desktop_analysis_results_with_desktop_1.5k"
+    csv_path = "desktop_sequences_filtered_with_desktop_1.5k_last100.challenging.csv"
+    output_dir = "desktop_analysis_results_with_desktop_1.5k_last100_challenging"
     history_length = 28  # Number of previous frames to show in transitions
     time_threshold = 0.6
-    debug = False # Set to True to process only first 100 rows
-    
-    results_df, error_cases = analyze_sequences(
-        csv_path, 
-        output_dir,
-        debug=debug,
-        history_length=history_length,
-        time_threshold=time_threshold
-    )
+    debug = True # Set to True to process only first 100 rows
+    for history_length in [2, 4, 8, 16, 32, 64, 128]:
+        results_df, error_cases = analyze_sequences(
+            csv_path, 
+            output_dir,
+            debug=debug,
+            history_length=history_length,
+            time_threshold=time_threshold
+        )

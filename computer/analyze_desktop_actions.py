@@ -218,7 +218,7 @@ def get_actions_for_sequence(mapping_dict, record_num, image_nums):
         actions.append(mapping_dict.get(key))
     return actions
 
-def analyze_sequences(csv_path, output_dir="analysis_results", debug=False, history_length=14, time_threshold=0.6):
+def analyze_sequences(csv_path, output_dir="analysis_results", debug=False, history_length=14, time_threshold=0.6, visualize=False):
     """Analyze all sequences and compute accuracy"""
     # Load mapping and target frames
     print("Loading mapping dictionary...")
@@ -301,9 +301,10 @@ def analyze_sequences(csv_path, output_dir="analysis_results", debug=False, hist
     print(results_df['prediction'].value_counts(dropna=False))
     
     # Save error cases by confusion type
-    for error_key, cases in error_cases.items():
-        if cases:  # Only create directories for error types that exist
-            error_dir = output_dir / error_key
+    if visualize:
+        for error_key, cases in error_cases.items():
+            if cases:  # Only create directories for error types that exist
+                error_dir = output_dir / error_key
             error_dir.mkdir(exist_ok=True)
             
             for i, case in enumerate(cases):
@@ -328,6 +329,7 @@ if __name__ == "__main__":
 
 
     rerun = True
+    visualize = False
     if rerun:
         for history_length in [2, 4, 8, 16, 32, 64, 128]:
             print (f"Running for history length {history_length}")
@@ -336,7 +338,8 @@ if __name__ == "__main__":
                 output_dir,
                 debug=debug,
                 history_length=history_length,
-                time_threshold=time_threshold
+                time_threshold=time_threshold,
+                visualize=visualize
             )
             
             # Calculate accuracy for each icon type

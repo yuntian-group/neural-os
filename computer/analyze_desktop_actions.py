@@ -324,7 +324,7 @@ if __name__ == "__main__":
     output_dir = "desktop_analysis_results_with_desktop_1.5k_last100_challenging"
     history_length = 28  # Number of previous frames to show in transitions
     time_threshold = 0.6
-    debug = True # Set to True to process only first 100 rows
+    debug = False # Set to True to process only first 100 rows
     results_data = []
 
 
@@ -332,6 +332,7 @@ if __name__ == "__main__":
     visualize = False
     if rerun:
         for history_length in [2, 4, 8, 16, 32, 64, 128]:
+            #for history_length in [2, 4, 8]:
             print (f"Running for history length {history_length}")
             results_df, error_cases = analyze_sequences(
                 csv_path, 

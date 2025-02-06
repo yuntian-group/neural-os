@@ -324,11 +324,61 @@ if __name__ == "__main__":
     history_length = 28  # Number of previous frames to show in transitions
     time_threshold = 0.6
     debug = True # Set to True to process only first 100 rows
-    for history_length in [2, 4, 8, 16, 32, 64, 128]:
-        results_df, error_cases = analyze_sequences(
-            csv_path, 
-            output_dir,
-            debug=debug,
-            history_length=history_length,
-            time_threshold=time_threshold
-        )
+    results_data = []
+
+
+    rerun = False
+    if rerun:
+        for history_length in [2, 4, 8, 16, 32, 64, 128]:
+            results_df, error_cases = analyze_sequences(
+                csv_path, 
+                output_dir,
+                debug=debug,
+                history_length=history_length,
+                time_threshold=time_threshold
+            )
+            
+            # Calculate accuracy for each icon type
+            for icon in ['desktop', 'firefox', 'terminal', 'root', 'trash']:
+                icon_cases = results_df[results_df['ground_truth'] == icon]
+                if len(icon_cases) > 0:
+                    accuracy = icon_cases['correct'].mean()
+                    results_data.append({
+                        'history_length': history_length,
+                        'icon': icon,
+                        'accuracy': accuracy,
+                        'total_cases': len(icon_cases)
+                    })
+        # Save to CSV
+        pd.DataFrame(results_data).to_csv('icon_accuracy_vs_history.csv', index=False)
+
+    # Part 2: Create plot
+    import pandas as pd
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+
+    # Read results
+    df = pd.read_csv('icon_accuracy_vs_history.csv')
+
+    # Create plot
+    plt.figure(figsize=(10, 6))
+    for icon in df['icon'].unique():
+        icon_data = df[df['icon'] == icon]
+        plt.plot(icon_data['history_length'], icon_data['accuracy'], 
+                marker='o', label=f'{icon} (n={icon_data.iloc[0]["total_cases"]})')
+
+    plt.xlabel('History Length')
+    plt.ylabel('Accuracy')
+    plt.title('Icon Detection Accuracy vs History Length')
+    plt.grid(True, alpha=0.3)
+    plt.legend()
+    plt.xscale('log', base=2)  # Use log scale for history length
+    plt.ylim(0, 1)  # Set y-axis from 0 to 1
+
+    # Add horizontal lines at 0.5 and 1.0
+    plt.axhline(y=0.5, color='gray', linestyle='--', alpha=0.3)
+    plt.axhline(y=1.0, color='gray', linestyle='--', alpha=0.3)
+
+    plt.tight_layout()
+    plt.savefig('icon_accuracy_vs_history.png')
+    plt.close()

@@ -950,7 +950,7 @@ class LatentDiffusion(DDPM):
             z_vis = self.decode_first_stage(batch['image_processed'])
             #prev_frames = self.decode_first_stage(batch['c_concat_processed'][:, -1])
             for i, zz in enumerate(z_vis):
-                prev_frames = self.decode_first_stage(batch['c_concat_processed'][i, -7:])
+                prev_frames = self.decode_first_stage(batch['c_concat_processed'][i, -self.context_length:])
                 prev_frames = prev_frames.clamp(-1, 1)
                 #prev_frame = prev_frames[i].clamp(-1, 1)
                 from PIL import Image
@@ -990,8 +990,8 @@ class LatentDiffusion(DDPM):
                 
                 # Save the corresponding action texts
                 with open(f'{exp_name}/real_vs_generated_debug_comparison_{self.i}.txt', 'w') as f:
-                    action_7 = batch['action_7'][i]
-                    action_0 = batch['action_0'][i]
+                    action_7 = batch[f'action_{self.context_length}'][i]
+                    action_0 = batch[f'action_0'][i]
                     f.write(f"Current action (7): {action_7}\n")
                     f.write(f"First action (0): {action_0}\n")
 
@@ -1058,7 +1058,7 @@ class LatentDiffusion(DDPM):
                 #actions = actions[-7:]
                 
                 # Calculate grid dimensions (roughly 2:1 aspect ratio)
-                total_images = 7 + 2 + 1  # 7 history frames + target + prediction
+                total_images = self.context_length + 2 + 1  # 7 history frames + target + prediction
                 cols = int(np.sqrt(total_images * 2))  # multiply by 2 for 2:1 aspect ratio
                 rows = (total_images + cols - 1) // cols  # ceiling division
                 
@@ -1112,7 +1112,7 @@ class LatentDiffusion(DDPM):
                         frame = draw_action_on_frame(frame, *actions[j])
                         combined_img[row*frame_height:(row+1)*frame_height, 
                                    col*frame_width:(col+1)*frame_width] = frame
-                    elif j < 8:  # History frames
+                    elif j < self.context_length+1:  # History frames
                         prev_frame = prev_frames[j-1]
                         prev_frame_img = ((prev_frame.transpose(0,1).transpose(1,2).cpu().float().numpy()+1)*255/2).astype(np.uint8)
                         frame = prev_frame_img
@@ -1120,10 +1120,10 @@ class LatentDiffusion(DDPM):
                         frame = draw_action_on_frame(frame, *actions[j])
                         combined_img[row*frame_height:(row+1)*frame_height, 
                                    col*frame_width:(col+1)*frame_width] = frame
-                    elif j == 8:  # Target frame
+                    elif j == self.context_length+1:  # Target frame
                         combined_img[row*frame_height:(row+1)*frame_height, 
                                    col*frame_width:(col+1)*frame_width] = zz_img
-                    elif j == 9:  # Prediction frame
+                    elif j == self.context_length+2:  # Prediction frame
                         combined_img[row*frame_height:(row+1)*frame_height, 
                                    col*frame_width:(col+1)*frame_width] = sample_img
 

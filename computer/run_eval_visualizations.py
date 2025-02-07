@@ -30,84 +30,90 @@ ckpt_dir = 'saved_bsz64_acc1_lr8e5_512_leftclick_histpos_512_384_cont2_ddd_diffi
 ckpt_dir = 'saved_bsz64_acc1_lr8e5_512_leftclick_histpos_512_384_cont2_ddd_difficult_only_withlstmencoder_without_standard_filtered_with_desktop_1.5k_maskprev0/'
 ckpt_dir = 'saved_bsz64_acc1_lr8e5_512_leftclick_histpos_512_384_cont2_ddd_difficult_only_withlstmencoder_without_standard_filtered_with_desktop_1.5k_maskprev0_challenging/'
 ckpt_dir = 'saved_bsz64_acc1_lr8e5_512_leftclick_histpos_512_384_cont2_ddd_difficult_only_withlstmencoder_without_standard_filtered_with_desktop_1.5k_maskprev0_challenging_standard/'
-# Get all checkpoint files and sort them
-ckpts = []
-for f in os.listdir(ckpt_dir):
-    if f.endswith('.ckpt'):
-        step = int(re.search(r'step=(\d+)', f).group(1))
-        if step != 20000:
-            continue
-        ckpts.append((step, f))
-ckpts.sort()  # Sort by step number
 
-# Config file to run
-config_file = 'configs/pssearch_bsz64_acc1_lr8e5_512_leftclick_histpos_512_384_difficult_only_withlstmencoder_without_norm_standard_filtered_eval.yaml'
-
-for step, ckpt in tqdm(ckpts, desc="Processing checkpoints"):
-    print(f"Processing checkpoint: {ckpt}")
+for context_length in [2, 4, 8, 16, 32, 64, 128]:
+    ckpt_dir = 'saved_standard_challenging_context{context_length}'
+    print ('='*10)
+    print (f'processing context length {context_length}')
+    # Get all checkpoint files and sort them
+    ckpts = []
+    for f in os.listdir(ckpt_dir):
+        if f.endswith('.ckpt'):
+            step = int(re.search(r'step=(\d+)', f).group(1))
+            if step != 100000:
+                continue
+            ckpts.append((step, f))
+    ckpts.sort()  # Sort by step number
     
-    # Replace line in main.py
-    ckpt_path = os.path.join(ckpt_dir, ckpt)
-    main_replacement = f'        model = load_model_from_config(config, \'{ckpt_path}\')'
+    # Config file to run
+    config_file = f'configs/standard_challenging_context{context_length}.eval.yaml'
     
-    with fileinput.FileInput('./main.py', inplace=True, backup='.bak') as file:
-        for line in file:
-            if '#### REPLACEMENT_LINE' in line:
-                print(main_replacement)
-            else:
-                print(line, end='')
+    for step, ckpt in tqdm(ckpts, desc="Processing checkpoints"):
+        print(f"Processing checkpoint: {ckpt}")
+        
+        # Replace line in main.py
+        ckpt_path = os.path.join(ckpt_dir, ckpt)
+        main_replacement = f'        model = load_model_from_config(config, \'{ckpt_path}\')'
+        
+        with fileinput.FileInput('./main.py', inplace=True, backup='.bak') as file:
+            for line in file:
+                if '#### REPLACEMENT_LINE' in line:
+                    print(main_replacement)
+                else:
+                    print(line, end='')
+        
+        # Run for training set
+        # Replace lines in ddpm.py for training set
+        ddpm_replacement = f'        exp_name = \'vis_context{context_length}_ckpt{step}/train\'\n        DEBUG = True'
+        
+        with fileinput.FileInput('../latent_diffusion/ldm/models/diffusion/ddpm.py', inplace=True, backup='.bak') as file:
+            for line in file:
+                if '#### REPLACEMENT_LINE' in line:
+                    print(ddpm_replacement)
+                else:
+                    print(line, end='')
+        
+        #### Run with original config (training set)
+        ###try:
+        ###    subprocess.run(f'python main.py --config {config_file}', shell=True)
+        ###except Exception as e:
+        ###    print(f"Error in training run: {e}")
+        ###    pass
+        
+        if os.path.exists('../latent_diffusion/ldm/models/diffusion/ddpm.py.bak'):
+            os.replace('../latent_diffusion/ldm/models/diffusion/ddpm.py.bak', '../latent_diffusion/ldm/models/diffusion/ddpm.py')
+        
+        # Now modify config for test set
+        with fileinput.FileInput(config_file, inplace=True, backup='.bak') as file:
+            for line in file:
+                if 'data_csv_path: desktop_sequences_filtered_with_desktop_1.5k_removelast100.csv' in line:
+                    #print('        data_csv_path: desktop_sequences_filtered_with_desktop_1.5k_last100.csv')
+                    print('        data_csv_path: debug.csv')
+                else:
+                    print(line, end='')
+        
+        # Replace lines in ddpm.py for test set
+        #ddpm_replacement = f'        exp_name = \'without_comp_norm_standard_ckpt{step}/test\'\n        DEBUG = True'
+        ddpm_replacement = f'        exp_name = \'vis_context{context_length}_ckpt{step}/test\'\n        DEBUG = True'
+        
+        with fileinput.FileInput('../latent_diffusion/ldm/models/diffusion/ddpm.py', inplace=True, backup='.bak') as file:
+            for line in file:
+                if '#### REPLACEMENT_LINE' in line:
+                    print(ddpm_replacement)
+                else:
+                    print(line, end='')
+        
+        # Run with modified config (test set)
+        try:
+            subprocess.run(f'python main.py --config {config_file}', shell=True)
+        except Exception as e:
+            print(f"Error in test run: {e}")
+            pass
+        
+        # Restore original files
+        restore_files()
+        
+        print(f"Completed checkpoint: {ckpt}\n")
     
-    # Run for training set
-    # Replace lines in ddpm.py for training set
-    ddpm_replacement = f'        exp_name = \'without_comp_norm_standard_ckpt{step}/train\'\n        DEBUG = True'
-    
-    with fileinput.FileInput('../latent_diffusion/ldm/models/diffusion/ddpm.py', inplace=True, backup='.bak') as file:
-        for line in file:
-            if '#### REPLACEMENT_LINE' in line:
-                print(ddpm_replacement)
-            else:
-                print(line, end='')
-    
-    #### Run with original config (training set)
-    ###try:
-    ###    subprocess.run(f'python main.py --config {config_file}', shell=True)
-    ###except Exception as e:
-    ###    print(f"Error in training run: {e}")
-    ###    pass
-    
-    if os.path.exists('../latent_diffusion/ldm/models/diffusion/ddpm.py.bak'):
-        os.replace('../latent_diffusion/ldm/models/diffusion/ddpm.py.bak', '../latent_diffusion/ldm/models/diffusion/ddpm.py')
-    
-    # Now modify config for test set
-    with fileinput.FileInput(config_file, inplace=True, backup='.bak') as file:
-        for line in file:
-            if 'data_csv_path: desktop_sequences_filtered_with_desktop_1.5k_removelast100.csv' in line:
-                #print('        data_csv_path: desktop_sequences_filtered_with_desktop_1.5k_last100.csv')
-                print('        data_csv_path: debug.csv')
-            else:
-                print(line, end='')
-    
-    # Replace lines in ddpm.py for test set
-    ddpm_replacement = f'        exp_name = \'without_comp_norm_standard_ckpt{step}/test\'\n        DEBUG = True'
-    
-    with fileinput.FileInput('../latent_diffusion/ldm/models/diffusion/ddpm.py', inplace=True, backup='.bak') as file:
-        for line in file:
-            if '#### REPLACEMENT_LINE' in line:
-                print(ddpm_replacement)
-            else:
-                print(line, end='')
-    
-    # Run with modified config (test set)
-    try:
-        subprocess.run(f'python main.py --config {config_file}', shell=True)
-    except Exception as e:
-        print(f"Error in test run: {e}")
-        pass
-    
-    # Restore original files
+    # Final cleanup
     restore_files()
-    
-    print(f"Completed checkpoint: {ckpt}\n")
-
-# Final cleanup
-restore_files()

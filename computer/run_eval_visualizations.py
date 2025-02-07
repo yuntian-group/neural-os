@@ -33,7 +33,7 @@ ckpt_dir = 'saved_bsz64_acc1_lr8e5_512_leftclick_histpos_512_384_cont2_ddd_diffi
 
 #for context_length in [2, 4, 8, 16, 32, 64, 128]:
 for context_length in [2]:
-    ckpt_dir = 'saved_standard_challenging_context{context_length}'
+    ckpt_dir = f'saved_standard_challenging_context{context_length}'
     print ('='*10)
     print (f'processing context length {context_length}')
     # Get all checkpoint files and sort them

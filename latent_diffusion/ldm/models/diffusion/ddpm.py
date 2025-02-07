@@ -1054,6 +1054,8 @@ class LatentDiffusion(DDPM):
                     return [(action_type, int(x), int(y)) for action_type, x, y in actions]
 
                 actions = parse_action_sequence(action_7)
+                if len(actions) < self.context_length+1:
+                    actions = [('N', 0, 0)] * (self.context_length+1 - len(actions)) + actions
                 assert len(actions) == self.context_length+1, (action_7, actions)
                 #actions = actions[-7:]
                 

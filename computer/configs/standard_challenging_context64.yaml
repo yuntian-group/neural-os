@@ -1,4 +1,4 @@
-save_path: saved_standard_challenging_context64
+save_path: saved_standard_challenging_context64_cont
 
 model:
   base_learning_rate: 8.0e-05

@@ -31,7 +31,8 @@ ckpt_dir = 'saved_bsz64_acc1_lr8e5_512_leftclick_histpos_512_384_cont2_ddd_diffi
 ckpt_dir = 'saved_bsz64_acc1_lr8e5_512_leftclick_histpos_512_384_cont2_ddd_difficult_only_withlstmencoder_without_standard_filtered_with_desktop_1.5k_maskprev0_challenging/'
 ckpt_dir = 'saved_bsz64_acc1_lr8e5_512_leftclick_histpos_512_384_cont2_ddd_difficult_only_withlstmencoder_without_standard_filtered_with_desktop_1.5k_maskprev0_challenging_standard/'
 
-for context_length in [2, 4, 8, 16, 32, 64]:
+#for context_length in [2, 4, 8, 16, 32, 64]:
+for context_length in [4, 8, 16, 32]:
 #for context_length in [2]:
     ckpt_dir = f'saved_standard_challenging_context{context_length}'
     print ('='*10)
@@ -41,7 +42,7 @@ for context_length in [2, 4, 8, 16, 32, 64]:
     for f in os.listdir(ckpt_dir):
         if f.endswith('.ckpt'):
             step = int(re.search(r'step=(\d+)', f).group(1))
-            if step != 100000:
+            if step != 500000:
                 continue
             ckpts.append((step, f))
     ckpts.sort()  # Sort by step number
@@ -106,7 +107,7 @@ for context_length in [2, 4, 8, 16, 32, 64]:
         
         # Run with modified config (test set)
         try:
-            subprocess.run(f'CUDA_VISIBLE_DEVICES=4 python main.py --config {config_file}', shell=True)
+            subprocess.run(f'CUDA_VISIBLE_DEVICES=3 python main.py --config {config_file}', shell=True)
         except Exception as e:
             print(f"Error in test run: {e}")
             pass

@@ -1161,7 +1161,8 @@ class LatentDiffusion(DDPM):
 
         out = [z, c]
         #import pdb; pdb.set_trace()
-        c['c_crossattn'] = [' '.join(['N' for item in items.split()]) for items in c['c_crossattn']] # TODO: note that encoder is not used
+        if 'c_crossattn' in c:
+            c['c_crossattn'] = [' '.join(['N' for item in items.split()]) for items in c['c_crossattn']] # TODO: note that encoder is not used
         #import pdb; pdb.set_trace()
         if return_first_stage_outputs:
             xrec = self.decode_first_stage(z)

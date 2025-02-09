@@ -760,7 +760,7 @@ class LatentDiffusion(DDPM):
 
         self.context_length = self.trainer.datamodule.datasets['train'].context_length
 
-        if (self.model.conditioning_key is not None) and (self.cond_stage_config is not '__is_unconditional__'):
+        if (self.model.conditioning_key is not None) and (self.cond_stage_config != '__is_unconditional__'):
             if cond_key is None:
                 cond_key = self.cond_stage_key
             cond_key = f'action_{self.context_length}'

@@ -1132,7 +1132,7 @@ class LatentDiffusion(DDPM):
                 Image.fromarray(combined_img).save(f'{pair_dir}/comparison_{self.i}.png')
                 
                 # Save confusion matrix periodically
-                if self.i % 10 == 0:
+                if True or self.i % 10 == 0:
                     plt.figure(figsize=(10,8))
                     sns.heatmap(self.confusion_matrix, 
                                xticklabels=self.cluster_names,

@@ -757,11 +757,11 @@ class LatentDiffusion(DDPM):
                 image.save(f'loadmodel64debug_{kkk}.png')
             import pdb; pdb.set_trace()
 
-        
+        self.context_length = self.trainer.datamodule.datasets['train'].context_length
+
         if self.model.conditioning_key is not None:
             if cond_key is None:
                 cond_key = self.cond_stage_key
-            self.context_length = self.trainer.datamodule.datasets['train'].context_length
             cond_key = f'action_{self.context_length}'
             if cond_key != self.first_stage_key:
                 if cond_key in ['caption', 'coordinates_bbox', f'action_{self.context_length}']:

@@ -23,6 +23,7 @@ import re
 import cv2
 import matplotlib.pyplot as plt
 import seaborn as sns
+import pandas as pd
 
 from latent_diffusion.ldm.util import log_txt_as_img, exists, default, ismap, isimage, mean_flat, count_params, instantiate_from_config
 from latent_diffusion.ldm.modules.ema import LitEma
@@ -1143,6 +1144,14 @@ class LatentDiffusion(DDPM):
                     plt.ylabel('Target')
                     plt.savefig(f'{exp_name}/confusion_matrix.png')
                     plt.close()
+                    # Inside your model code where confusion matrix is calculated
+                    history_length = self.context_length
+                    for icon in self.cluster_names:
+                        i = self.cluster_names.index(icon)
+                        total = self.confusion_matrix[i].sum()
+                        if total > 0:
+                            accuracy = self.confusion_matrix[i,i] / total
+                            update_accuracy_csv(history_length, icon, accuracy, total)
 
                 self.i += 1
                 if self.i > 100:
@@ -1979,3 +1988,33 @@ class Layout2ImgDiffusion(LatentDiffusion):
         cond_img = torch.stack(bbox_imgs, dim=0)
         logs['bbox_image'] = cond_img
         return logs
+
+def update_accuracy_csv(history_length, icon, accuracy, total_cases, csv_path='model_pred_icon_accuracy_vs_history.csv'):
+    # Read existing CSV if it exists
+    try:
+        df = pd.read_csv(csv_path)
+    except FileNotFoundError:
+        df = pd.DataFrame(columns=['history_length', 'icon', 'accuracy', 'total_cases'])
+    
+    # Check if entry exists
+    mask = (df['history_length'] == history_length) & (df['icon'] == icon)
+    
+    if mask.any():
+        # Update existing entry
+        df.loc[mask, 'accuracy'] = accuracy
+        df.loc[mask, 'total_cases'] = total_cases
+    else:
+        # Add new entry
+        new_row = pd.DataFrame({
+            'history_length': [history_length],
+            'icon': [icon],
+            'accuracy': [accuracy], 
+            'total_cases': [total_cases]
+        })
+        df = pd.concat([df, new_row], ignore_index=True)
+    
+    # Sort by history_length and icon
+    df = df.sort_values(['history_length', 'icon']).reset_index(drop=True)
+    
+    # Save to CSV
+    df.to_csv(csv_path, index=False)

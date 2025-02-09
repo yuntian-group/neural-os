@@ -456,6 +456,7 @@ class LatentDiffusion(DDPM):
             conditioning_key = 'concat' if concat_mode else 'crossattn'
         #if cond_stage_config == '__is_unconditional__':
         #    conditioning_key = None
+        self.cond_stage_config = cond_stage_config
         ckpt_path = kwargs.pop("ckpt_path", None)
         ignore_keys = kwargs.pop("ignore_keys", [])
         super().__init__(conditioning_key=conditioning_key, *args, **kwargs)
@@ -759,7 +760,7 @@ class LatentDiffusion(DDPM):
 
         self.context_length = self.trainer.datamodule.datasets['train'].context_length
 
-        if self.model.conditioning_key is not None:
+        if (self.model.conditioning_key is not None) and (self.cond_stage_config is not '__is_unconditional__'):
             if cond_key is None:
                 cond_key = self.cond_stage_key
             cond_key = f'action_{self.context_length}'

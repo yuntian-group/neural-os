@@ -800,7 +800,7 @@ class LatentDiffusion(DDPM):
         if self.hybrid_key == 'c_concat':
             hkey = self.hybrid_key
 
-            c = {'c_crossattn': batch[cond_key]} #cond_key is converted to cross attention.
+            c = {'c_crossattn': batch[cond_key]} if cond_key is not None else {} #cond_key is converted to cross attention.
             c, is_padding = self.enc_concat_seq(c, batch, hkey)
             #return the dict of conds with cattn for the learnable cond. and cconcat for latent cond.
             if self.temporal_encoder is not None:

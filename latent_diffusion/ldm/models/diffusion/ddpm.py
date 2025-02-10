@@ -1147,12 +1147,13 @@ class LatentDiffusion(DDPM):
                     plt.close()
                     # Inside your model code where confusion matrix is calculated
                     history_length = self.context_length
-                    for icon in self.cluster_names:
-                        i = self.cluster_names.index(icon)
-                        total = self.confusion_matrix[i].sum()
-                        if total > 0:
-                            accuracy = self.confusion_matrix[i,i] / total
-                            update_accuracy_csv(history_length, icon, accuracy, total)
+                    if 'train' not in exp_name:
+                        for icon in self.cluster_names:
+                            i = self.cluster_names.index(icon)
+                            total = self.confusion_matrix[i].sum()
+                            if total > 0:
+                                accuracy = self.confusion_matrix[i,i] / total
+                                update_accuracy_csv(history_length, icon, accuracy, total)
 
                 self.i += 1
                 if self.i > 100:

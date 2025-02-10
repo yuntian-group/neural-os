@@ -75,12 +75,21 @@ for context_length in [4, 8, 16, 32]:
                 else:
                     print(line, end='')
         
-        #### Run with original config (training set)
-        ###try:
-        ###    subprocess.run(f'python main.py --config {config_file}', shell=True)
-        ###except Exception as e:
-        ###    print(f"Error in training run: {e}")
-        ###    pass
+        # Run with original config (training set)
+        # Now modify config for test set
+        with fileinput.FileInput(config_file, inplace=True, backup='.bak') as file:
+            for line in file:
+                if 'data_csv_path' in line:
+                    #print('        data_csv_path: desktop_sequences_filtered_with_desktop_1.5k_last100.csv')
+                    print('        data_csv_path: desktop_sequences_filtered_with_desktop_1.5k.challenging.train.target_frames.csv')
+                else:
+                    print(line, end='')
+        
+        try:
+            subprocess.run(f'CUDA_VISIBLE_DEVICES=0 python main.py --config {config_file}', shell=True)
+        except Exception as e:
+            print(f"Error in training run: {e}")
+            pass
         
         if os.path.exists('../latent_diffusion/ldm/models/diffusion/ddpm.py.bak'):
             os.replace('../latent_diffusion/ldm/models/diffusion/ddpm.py.bak', '../latent_diffusion/ldm/models/diffusion/ddpm.py')
@@ -88,9 +97,9 @@ for context_length in [4, 8, 16, 32]:
         # Now modify config for test set
         with fileinput.FileInput(config_file, inplace=True, backup='.bak') as file:
             for line in file:
-                if 'data_csv_path: desktop_sequences_filtered_with_desktop_1.5k_removelast100.csv' in line:
+                if 'data_csv_path' in line:
                     #print('        data_csv_path: desktop_sequences_filtered_with_desktop_1.5k_last100.csv')
-                    print('        data_csv_path: debug.csv')
+                    print('        data_csv_path: desktop_sequences_filtered_with_desktop_1.5k.challenging.test.target_frames.csv')
                 else:
                     print(line, end='')
         
@@ -107,7 +116,7 @@ for context_length in [4, 8, 16, 32]:
         
         # Run with modified config (test set)
         try:
-            subprocess.run(f'CUDA_VISIBLE_DEVICES=3 python main.py --config {config_file}', shell=True)
+            subprocess.run(f'CUDA_VISIBLE_DEVICES=0 python main.py --config {config_file}', shell=True)
         except Exception as e:
             print(f"Error in test run: {e}")
             pass

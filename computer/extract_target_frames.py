@@ -34,5 +34,6 @@ def extract_targets(filename):
     print(f"Extracted {len(target_df)} target frames")
 
 if __name__ == "__main__":
-    for filename in ['desktop_sequences_filtered_with_desktop_1.5k.challenging.train.csv', 'desktop_sequences_filtered_with_desktop_1.5k.challenging.test.csv']:
+    #for filename in ['desktop_sequences_filtered_with_desktop_1.5k.challenging.train.csv', 'desktop_sequences_filtered_with_desktop_1.5k.challenging.test.csv']:
+    for filename in ['train_dataset/train_dataset.csv']:
         extract_targets(filename)

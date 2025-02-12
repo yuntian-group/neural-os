@@ -334,10 +334,10 @@ class ActionsData(Dataset):
         actions.append(self.mapping_dict.get((record_num, target_frame), 'N N N N N N : N N N N N'))
         assert len(actions) == self.context_length*2+1, f"Action sequence must be {self.context_length*2+1} actions long"
         
-        example["image_processed"] = self.load_processed_image(f'train_dataset/record_{record_num}/image_{target_frame}.png')
-        example["c_concat_processed"] = torch.stack([
+        example["image_processed"] = self.normalize_features(self.load_processed_image(f'train_dataset/record_{record_num}/image_{target_frame}.png'))
+        example["c_concat_processed"] = self.normalize_features(torch.stack([
             self.load_processed_image(path) for path in image_paths
-        ])
+        ]))
         
         # Rest of action processing remains the same
         for j in range(self.context_length + 1):

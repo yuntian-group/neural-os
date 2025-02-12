@@ -36,6 +36,7 @@ ckpt_dir = 'saved_bsz64_acc1_lr8e5_512_leftclick_histpos_512_384_cont2_ddd_diffi
 for context_length in [888]:
     ckpt_dir = f'saved_standard_challenging_context{context_length}'
     ckpt_dir = f'saved_standard_challenging_context32_nocond_cont_cont_all_cont/'
+    ckpt_dir = f'saved_standard_challenging_context32_nocond_fixnorm/'
     print ('='*10)
     print (f'processing context length {context_length}')
     # Get all checkpoint files and sort them
@@ -43,7 +44,7 @@ for context_length in [888]:
     for f in os.listdir(ckpt_dir):
         if f.endswith('.ckpt'):
             step = int(re.search(r'step=(\d+)', f).group(1))
-            if step != 46000:
+            if step != 6000:
                 continue
             ckpts.append((step, f))
     ckpts.sort()  # Sort by step number
@@ -68,7 +69,7 @@ for context_length in [888]:
         
         # Run for training set
         # Replace lines in ddpm.py for training set
-        ddpm_replacement = f'        exp_name = \'vis_context{context_length}_ckpt{step}/train\'\n        DEBUG = True'
+        ddpm_replacement = f'        exp_name = \'vis_norm_standard_context{context_length}_ckpt{step}/train\'\n        DEBUG = True'
         
         with fileinput.FileInput('../latent_diffusion/ldm/models/diffusion/ddpm.py', inplace=True, backup='.bak') as file:
             for line in file:
@@ -107,7 +108,7 @@ for context_length in [888]:
         
         # Replace lines in ddpm.py for test set
         #ddpm_replacement = f'        exp_name = \'without_comp_norm_standard_ckpt{step}/test\'\n        DEBUG = True'
-        ddpm_replacement = f'        exp_name = \'vis_context{context_length}_ckpt{step}/test\'\n        DEBUG = True'
+        ddpm_replacement = f'        exp_name = \'vis_norm_standard_context{context_length}_ckpt{step}/test\'\n        DEBUG = True'
         
         with fileinput.FileInput('../latent_diffusion/ldm/models/diffusion/ddpm.py', inplace=True, backup='.bak') as file:
             for line in file:

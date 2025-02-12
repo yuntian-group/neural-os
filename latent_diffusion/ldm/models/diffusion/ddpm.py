@@ -941,7 +941,7 @@ class LatentDiffusion(DDPM):
                 }
             self.eval()
             #import pdb; pdb.set_trace()
-            if 'without_comp_norm_standard' in exp_name:
+            if 'norm_standard' in exp_name:
                 batch['image_processed'] = batch['image_processed'] * data_std + data_mean
                 batch['c_concat_processed'] = batch['c_concat_processed'] * data_std + data_mean
             elif 'without_comp_norm_minmax' in exp_name:
@@ -962,10 +962,10 @@ class LatentDiffusion(DDPM):
                 c_i = copy.deepcopy(c)
                 c_i['c_concat'] = c['c_concat'][i:i+1]
                 #c_i['c_crossattn'] = c['c_crossattn'][i:i+1]
-                c_i = self.get_learned_conditioning(c_i)
+                #c_i = self.get_learned_conditioning(c_i)
                 sample_i = self.p_sample_loop(cond=c_i, shape=[1, 4, 48, 64], return_intermediates=False, verbose=True)
                 
-                if 'without_comp_norm_standard' in exp_name:
+                if 'norm_standard' in exp_name:
                     sample_i = sample_i * data_std + data_mean
                     #prev_frame_img = prev_frame_img * data_std + data_mean
                 elif 'without_comp_norm_minmax' in exp_name:

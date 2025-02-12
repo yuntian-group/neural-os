@@ -34,6 +34,7 @@ LOCAL_CHECKPOINT_PATH = "saved_bsz64_acc1_lr8e5_512_leftclick_histpos_512_384_co
 LOCAL_CHECKPOINT_PATH = "saved_bsz64_acc1_lr8e5_512_leftclick_histpos_512_384_cont2_debug_fixed//model-step=110000.ckpt"
 LOCAL_CHECKPOINT_PATH = "saved_bsz64_acc1_lr8e5_512_leftclick_histpos_512_384_cont2/model-step=762000.ckpt"
 LOCAL_CHECKPOINT_PATH = "saved_bsz64_acc1_lr8e5_512_leftclick_histpos_512_384_cont2_debug_fixed//model-step=110000.ckpt"
+LOCAL_CHECKPOINT_PATH = "saved_standard_challenging_context32_nocond_cont_cont_all_cont/model-step=040000.ckpt"
 CONFIG_PATH = "config_csllm.yaml"
 CONFIG_PATH = "configs/2e5_debug_gpt_firstframe.yaml"
 CONFIG_PATH = "configs/2e5_debug_gpt_firstframe_identity.yaml"
@@ -41,6 +42,7 @@ CONFIG_PATH = "configs/2e5_debug_gpt_firstframe_posmap_debugidentity.yaml"
 CONFIG_PATH = "configs/2e5_debug_gpt_firstframe_posmap_longtrainh200.yaml"
 CONFIG_PATH = "configs/pssearch_bsz64_acc1_lr8e5_512_leftclick_histpos.yaml"
 CONFIG_PATH = "configs/pssearch_bsz64_acc1_lr8e5_512_leftclick_histpos_512_384.yaml"
+CONFIG_PATH = "configs/standard_challenging_context32_nocond_all.yaml"
 
 def upload_model_to_hub():
     # Load the configuration

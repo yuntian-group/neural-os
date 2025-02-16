@@ -855,6 +855,7 @@ class LatentDiffusion(DDPM):
                                 scheduled_sampling_length += 1
                             else:
                                 break
+                        print ('='*100)
                         print (f"Scheduled sampling length: {scheduled_sampling_length}")
                         #for j in range(self.context_length-1, -1, -1):
                         for j in range(self.context_length-scheduled_sampling_length, self.context_length):

@@ -849,9 +849,15 @@ class LatentDiffusion(DDPM):
                     with torch.no_grad():
                         
                         #assert cond_key == 'action_7', "Only action conditioning is supported for now"
-                        
-                        for j in range(self.context_length-1, -1, -1):
-                        #for j in range(7):
+                        scheduled_sampling_length = 1
+                        while scheduled_sampling_length < self.context_length:
+                            if random.random() < 0.5:
+                                scheduled_sampling_length += 1
+                            else:
+                                break
+                        print (f"Scheduled sampling length: {scheduled_sampling_length}")
+                        #for j in range(self.context_length-1, -1, -1):
+                        for j in range(self.context_length-scheduled_sampling_length, self.context_length):
                             c_prev = c[hkey][:, 4*j:4*(j+self.context_length)]
                             c_dict = {'c_concat': c_prev}
                             #c_dict = self.get_learned_conditioning(c_dict)
@@ -904,7 +910,7 @@ class LatentDiffusion(DDPM):
                             #if is_padding[:, j+7].any():
                             #    import pdb; pdb.set_trace()
                             c[hkey][:, self.context_length*4+j*4:self.context_length*4+j*4+4] = torch.where(mask, z_samples, c[hkey][:, self.context_length*4+j*4:self.context_length*4+j*4+4])
-                            break
+                            #break
 
                 c[hkey] = c[hkey][:, 4*self.context_length:] #* 0 # TODO: remove
                 #import pdb; pdb.set_trace()

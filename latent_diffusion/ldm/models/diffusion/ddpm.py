@@ -885,10 +885,10 @@ class LatentDiffusion(DDPM):
                             x_samples_ddim = torch.clamp(x_samples_ddim, min=-1.0, max=1.0)
                             z_samples = torch.cat(z_samples, dim=0)
                             # save to disk for visualization and debugging
-                            for kkk in range(batch_size):
-                                from PIL import Image, ImageDraw
-                                image = Image.fromarray(((x_samples_ddim[kkk].transpose(0, 1).transpose(1, 2).cpu().float().numpy()+1)*255/2).astype(np.uint8))
-                                image.save(f'feb15_25_ddim_sample_{j}_{kkk}.png')
+                            #for kkk in range(batch_size):
+                            #       from PIL import Image, ImageDraw
+                            #       image = Image.fromarray(((x_samples_ddim[kkk].transpose(0, 1).transpose(1, 2).cpu().float().numpy()+1)*255/2).astype(np.uint8))
+                            #       image.save(f'feb15_25_ddim_sample_{j}_{kkk}.png')
                             #
                             #import pdb; pdb.set_trace()
                             # Encode the generated samples back to latent space

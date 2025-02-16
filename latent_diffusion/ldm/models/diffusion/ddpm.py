@@ -867,7 +867,7 @@ class LatentDiffusion(DDPM):
                                             #unconditional_conditioning=uc_dict,
                                             #eta=0)
                             # Decode in smaller batches
-                            decode_batch_size = batch_size #16
+                            decode_batch_size = 16
                             x_samples_ddim = []
                             z_samples = []
                             for idx in range(0, samples_ddim.shape[0], decode_batch_size):

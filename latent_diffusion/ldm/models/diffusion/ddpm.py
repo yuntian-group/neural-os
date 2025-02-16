@@ -895,7 +895,7 @@ class LatentDiffusion(DDPM):
                             #z_samples = self.encode_first_stage(x_samples_ddim)
                             
                             # Replace the corresponding frames in c[hkey]
-                            sampling_mask = torch.rand(batch_size, 1, 1, 1, device=c[hkey].device) < 1.5 #self.scheduler_sampling_rate
+                            sampling_mask = torch.rand(batch_size, 1, 1, 1, device=c[hkey].device) < 0.5 #self.scheduler_sampling_rate
                             # Only apply sampling mask where is_padding is False
                             mask = sampling_mask & (~is_padding[:, j+self.context_length].view(-1, 1, 1, 1))
                             #if is_padding[:, j+7].any():

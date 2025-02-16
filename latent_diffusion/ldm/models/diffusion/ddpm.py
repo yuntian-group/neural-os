@@ -878,12 +878,14 @@ class LatentDiffusion(DDPM):
                             for idx in range(0, samples_ddim.shape[0], decode_batch_size):
                                 batch_samples = samples_ddim[idx:min(idx + decode_batch_size, samples_ddim.shape[0])]
                                 batch_decoded = self.decode_first_stage(batch_samples)
+                                batch_encoded = torch.clamp(batch_decoded, min=-1.0, max=1.0)
                                 x_samples_ddim.append(batch_decoded)
                                 batch_encoded = self.encode_first_stage(batch_decoded).sample()
                                 z_samples.append(batch_encoded)
                             x_samples_ddim = torch.cat(x_samples_ddim, dim=0)
-                            x_samples_ddim = torch.clamp(x_samples_ddim, min=-1.0, max=1.0)
+                            #x_samples_ddim = torch.clamp(x_samples_ddim, min=-1.0, max=1.0)
                             z_samples = torch.cat(z_samples, dim=0)
+                            z_samples = (z_samples - data_mean) / data_std
                             # save to disk for visualization and debugging
                             #for kkk in range(batch_size):
                             #       from PIL import Image, ImageDraw

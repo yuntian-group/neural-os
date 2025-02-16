@@ -870,7 +870,7 @@ class LatentDiffusion(DDPM):
                                             #unconditional_guidance_scale=5.0,
                                             #unconditional_conditioning=uc_dict,
                                             #eta=0)
-                            samples_ddim = samples_ddim * data_std + data_mean
+                            #samples_ddim = samples_ddim * data_std + data_mean
                             # Decode in smaller batches
                             decode_batch_size = batch_size #16
                             x_samples_ddim = []

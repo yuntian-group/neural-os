@@ -845,7 +845,7 @@ class LatentDiffusion(DDPM):
                 
                 if random.random() < self.scheduler_sampling_rate:
                     #assert False, "Not implemented"
-                    import pdb; pdb.set_trace()
+                    #import pdb; pdb.set_trace()
                     with torch.no_grad():
                         
                         #assert cond_key == 'action_7', "Only action conditioning is supported for now"
@@ -890,7 +890,7 @@ class LatentDiffusion(DDPM):
                                 image = Image.fromarray(((x_samples_ddim[kkk].transpose(0, 1).transpose(1, 2).cpu().float().numpy()+1)*255/2).astype(np.uint8))
                                 image.save(f'feb15_25_ddim_sample_{j}_{kkk}.png')
                             #
-                            import pdb; pdb.set_trace()
+                            #import pdb; pdb.set_trace()
                             # Encode the generated samples back to latent space
                             #z_samples = self.encode_first_stage(x_samples_ddim)
                             

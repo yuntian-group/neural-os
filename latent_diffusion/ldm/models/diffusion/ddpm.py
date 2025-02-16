@@ -838,6 +838,10 @@ class LatentDiffusion(DDPM):
                 #c[hkey] = output_from_rnn
 
                 #c, is_padding = self.enc_concat_seq(c, batch, hkey)
+                data_mean = -0.54
+                data_std = 6.78
+                data_min = -27.681446075439453
+                data_max = 30.854148864746094
                 
                 if random.random() < self.scheduler_sampling_rate:
                     #assert False, "Not implemented"
@@ -866,6 +870,7 @@ class LatentDiffusion(DDPM):
                                             #unconditional_guidance_scale=5.0,
                                             #unconditional_conditioning=uc_dict,
                                             #eta=0)
+                            samples_ddim = samples_ddim * data_std + data_mean
                             # Decode in smaller batches
                             decode_batch_size = 16
                             x_samples_ddim = []

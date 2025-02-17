@@ -38,6 +38,7 @@ LOCAL_CHECKPOINT_PATH = "saved_standard_challenging_context32_nocond_cont_cont_a
 LOCAL_CHECKPOINT_PATH = "saved_standard_challenging_context32_nocond_fixnorm/model-step=002000.ckpt"
 LOCAL_CHECKPOINT_PATH = "saved_standard_challenging_context32_nocond_fixnorm_all/model-step=300000.ckpt"
 LOCAL_CHECKPOINT_PATH = "saved_standard_challenging_context32_nocond_fixnorm_all_scheduled_sampling_0.2/model-step=018000.ckpt"
+LOCAL_CHECKPOINT_PATH = "saved_standard_challenging_context32_nocond_fixnorm_all_scheduled_sampling_0.2_feedz/model-step=030000.ckpt"
 CONFIG_PATH = "config_csllm.yaml"
 CONFIG_PATH = "configs/2e5_debug_gpt_firstframe.yaml"
 CONFIG_PATH = "configs/2e5_debug_gpt_firstframe_identity.yaml"

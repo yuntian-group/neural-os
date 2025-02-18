@@ -37,6 +37,7 @@ for context_length in [888]:
     ckpt_dir = f'saved_standard_challenging_context{context_length}'
     ckpt_dir = f'saved_standard_challenging_context32_nocond_cont_cont_all_cont/'
     ckpt_dir = f'saved_standard_challenging_context32_nocond_fixnorm_all/'
+    ckpt_dir = f'saved_standard_challenging_context32_nocond_fixnorm_all_scheduled_sampling_0.2_feedz_comb0.1/'
     print ('='*10)
     print (f'processing context length {context_length}')
     # Get all checkpoint files and sort them
@@ -44,7 +45,7 @@ for context_length in [888]:
     for f in os.listdir(ckpt_dir):
         if f.endswith('.ckpt'):
             step = int(re.search(r'step=(\d+)', f).group(1))
-            if step != 300000:
+            if step != 4000:
                 continue
             ckpts.append((step, f))
     ckpts.sort()  # Sort by step number

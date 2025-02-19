@@ -837,12 +837,12 @@ class LatentDiffusion(DDPM):
                 #import pdb; pdb.set_trace()
                 #c[hkey] = c[hkey][:, 4*7:]
                 c[hkey] = output_from_rnn
-                if TRIM_BEGINNING == 0:
-                    pos_map = batch['position_map_7']
-                    inputs = [c[hkey], pos_map] + [batch[f'leftclick_map_7']]
-                    c[hkey] = torch.cat(inputs, dim=1)
+                #if TRIM_BEGINNING == 0:
+                #    pos_map = batch['position_map_7']
+                #    inputs = [c[hkey], pos_map] + [batch[f'leftclick_map_7']]
+                #    c[hkey] = torch.cat(inputs, dim=1)
                 # concatenate with the position map.
-                assert c[hkey].shape[1] == 4*7 + 2 + 7
+                #assert c[hkey].shape[1] == 4*7 + 2 + 7
             else:
                 #c[hkey] = output_from_rnn
 

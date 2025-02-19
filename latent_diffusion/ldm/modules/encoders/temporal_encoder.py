@@ -105,7 +105,7 @@ class TemporalEncoder(nn.Module):
             is_padding = inputs_t['is_padding']
             x = inputs_t['x'].squeeze(-1)
             y = inputs_t['y'].squeeze(-1)
-            is_leftclick = inputs_t['is_leftclick'].squeeze(-1)
+            is_leftclick = inputs_t['is_leftclick'].squeeze(-1).long()
             if is_padding.any():
                 hidden_states_h_lower = torch.where(is_padding.unsqueeze(-1), self.initial_state_padding_h_lower, hidden_states_h_lower) # bsz, hidden_size
                 hidden_states_h_upper = torch.where(is_padding.unsqueeze(-1), self.initial_state_padding_h_upper, hidden_states_h_upper) # bsz, hidden_size

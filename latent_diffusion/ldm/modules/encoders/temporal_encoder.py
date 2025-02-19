@@ -129,7 +129,7 @@ class TemporalEncoder(nn.Module):
             # apply multi-headed attention to attend lstm_out_lower to image_features_with_position
             context, _ = self.multi_head_attention(lstm_out_lower, image_features_with_position, image_features_with_position)
             lstm_out_upper, (hidden_states_h_upper, hidden_states_c_upper) = self.lstm_upper(context, (hidden_states_h_upper, hidden_states_c_upper))
-            feedback = lstm_out_upper
+            feedback = lstm_out_upper.squeeze(1)
         
         hidden_last = lstm_out_upper
         

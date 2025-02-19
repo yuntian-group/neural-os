@@ -123,7 +123,7 @@ class TemporalEncoder(nn.Module):
             
             lstm_out_lower, (hidden_states_h_lower, hidden_states_c_lower) = self.lstm_lower(embedding_input, (hidden_states_h_lower, hidden_states_c_lower))
             image_features = inputs_t['image_features'] # bsz, num_channels, height, width
-            image_features = torch.einsum('bchw->b(hw)c', image_features)
+            image_features = torch.einsum('bchw->bhwc', image_features).reshape(batch_size, -1, 4)
             image_features = self.image_feature_projection(image_features)
             image_features_with_position = image_features + self.image_position_embeddings
             # apply multi-headed attention to attend lstm_out_lower to image_features_with_position

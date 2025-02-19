@@ -822,7 +822,7 @@ class LatentDiffusion(DDPM):
                 for t in range(self.context_length):
                     inputs_t = {}
                     inputs_t['image_features'] = batch[f'c_concat_processed'][:, self.context_length + t]
-                    inputs_t['is_padding'] = batch[f'is_padding'][t] # if is_padding is true, then set initial state to the padding state
+                    inputs_t['is_padding'] = batch[f'is_padding'][:, self.context_length + t] # if is_padding is true, then set initial state to the padding state
                     inputs_t['x'] = batch[f'x_{t+1}']
                     inputs_t['y'] = batch[f'y_{t+1}']
                     inputs_t['is_leftclick'] = batch[f'is_leftclick_{t+1}']

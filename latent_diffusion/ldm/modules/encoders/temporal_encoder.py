@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import matplotlib.pyplot as plt
+import numpy as np
 
 class TemporalEncoder(nn.Module):
     def __init__(
@@ -93,6 +95,10 @@ class TemporalEncoder(nn.Module):
         """
         # initial RNN state: if starts with padding, then use padding state, otherwise use unknown state
         import pdb; pdb.set_trace()
+        if not hasattr(self, 'num_times'):
+            self.num_times = 0
+        self.num_times += 1
+
         batch_size = inputs[0]['image_features'].shape[0]
         hidden_states_h_lower = self.initial_state_unknown_h_lower.repeat(1, batch_size, 1) # bsz, hidden_size
         hidden_states_h_upper = self.initial_state_unknown_h_upper.repeat(1, batch_size, 1) # bsz, hidden_size
@@ -127,7 +133,38 @@ class TemporalEncoder(nn.Module):
             image_features = self.image_feature_projection(image_features)
             image_features_with_position = image_features + self.image_position_embeddings
             # apply multi-headed attention to attend lstm_out_lower to image_features_with_position
-            context, _ = self.multi_head_attention(lstm_out_lower, image_features_with_position, image_features_with_position)
+            context, attention_weights = self.multi_head_attention(lstm_out_lower, image_features_with_position, image_features_with_position, need_weights=True)
+
+            # visualize attention weights and also x and y positions in the same image, but only for the first element in the batch
+            if self.num_times % 100 == 0:
+                # Get first batch element's attention weights and coordinates
+                attn = attention_weights[0].reshape(-1, self.output_height, self.output_width)  # [num_heads, H, W]
+                x_pos = x[0].item()
+                y_pos = y[0].item()
+                is_click = is_leftclick[0].item()
+                
+                # Create subplot for each attention head
+                num_heads = attn.shape[0]
+                fig, axes = plt.subplots(1, num_heads, figsize=(4*num_heads, 4))
+                if num_heads == 1:
+                    axes = [axes]
+                
+                for head_idx, ax in enumerate(axes):
+                    # Plot attention heatmap
+                    im = ax.imshow(attn[head_idx].detach().cpu(), cmap='Reds')
+                    
+                    # Plot click/no-click circle
+                    circle_color = 'red' if is_click else 'yellow'
+                    circle = plt.Circle((x_pos/8, y_pos/8), 0.5, color=circle_color, fill=False, linewidth=2)
+                    ax.add_patch(circle)
+                    
+                    ax.set_title(f'Head {head_idx+1}')
+                    plt.colorbar(im, ax=ax)
+                
+                plt.tight_layout()
+                plt.savefig(f'attention_vis_{self.num_times}.png')
+                plt.close()
+            
             lstm_out_upper, (hidden_states_h_upper, hidden_states_c_upper) = self.lstm_upper(context, (hidden_states_h_upper, hidden_states_c_upper))
             feedback = lstm_out_upper.squeeze(1)
         

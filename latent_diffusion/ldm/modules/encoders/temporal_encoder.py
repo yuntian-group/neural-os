@@ -94,7 +94,7 @@ class TemporalEncoder(nn.Module):
             output: Tensor of shape [B, output_channels, output_height, output_width]
         """
         # initial RNN state: if starts with padding, then use padding state, otherwise use unknown state
-        import pdb; pdb.set_trace()
+        #import pdb; pdb.set_trace()
         if not hasattr(self, 'num_times'):
             self.num_times = 0
         self.num_times += 1
@@ -136,7 +136,7 @@ class TemporalEncoder(nn.Module):
             context, attention_weights = self.multi_head_attention(lstm_out_lower, image_features_with_position, image_features_with_position, need_weights=True, average_attn_weights=False)
 
             # visualize attention weights and also x and y positions in the same image, but only for the first element in the batch
-            if self.num_times % 10 == 0:
+            if self.num_times % 1000 == 0:
                 # Get first batch element's attention weights and coordinates
                 attn = attention_weights[0].reshape(-1, self.output_height, self.output_width)  # [num_heads, H, W]
                 x_pos = x[0].item()
@@ -162,7 +162,7 @@ class TemporalEncoder(nn.Module):
                     plt.colorbar(im, ax=ax)
                 
                 plt.tight_layout()
-                plt.savefig(f'attention_vis_{self.num_times}_{t}.png')
+                plt.savefig(f'attention_vis_{self.num_times}_{t:03d}.png')
                 plt.close()
             
             lstm_out_upper, (hidden_states_h_upper, hidden_states_c_upper) = self.lstm_upper(context, (hidden_states_h_upper, hidden_states_c_upper))

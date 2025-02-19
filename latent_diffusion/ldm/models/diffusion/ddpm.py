@@ -805,25 +805,34 @@ class LatentDiffusion(DDPM):
             c, is_padding = self.enc_concat_seq(c, batch, hkey)
             #return the dict of conds with cattn for the learnable cond. and cconcat for latent cond.
             if self.temporal_encoder is not None:
-                assert False, "Temporal encoder is not implemented"
-                assert f'{hkey}_processed' in batch, "Processed sequence is required for temporal encoder"
+                #assert False, "Temporal encoder is not implemented"
+                #assert f'{hkey}_processed' in batch, "Processed sequence is required for temporal encoder"
                 #import pdb; pdb.set_trace()
                 # c_concat_processed: previous image sequences, shape: [B, L, C, H, W], with L being 14.
                 # position_map_j: position map for the jth frame, shape: [B, 1, H, W], with j being from -7 to 7 (15 in total)
                 # leftclick_map_j: leftclick map for the jth frame, shape: [B, 1, H, W], with j being from -7 to 7 (15 in total)
                 # concatenate through the channel dimension.
-                history_length_to_consider = 14
-                actual_history_length = batch['c_concat_processed'].shape[1]
+                #history_length_to_consider = 14
+                #actual_history_length = batch['c_concat_processed'].shape[1]
 
                 inputs_to_rnn = []
-                TRIM_BEGINNING = 1
-                TRIM_BEGINNING = 1
-                for j in range(history_length_to_consider):
-                    image_part = batch[f'c_concat_processed'][:, actual_history_length-history_length_to_consider+j]
-                    position_map_part = batch[f'position_map_{7-history_length_to_consider+j+TRIM_BEGINNING}']
-                    leftclick_map_part = batch[f'leftclick_map_{7-history_length_to_consider+j+TRIM_BEGINNING}']
-                    inputs_to_rnn.append(torch.cat([image_part, position_map_part, leftclick_map_part], dim=1))
-                inputs_to_rnn = torch.stack(inputs_to_rnn, dim=1)
+                #TRIM_BEGINNING = 1
+                #TRIM_BEGINNING = 1
+
+                for t in range(self.context_length):
+                    inputs_t = {}
+                    inputs_t['image_features'] = batch[f'c_concat_processed'][:, self.context_length + t]
+                    inputs_t['is_padding'] = batch[f'is_padding'][t] # if is_padding is true, then set initial state to the padding state
+                    inputs_t['x'] = batch[f'x_{t+1}']
+                    inputs_t['y'] = batch[f'y_{t+1}']
+                    inputs_t['is_leftclick'] = batch[f'is_leftclick_{t+1}']
+                    inputs_to_rnn.append(inputs_t)
+                #for j in range(history_length_to_consider):
+                #    image_part = batch[f'c_concat_processed'][:, actual_history_length-history_length_to_consider+j]
+                #    position_map_part = batch[f'position_map_{7-history_length_to_consider+j+TRIM_BEGINNING}']
+                #    leftclick_map_part = batch[f'leftclick_map_{7-history_length_to_consider+j+TRIM_BEGINNING}']
+                #    inputs_to_rnn.append(torch.cat([image_part, position_map_part, leftclick_map_part], dim=1))
+                #inputs_to_rnn = torch.stack(inputs_to_rnn, dim=1)
                 output_from_rnn = self.temporal_encoder(inputs_to_rnn)
                 #import pdb; pdb.set_trace()
                 #c[hkey] = c[hkey][:, 4*7:]

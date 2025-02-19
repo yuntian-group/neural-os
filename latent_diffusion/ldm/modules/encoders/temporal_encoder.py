@@ -46,19 +46,19 @@ class TemporalEncoder(nn.Module):
     # TODO: maybe use a CNN to process the sequence
     # TODO: maybe use aligned images and position maps
     # TODO: maybe use layernorm to preprocess the input
-    def forward(self, x):
+    def forward(self, inputs):
         """
         Args:
-            x: Input tensor of shape [B, T, C, H, W]
-                B: batch size
-                T: sequence length
-                C: input channels
-                H: height
-                W: width
+            inputs: a list of dictionaries, each containing the following keys:
+                'image_features': Tensor of shape [B, C, H, W]
+                'is_padding': Tensor of shape [B, 1, H, W]
+                'x': Tensor of shape [B, 1, H, W]
+                'y': Tensor of shape [B, 1, H, W]
+                'is_leftclick': Tensor of shape [B, 1, H, W]
         Returns:
             output: Tensor of shape [B, output_channels, output_height, output_width]
         """
-        #import pdb; pdb.set_trace()
+        import pdb; pdb.set_trace()
         batch_size = x.shape[0]
         sequence_length = x.shape[1]
         assert sequence_length == 14, "Sequence length must be 14"

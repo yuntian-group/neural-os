@@ -338,6 +338,7 @@ class ActionsData(Dataset):
         example["c_concat_processed"] = self.normalize_features(torch.stack([
             self.load_processed_image(path) for path in image_paths
         ]))
+        example['is_padding'] = torch.BoolTensor([frame_num < 0 for frame_num in frame_numbers])
         
         # Rest of action processing remains the same
         for j in range(self.context_length + 1):
@@ -348,12 +349,19 @@ class ActionsData(Dataset):
             position_map, leftclick_map = create_position_and_click_map((x,y), action_type)
             example[f"position_map_{j}"] = position_map
             example[f"leftclick_map_{j}"] = leftclick_map
+            example[f"x_{j}"] = torch.LongTensor([x])
+            example[f"y_{j}"] = torch.LongTensor([y])
+            example[f"is_leftclick_{j}"] = torch.BoolTensor([action_type == 'L'])
 
         for j in range(-1, -(self.context_length + 1), -1):
             x, y, action_type = parse_action_string(actions[j+self.context_length])
             position_map, leftclick_map = create_position_and_click_map((x,y), action_type)
             example[f"position_map_{j}"] = position_map
             example[f"leftclick_map_{j}"] = leftclick_map
+            example[f"x_{j}"] = torch.LongTensor([x])
+            example[f"y_{j}"] = torch.LongTensor([y])
+            example[f"is_leftclick_{j}"] = torch.BoolTensor([action_type == 'L'])
+
         if self.normalization == 'standard_maskprev0':
             example['c_concat_processed'] = example['c_concat_processed'] * 0
             assert False

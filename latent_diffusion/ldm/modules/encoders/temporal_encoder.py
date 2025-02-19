@@ -136,7 +136,7 @@ class TemporalEncoder(nn.Module):
             context, attention_weights = self.multi_head_attention(lstm_out_lower, image_features_with_position, image_features_with_position, need_weights=True)
 
             # visualize attention weights and also x and y positions in the same image, but only for the first element in the batch
-            if self.num_times % 100 == 0:
+            if self.num_times % 10 == 0:
                 # Get first batch element's attention weights and coordinates
                 attn = attention_weights[0].reshape(-1, self.output_height, self.output_width)  # [num_heads, H, W]
                 x_pos = x[0].item()

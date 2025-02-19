@@ -44,7 +44,7 @@ model:
       target: latent_diffusion.ldm.modules.encoders.temporal_encoder.TemporalEncoder
       params:
         input_channels: 6
-        hidden_size: 768
+        hidden_size: 1024
         num_layers: 1
         dropout: 0.1
         output_channels: 4

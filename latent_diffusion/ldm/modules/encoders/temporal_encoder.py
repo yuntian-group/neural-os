@@ -59,7 +59,7 @@ class TemporalEncoder(nn.Module):
             bidirectional=False
         )
         self.lstm_upper = nn.LSTM(
-            input_size=hidden_size*4,  # Flattened input size
+            input_size=hidden_size,  # Flattened input size
             hidden_size=hidden_size,
             num_layers=num_layers,
             dropout=dropout if num_layers > 1 else 0,
@@ -71,7 +71,7 @@ class TemporalEncoder(nn.Module):
         # Project LSTM output to desired spatial feature map
         self.projection = nn.Sequential(
             nn.Linear(hidden_size, hidden_size*4),
-            nn.ReLU(inplace=True),
+            nn.ReLU(),
             nn.Linear(hidden_size*4, self.output_channels * output_height * output_width),
         )
     # TODO: maybe use a CNN to process the sequence

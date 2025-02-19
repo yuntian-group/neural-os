@@ -26,14 +26,14 @@ class TemporalEncoder(nn.Module):
         self.output_height = output_height
         self.output_width = output_width
 
-        self.initial_state_padding_h_lower = nn.Parameter(torch.randn(1, hidden_size))
-        self.initial_state_unknown_h_lower = nn.Parameter(torch.randn(1, hidden_size))
-        self.initial_state_padding_h_upper = nn.Parameter(torch.randn(1, hidden_size))
-        self.initial_state_unknown_h_upper = nn.Parameter(torch.randn(1, hidden_size))
-        self.initial_state_padding_c_lower = nn.Parameter(torch.randn(1, hidden_size))
-        self.initial_state_unknown_c_lower = nn.Parameter(torch.randn(1, hidden_size))
-        self.initial_state_padding_c_upper = nn.Parameter(torch.randn(1, hidden_size))
-        self.initial_state_unknown_c_upper = nn.Parameter(torch.randn(1, hidden_size))
+        self.initial_state_padding_h_lower = nn.Parameter(torch.randn(1, 1, hidden_size))
+        self.initial_state_unknown_h_lower = nn.Parameter(torch.randn(1, 1, hidden_size))
+        self.initial_state_padding_h_upper = nn.Parameter(torch.randn(1, 1, hidden_size))
+        self.initial_state_unknown_h_upper = nn.Parameter(torch.randn(1, 1, hidden_size))
+        self.initial_state_padding_c_lower = nn.Parameter(torch.randn(1, 1, hidden_size))
+        self.initial_state_unknown_c_lower = nn.Parameter(torch.randn(1, 1, hidden_size))
+        self.initial_state_padding_c_upper = nn.Parameter(torch.randn(1, 1, hidden_size))
+        self.initial_state_unknown_c_upper = nn.Parameter(torch.randn(1, 1, hidden_size))
         assert hidden_size % 8 == 0, "hidden_size must be divisible by 8"
 
         self.image_position_embeddings = nn.Parameter(torch.randn(1, self.output_height*self.output_width, hidden_size))
@@ -94,10 +94,10 @@ class TemporalEncoder(nn.Module):
         # initial RNN state: if starts with padding, then use padding state, otherwise use unknown state
         import pdb; pdb.set_trace()
         batch_size = inputs[0]['image_features'].shape[0]
-        hidden_states_h_lower = self.initial_state_unknown_h_lower.repeat(batch_size, 1) # bsz, hidden_size
-        hidden_states_h_upper = self.initial_state_unknown_h_upper.repeat(batch_size, 1) # bsz, hidden_size
-        hidden_states_c_lower = self.initial_state_unknown_c_lower.repeat(batch_size, 1) # bsz, hidden_size
-        hidden_states_c_upper = self.initial_state_unknown_c_upper.repeat(batch_size, 1) # bsz, hidden_size
+        hidden_states_h_lower = self.initial_state_unknown_h_lower.repeat(1, batch_size, 1) # bsz, hidden_size
+        hidden_states_h_upper = self.initial_state_unknown_h_upper.repeat(1, batch_size, 1) # bsz, hidden_size
+        hidden_states_c_lower = self.initial_state_unknown_c_lower.repeat(1, batch_size, 1) # bsz, hidden_size
+        hidden_states_c_upper = self.initial_state_unknown_c_upper.repeat(1, batch_size, 1) # bsz, hidden_size
         feedback = self.initial_feedback_unknown.repeat(batch_size, 1) # bsz, hidden_size
         sequence_length = len(inputs)
         for t in range(sequence_length):
@@ -107,10 +107,10 @@ class TemporalEncoder(nn.Module):
             y = inputs_t['y'].squeeze(-1)
             is_leftclick = inputs_t['is_leftclick'].squeeze(-1).long()
             if is_padding.any():
-                hidden_states_h_lower = torch.where(is_padding.unsqueeze(-1), self.initial_state_padding_h_lower, hidden_states_h_lower) # bsz, hidden_size
-                hidden_states_h_upper = torch.where(is_padding.unsqueeze(-1), self.initial_state_padding_h_upper, hidden_states_h_upper) # bsz, hidden_size
-                hidden_states_c_lower = torch.where(is_padding.unsqueeze(-1), self.initial_state_padding_c_lower, hidden_states_c_lower) # bsz, hidden_size
-                hidden_states_c_upper = torch.where(is_padding.unsqueeze(-1), self.initial_state_padding_c_upper, hidden_states_c_upper) # bsz, hidden_size
+                hidden_states_h_lower = torch.where(is_padding.view(1, batch_size, 1), self.initial_state_padding_h_lower, hidden_states_h_lower) # 1, bsz, hidden_size
+                hidden_states_h_upper = torch.where(is_padding.view(1, batch_size, 1), self.initial_state_padding_h_upper, hidden_states_h_upper) # 1, bsz, hidden_size
+                hidden_states_c_lower = torch.where(is_padding.view(1, batch_size, 1), self.initial_state_padding_c_lower, hidden_states_c_lower) # 1, bsz, hidden_size
+                hidden_states_c_upper = torch.where(is_padding.view(1, batch_size, 1), self.initial_state_padding_c_upper, hidden_states_c_upper) # 1, bsz, hidden_size
                 feedback = torch.where(is_padding.unsqueeze(-1), self.initial_feedback_padding, feedback) # bsz, hidden_size
             
             embedding_x = self.embedding_x(x) # bsz, hidden_size    
@@ -118,6 +118,7 @@ class TemporalEncoder(nn.Module):
             embedding_is_leftclick = self.embedding_is_leftclick(is_leftclick) # bsz, hidden_size
             embedding_input = torch.cat([embedding_x, embedding_y, embedding_is_leftclick, feedback], dim=-1) # bsz, hidden_size*4
             embedding_input = self.input_projection(embedding_input) # bsz, hidden_size*4
+            embedding_input = embedding_input.unsqueeze(1) # bsz, 1, hidden_size*4
 
             
             lstm_out_lower, (hidden_states_h_lower, hidden_states_c_lower) = self.lstm_lower(embedding_input, (hidden_states_h_lower, hidden_states_c_lower))

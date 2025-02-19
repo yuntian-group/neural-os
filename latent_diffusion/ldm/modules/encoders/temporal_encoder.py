@@ -162,7 +162,7 @@ class TemporalEncoder(nn.Module):
                     plt.colorbar(im, ax=ax)
                 
                 plt.tight_layout()
-                plt.savefig(f'attention_vis_{self.num_times}.png')
+                plt.savefig(f'attention_vis_{self.num_times}_{t}.png')
                 plt.close()
             
             lstm_out_upper, (hidden_states_h_upper, hidden_states_c_upper) = self.lstm_upper(context, (hidden_states_h_upper, hidden_states_c_upper))

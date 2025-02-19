@@ -151,11 +151,11 @@ class TemporalEncoder(nn.Module):
                 
                 for head_idx, ax in enumerate(axes):
                     # Plot attention heatmap
-                    im = ax.imshow(attn[head_idx].detach().cpu(), cmap='Reds')
+                    im = ax.imshow(attn[head_idx].detach().cpu(), cmap='Greens')
                     
                     # Plot click/no-click circle
                     circle_color = 'red' if is_click else 'yellow'
-                    circle = plt.Circle((x_pos/8, y_pos/8), 0.5, color=circle_color, fill=False, linewidth=2)
+                    circle = plt.Circle((x_pos/8, y_pos/8), 3, color=circle_color, fill=False, linewidth=2)
                     ax.add_patch(circle)
                     
                     ax.set_title(f'Head {head_idx+1}')

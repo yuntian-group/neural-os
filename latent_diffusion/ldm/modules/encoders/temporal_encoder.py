@@ -133,7 +133,7 @@ class TemporalEncoder(nn.Module):
             image_features = self.image_feature_projection(image_features)
             image_features_with_position = image_features + self.image_position_embeddings
             # apply multi-headed attention to attend lstm_out_lower to image_features_with_position
-            context, attention_weights = self.multi_head_attention(lstm_out_lower, image_features_with_position, image_features_with_position, need_weights=True)
+            context, attention_weights = self.multi_head_attention(lstm_out_lower, image_features_with_position, image_features_with_position, need_weights=True, average_attn_weights=False)
 
             # visualize attention weights and also x and y positions in the same image, but only for the first element in the batch
             if self.num_times % 10 == 0:

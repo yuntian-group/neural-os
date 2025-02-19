@@ -349,8 +349,8 @@ class ActionsData(Dataset):
             position_map, leftclick_map = create_position_and_click_map((x,y), action_type)
             example[f"position_map_{j}"] = position_map
             example[f"leftclick_map_{j}"] = leftclick_map
-            example[f"x_{j}"] = torch.LongTensor([x])
-            example[f"y_{j}"] = torch.LongTensor([y])
+            example[f"x_{j}"] = torch.LongTensor([x if x is not None else 0])
+            example[f"y_{j}"] = torch.LongTensor([y if y is not None else 0])
             example[f"is_leftclick_{j}"] = torch.BoolTensor([action_type == 'L'])
 
         for j in range(-1, -(self.context_length + 1), -1):
@@ -358,8 +358,8 @@ class ActionsData(Dataset):
             position_map, leftclick_map = create_position_and_click_map((x,y), action_type)
             example[f"position_map_{j}"] = position_map
             example[f"leftclick_map_{j}"] = leftclick_map
-            example[f"x_{j}"] = torch.LongTensor([x])
-            example[f"y_{j}"] = torch.LongTensor([y])
+            example[f"x_{j}"] = torch.LongTensor([x if x is not None else 0])
+            example[f"y_{j}"] = torch.LongTensor([y if y is not None else 0])
             example[f"is_leftclick_{j}"] = torch.BoolTensor([action_type == 'L'])
 
         if self.normalization == 'standard_maskprev0':

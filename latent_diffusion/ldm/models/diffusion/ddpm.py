@@ -833,7 +833,7 @@ class LatentDiffusion(DDPM):
                 #    leftclick_map_part = batch[f'leftclick_map_{7-history_length_to_consider+j+TRIM_BEGINNING}']
                 #    inputs_to_rnn.append(torch.cat([image_part, position_map_part, leftclick_map_part], dim=1))
                 #inputs_to_rnn = torch.stack(inputs_to_rnn, dim=1)
-                import pdb; pdb.set_trace()
+                #import pdb; pdb.set_trace()
                 with torch.enable_grad():
                     output_from_rnn = self.temporal_encoder(inputs_to_rnn)
                 

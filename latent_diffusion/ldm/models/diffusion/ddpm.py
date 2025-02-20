@@ -1991,6 +1991,9 @@ class LatentDiffusion(DDPM):
         if self.cond_stage_trainable:
             print(f"{self.__class__.__name__}: Also optimizing conditioner params!")
             params = params + list(self.cond_stage_model.parameters())
+        if self.temporal_encoder is not None:
+            print(f"{self.__class__.__name__}: Also optimizing temporal encoder params!")
+            params = params + list(self.temporal_encoder.parameters())
         if self.learn_logvar:
             print('Diffusion model optimizing logvar')
             params.append(self.logvar)

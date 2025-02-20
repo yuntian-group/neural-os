@@ -85,6 +85,7 @@ def load_model_from_config(config, ckpt, verbose=False):
     pl_sd = torch.load(ckpt, map_location='cpu')
     sd = pl_sd["state_dict"]
     model = instantiate_from_config(config.model)
+    #import pdb; pdb.set_trace()
     try:
         m, u = model.load_state_dict(sd, strict=False)
 

@@ -45,7 +45,7 @@ class TemporalEncoder(nn.Module):
         self.embedding_is_leftclick = nn.Embedding(2, hidden_size)
         self.input_projection = nn.Sequential(
             nn.Linear(hidden_size*4, hidden_size*4),
-            nn.ReLU(inplace=True),
+            nn.ReLU(),
         )
         self.initial_feedback_padding = nn.Parameter(torch.randn(1, hidden_size))
         self.initial_feedback_unknown = nn.Parameter(torch.randn(1, hidden_size))

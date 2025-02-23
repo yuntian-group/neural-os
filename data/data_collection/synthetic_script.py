@@ -188,7 +188,7 @@ def create_synthetic_dataset(n=1, max_workers=None, memory_per_worker='2g'):
             total=n,
             desc="Generating trajectories"
         ))
-        import pdb; pdb.set_trace()
+        #import pdb; pdb.set_trace()
         
         # Process in parallel with resource limits and progress bar
         process_func = partial(
@@ -224,4 +224,5 @@ if __name__ == "__main__":
     sys.setrecursionlimit(10000)
     
     # Run with parallel processing
-    create_synthetic_dataset(16000)
+    #create_synthetic_dataset(16000)
+    create_synthetic_dataset(1)

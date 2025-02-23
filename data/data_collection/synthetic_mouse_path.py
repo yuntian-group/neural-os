@@ -156,6 +156,7 @@ def generate_human_like_trajectory(screen_width, screen_height,
                 if random.random() < 0.8:
                     break
 
+    events = []
     for pos, left, right, key_events in zip(trajectory, clicks, right_clicks, keyboard_events):
         events.append({
             'pos': pos,

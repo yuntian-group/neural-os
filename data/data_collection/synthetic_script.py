@@ -51,7 +51,7 @@ def record_trajectory(container_id, trajectory_data, record_idx):
     
     # Convert and serialize
     trajectory_list = convert_trajectory(trajectory_data)
-    
+    import pdb; pdb.set_trace()
     # Create a temporary Python script in the container
     script_content = f'''
 import sys
@@ -60,7 +60,6 @@ import traceback
 sys.path.append('/app')  # Add app directory to Python path
 
 try:
-    import json
     import os
     from record_script import record
 

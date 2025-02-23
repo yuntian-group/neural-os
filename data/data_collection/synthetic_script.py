@@ -72,11 +72,7 @@ try:
     
     trajectory_data = {trajectory_list!r}  # Direct Python literal
     print("Starting recording with trajectory:", len(trajectory_data), "points")
-    
-    # Create output directories if they don't exist
-    os.makedirs("raw_data/videos", exist_ok=True)
-    os.makedirs("raw_data/actions", exist_ok=True)
-    
+
     record(
         "raw_data",
         "record_{record_idx}",

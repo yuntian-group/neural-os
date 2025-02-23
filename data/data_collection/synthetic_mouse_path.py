@@ -135,7 +135,7 @@ def generate_human_like_trajectory(screen_width, screen_height,
     active_keys = set()
     up_keys = set()
     right_clicks = np.zeros(len(trajectory), dtype=bool)
-    next_id = 0
+    next_id = 0 + 10
     for i in range(len(trajectory)):
         if random.random() < right_click_prob:
             right_clicks[i] = True
@@ -155,6 +155,7 @@ def generate_human_like_trajectory(screen_width, screen_height,
                 key = random.choice(KEYS)
                 if next_id >= len(KEYS):
                     next_id = 0
+                    print ('resetting next_id')
                 key = KEYS[next_id]
                 next_id += 1
                 

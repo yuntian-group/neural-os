@@ -203,7 +203,7 @@ def create_synthetic_dataset(n=1, max_workers=None, memory_per_worker='2g'):
             memory_limit=memory_per_worker
         )
 
-        process_func(trajectories[0])
+        process_func(list(enumerate(trajectories))[0])
         
         if False:
             with multiprocessing.Pool(max_workers) as pool:

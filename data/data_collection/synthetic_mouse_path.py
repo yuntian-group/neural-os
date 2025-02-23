@@ -138,11 +138,15 @@ def generate_human_like_trajectory(screen_width, screen_height,
         if random.random() < right_click_prob:
             right_clicks[i] = True
         # for active keys, each has 0.5 probability of getting key down event
+        to_remove = []
         for key in active_keys:
             if random.random() < 0.8: # key up
                 keyboard_events[i].add(('keyup', key))
-                active_keys.remove(key)
+                #active_keys.remove(key)
                 up_keys.add(key)
+                to_remove.append(key)
+        for key in to_remove:
+            active_keys.remove(key)
         if random.random() < key_event_prob:
             while True:
                 key = random.choice(KEYS)

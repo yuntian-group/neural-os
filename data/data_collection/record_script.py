@@ -163,17 +163,6 @@ def record(save_dir: str = 'raw_data', save_name: str = 'record_0',
             
             # Iterate through each point in the trajectory
             for i, ((x, y), should_click, should_right_click, key_events) in enumerate(trajectory):
-                
-                
-                # Draw cursor with click indicator
-                #frame = draw_cursor(frame, x, y, should_click, right_click, scaling_factor)
-                
-                # Write frame at original size
-                #frame = cv2.resize(frame, output_size, interpolation=cv2.INTER_AREA)
-                success = out.write(frame)
-                frame_count += 1
-
-
                 x = int(x)
                 y = int(y)
                 frame_start = time.time()
@@ -225,9 +214,17 @@ def record(save_dir: str = 'raw_data', save_name: str = 'record_0',
                 # Save both the test image and the capture
                 #cv2.imwrite('/app/raw_data/test_pattern.png', test_image)
                 #cv2.imwrite('/app/raw_data/test_capture.png', screen)
-                
 
                 frame = cv2.cvtColor(screen, cv2.COLOR_BGRA2BGR)
+                
+                # Draw cursor with click indicator
+                #frame = draw_cursor(frame, x, y, should_click, right_click, scaling_factor)
+                
+                # Write frame at original size
+                #frame = cv2.resize(frame, output_size, interpolation=cv2.INTER_AREA)
+                success = out.write(frame)
+                frame_count += 1
+
                 # Record data
                 current_time = time.time() - start_time
                 seconds = int(current_time)

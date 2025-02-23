@@ -200,9 +200,9 @@ def create_synthetic_dataset(n=1, max_workers=None, memory_per_worker='2g'):
             clean_state=clean_state,
             memory_limit=memory_per_worker
         )
-
-        process_func(list(enumerate(trajectories))[0])
-        #max_workers = 1
+        trajectories = list(enumerate(trajectories))
+        for trajectory in trajectories:
+            process_func(trajectory)
         
         
         #with multiprocessing.Pool(max_workers) as pool:
@@ -227,4 +227,4 @@ if __name__ == "__main__":
     
     # Run with parallel processing
     #create_synthetic_dataset(16000)
-    create_synthetic_dataset(1)
+    create_synthetic_dataset(10)

@@ -196,17 +196,13 @@ def create_synthetic_dataset(n=1, max_workers=None, memory_per_worker='2g'):
             clean_state=clean_state,
             memory_limit=memory_per_worker
         )
-        trajectories = list(enumerate(trajectories))
-        for trajectory in trajectories:
-            process_func(trajectory)
         
-        
-        #with multiprocessing.Pool(max_workers) as pool:
-        #    list(tqdm(
-        #        pool.imap(process_func, enumerate(trajectories)),
-        #        total=len(trajectories),
-        #        desc="Processing trajectories"
-        #    ))
+        with multiprocessing.Pool(max_workers) as pool:
+            list(tqdm(
+                pool.imap(process_func, enumerate(trajectories)),
+                total=len(trajectories),
+                desc="Processing trajectories"
+            ))
     
     finally:
         # Cleanup
@@ -223,4 +219,4 @@ if __name__ == "__main__":
     
     # Run with parallel processing
     #create_synthetic_dataset(16000)
-    create_synthetic_dataset(10)
+    create_synthetic_dataset(100)

@@ -217,4 +217,4 @@ if __name__ == "__main__":
     
     # Run with parallel processing
     #create_synthetic_dataset(16000)
-    create_synthetic_dataset(100)
+    create_synthetic_dataset(24000)

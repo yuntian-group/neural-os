@@ -51,7 +51,7 @@ def record_trajectory(container_id, trajectory_data, record_idx):
     
     # Convert and serialize
     trajectory_list = convert_trajectory(trajectory_data)
-    import pdb; pdb.set_trace()
+    #import pdb; pdb.set_trace()
     # Create a temporary Python script in the container
     script_content = f'''
 import sys
@@ -89,7 +89,7 @@ except Exception as e:
     traceback.print_exc()
     sys.exit(1)
 '''
-    import pdb; pdb.set_trace()
+    #import pdb; pdb.set_trace()
     # Write the script to a temporary file in the container
     temp_script = f'/tmp/record_script_{record_idx}.py'
     cmd_write = [

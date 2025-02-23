@@ -127,29 +127,47 @@ python3 -u {temp_script}
     print(result.stderr)
     result.check_returncode()
 
-def process_trajectory(args, screen_width, screen_height, clean_state, memory_limit):
-    """Process a single trajectory in its own container"""
-    trajectory_idx, trajectory = args  # Unpack the tuple from enumerate
-    print(f"Recording trajectory {trajectory_idx}")
+def process_trajectory(args, screen_width, screen_height, clean_state, memory_limit, max_retries=3):
+    """Process a single trajectory in its own container with retries"""
+    trajectory_idx, trajectory = args
     
-    # Create a fresh container from clean state
-    
-    container_id = subprocess.check_output([
-        'docker', 'run', '-d',
-        '-v', f'{os.getcwd()}/raw_data:/app/raw_data',
-        '--hostname', 'computer',
-        '--env', 'DISPLAY=:99',
-        '--env', f'SCREEN_WIDTH={screen_width}',
-        '--env', f'SCREEN_HEIGHT={screen_height}',
-            clean_state,
-            '/app/start.sh'
-        ]).decode().strip()
-    
-    try:
-        time.sleep(20)  # Wait for container to initialize
-        record_trajectory(container_id, trajectory, trajectory_idx)
-    finally:
-        subprocess.run(['docker', 'rm', '-f', container_id], check=True)
+    for attempt in range(max_retries):
+        try:
+            print(f"Recording trajectory {trajectory_idx} (attempt {attempt + 1}/{max_retries})")
+            
+            # Create a fresh container from clean state
+            container_id = subprocess.check_output([
+                'docker', 'run', '-d',
+                '-v', f'{os.getcwd()}/raw_data:/app/raw_data',
+                '--hostname', 'computer',
+                '--env', 'DISPLAY=:99',
+                '--env', f'SCREEN_WIDTH={screen_width}',
+                '--env', f'SCREEN_HEIGHT={screen_height}',
+                clean_state,
+                '/app/start.sh'
+            ]).decode().strip()
+            
+            success = False
+            
+            try:
+                time.sleep(20)  # Wait for container to initialize
+                record_trajectory(container_id, trajectory, trajectory_idx)
+                success = True
+            finally:
+                # Always clean up the container
+                subprocess.run(['docker', 'rm', '-f', container_id], check=False)
+            
+            if success:  # Only return after container cleanup
+                return
+                
+        except Exception as e:
+            print(f"Attempt {attempt + 1} failed for trajectory {trajectory_idx}: {str(e)}")
+            if attempt == max_retries - 1:  # Last attempt
+                print(f"All {max_retries} attempts failed for trajectory {trajectory_idx}")
+                print (e)  # Re-raise the last exception
+                print ('Ignoring this error')
+                print ('*'*100)
+            time.sleep(2)  # Wait a bit before retrying
 
 def create_synthetic_dataset(n=1, max_workers=None, memory_per_worker='2g'):
     """Create synthetic dataset with resource management"""

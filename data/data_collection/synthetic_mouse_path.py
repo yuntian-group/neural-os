@@ -128,7 +128,7 @@ def generate_human_like_trajectory(screen_width, screen_height,
         'shift', 'shiftleft', 'shiftright', 'sleep', 'space', 'stop', 'subtract', 'tab',
         'up', 'volumedown', 'volumemute', 'volumeup', 'win', 'winleft', 'winright', 'yen',
         'command', 'option', 'optionleft', 'optionright']
-    INVALID_KEYS = ['f17', 'f18', 'f19', 'f20', 'f21', 'f22', 'f23', 'f24', 'select', 'separator']
+    INVALID_KEYS = ['f15', 'f16', 'f17', 'f18', 'f19', 'f20', 'f21', 'f22', 'f23', 'f24', 'select', 'separator']
     KEYS = [key for key in KEYS if key not in INVALID_KEYS]
 
     keyboard_events = [set() for _ in trajectory]

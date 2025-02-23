@@ -89,7 +89,7 @@ except Exception as e:
     traceback.print_exc()
     sys.exit(1)
 '''
-    
+    import pdb; pdb.set_trace()
     # Write the script to a temporary file in the container
     temp_script = f'/tmp/record_script_{record_idx}.py'
     cmd_write = [

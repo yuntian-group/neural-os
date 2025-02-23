@@ -198,11 +198,11 @@ def create_synthetic_dataset(n=1, max_workers=None, memory_per_worker='2g'):
         
         if False:
             with multiprocessing.Pool(max_workers) as pool:
-            list(tqdm(
-                pool.imap(process_func, enumerate(trajectories)),
-                total=len(trajectories),
-                desc="Processing trajectories"
-            ))
+                list(tqdm(
+                    pool.imap(process_func, enumerate(trajectories)),
+                    total=len(trajectories),
+                    desc="Processing trajectories"
+                ))
     
     finally:
         # Cleanup

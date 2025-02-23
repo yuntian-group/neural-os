@@ -163,17 +163,7 @@ def record(save_dir: str = 'raw_data', save_name: str = 'record_0',
             
             # Iterate through each point in the trajectory
             for i, ((x, y), should_click, should_right_click, key_events) in enumerate(trajectory):
-                screen = np.array(sct.grab(monitor))
-                #print("Screenshot shape:", screen.shape)
-                #print("Screenshot dtype:", screen.dtype)
-                #print("Screenshot min/max values:", screen.min(), screen.max())
                 
-                # Save a test image to verify capture
-                # Save both the test image and the capture
-                #cv2.imwrite('/app/raw_data/test_pattern.png', test_image)
-                #cv2.imwrite('/app/raw_data/test_capture.png', screen)
-
-                frame = cv2.cvtColor(screen, cv2.COLOR_BGRA2BGR)
                 
                 # Draw cursor with click indicator
                 #frame = draw_cursor(frame, x, y, should_click, right_click, scaling_factor)
@@ -221,7 +211,23 @@ def record(save_dir: str = 'raw_data', save_name: str = 'record_0',
                 
                 #if frame_count % 15 == 0:  # Print every second
                 #    print(f"Wrote frame {frame_count}, success: {success}")
+                # Maintain fps
+                elapsed = time.time() - frame_start
+                if elapsed < interval:
+                    time.sleep(interval - elapsed)
 
+                screen = np.array(sct.grab(monitor))
+                #print("Screenshot shape:", screen.shape)
+                #print("Screenshot dtype:", screen.dtype)
+                #print("Screenshot min/max values:", screen.min(), screen.max())
+                
+                # Save a test image to verify capture
+                # Save both the test image and the capture
+                #cv2.imwrite('/app/raw_data/test_pattern.png', test_image)
+                #cv2.imwrite('/app/raw_data/test_capture.png', screen)
+                
+
+                frame = cv2.cvtColor(screen, cv2.COLOR_BGRA2BGR)
                 # Record data
                 current_time = time.time() - start_time
                 seconds = int(current_time)
@@ -237,10 +243,7 @@ def record(save_dir: str = 'raw_data', save_name: str = 'record_0',
                     key_events
                 ])
 
-                # Maintain fps
-                elapsed = time.time() - frame_start
-                if elapsed < interval:
-                    time.sleep(interval - elapsed)
+                
 
         finally:
             if out.isOpened():

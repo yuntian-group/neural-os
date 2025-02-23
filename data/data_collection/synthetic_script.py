@@ -70,7 +70,7 @@ try:
     print("pyautogui version:", pyautogui.__version__)
     print ('pyautogui keys:', pyautogui.KEYBOARD_KEYS)
     
-    trajectory_data = {trajectory_list}  # Direct Python literal
+    trajectory_data = {trajectory_list!r}  # Direct Python literal
     print("Starting recording with trajectory:", len(trajectory_data), "points")
     
     # Create output directories if they don't exist
@@ -94,7 +94,7 @@ except Exception as e:
     temp_script = f'/tmp/record_script_{record_idx}.py'
     cmd_write = [
         'docker', 'exec', container_id,
-        'bash', '-c', f'cat > {temp_script} << EOL\n{script_content}\nEOL'
+        'bash', '-c', f'cat > {temp_script} << \'EOL\'\n{script_content}\n\'EOL\''
     ]
     subprocess.run(cmd_write, check=True)
     

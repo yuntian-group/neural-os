@@ -185,6 +185,7 @@ def create_synthetic_dataset(n=1, max_workers=None, memory_per_worker='2g'):
             total=n,
             desc="Generating trajectories"
         ))
+        import pdb; pdb.set_trace()
         
         # Process in parallel with resource limits and progress bar
         process_func = partial(
@@ -195,7 +196,8 @@ def create_synthetic_dataset(n=1, max_workers=None, memory_per_worker='2g'):
             memory_limit=memory_per_worker
         )
         
-        with multiprocessing.Pool(max_workers) as pool:
+        if False:
+            with multiprocessing.Pool(max_workers) as pool:
             list(tqdm(
                 pool.imap(process_func, enumerate(trajectories)),
                 total=len(trajectories),

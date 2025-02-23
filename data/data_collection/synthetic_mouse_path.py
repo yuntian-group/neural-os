@@ -43,7 +43,9 @@ def generate_human_like_trajectory(screen_width, screen_height,
                                    fps,  # Match recording FPS
                                    num_clicks,
                                    num_control_points=25, 
-                                   double_click_prob=0.3):  # Probability of double click
+                                   double_click_prob=0.3,
+                                   right_click_prob=0.01,
+                                   key_event_prob=0.3):  # Probability of double click
     # Calculate number of points based on duration and fps
     num_points = int(duration * fps)
     HUMAN = random.random() > 0.5
@@ -102,8 +104,63 @@ def generate_human_like_trajectory(screen_width, screen_height,
             clicks[idx + gap] = True
         else:
             clicks[idx] = True  # Single click
-    
-    return list(zip(trajectory, clicks))
+
+    # Generate keyboard events (from https://pyautogui.readthedocs.io/en/latest/keyboard.html)
+    KEYS = ['\t', '\n', '\r', ' ', '!', '"', '#', '$', '%', '&', "'", '(',
+        ')', '*', '+', ',', '-', '.', '/', '0', '1', '2', '3', '4', '5', '6', '7',
+        '8', '9', ':', ';', '<', '=', '>', '?', '@', '[', '\\', ']', '^', '_', '`',
+        'a', 'b', 'c', 'd', 'e','f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o',
+        'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '{', '|', '}', '~',
+        'accept', 'add', 'alt', 'altleft', 'altright', 'apps', 'backspace',
+        'browserback', 'browserfavorites', 'browserforward', 'browserhome',
+        'browserrefresh', 'browsersearch', 'browserstop', 'capslock', 'clear',
+        'convert', 'ctrl', 'ctrlleft', 'ctrlright', 'decimal', 'del', 'delete',
+        'divide', 'down', 'end', 'enter', 'esc', 'escape', 'execute', 'f1', 'f10',
+        'f11', 'f12', 'f13', 'f14', 'f15', 'f16', 'f17', 'f18', 'f19', 'f2', 'f20',
+        'f21', 'f22', 'f23', 'f24', 'f3', 'f4', 'f5', 'f6', 'f7', 'f8', 'f9',
+        'final', 'fn', 'hanguel', 'hangul', 'hanja', 'help', 'home', 'insert', 'junja',
+        'kana', 'kanji', 'launchapp1', 'launchapp2', 'launchmail',
+        'launchmediaselect', 'left', 'modechange', 'multiply', 'nexttrack',
+        'nonconvert', 'num0', 'num1', 'num2', 'num3', 'num4', 'num5', 'num6',
+        'num7', 'num8', 'num9', 'numlock', 'pagedown', 'pageup', 'pause', 'pgdn',
+        'pgup', 'playpause', 'prevtrack', 'print', 'printscreen', 'prntscrn',
+        'prtsc', 'prtscr', 'return', 'right', 'scrolllock', 'select', 'separator',
+        'shift', 'shiftleft', 'shiftright', 'sleep', 'space', 'stop', 'subtract', 'tab',
+        'up', 'volumedown', 'volumemute', 'volumeup', 'win', 'winleft', 'winright', 'yen',
+        'command', 'option', 'optionleft', 'optionright']
+
+    keyboard_events = [set() for _ in trajectory]
+    active_keys = set()
+    up_keys = set()
+    right_clicks = np.zeros(len(trajectory), dtype=bool)
+
+    for i in range(len(trajectory)):
+        if random.random() < right_click_prob:
+            right_clicks[i] = True
+        # for active keys, each has 0.5 probability of getting key down event
+        for key in active_keys:
+            if random.random() < 0.8: # key up
+                keyboard_events[i].add(('keyup', key))
+                active_keys.remove(key)
+                up_keys.add(key)
+        if random.random() < key_event_prob:
+            while True:
+                key = random.choice(KEYS)
+                if key not in active_keys and key not in up_keys:
+                    keyboard_events[i].add(('keydown', key))
+                    active_keys.add(key)
+                if random.random() < 0.8:
+                    break
+
+    for pos, left, right, key_events in zip(trajectory, left_clicks, right_clicks, keyboard_events):
+        events.append({
+            'pos': pos,
+            'left_click': left,
+            'right_click': right,
+            'key_events': key_events
+        })
+
+    return events
 
 def generate_multiple_trajectories(num_trajectories, screen_width, screen_height, duration, fps):
     trajectories = []

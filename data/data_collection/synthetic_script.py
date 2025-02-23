@@ -94,7 +94,7 @@ except Exception as e:
     temp_script = f'/tmp/record_script_{record_idx}.py'
     cmd_write = [
         'docker', 'exec', container_id,
-        'bash', '-c', f'cat > {temp_script} << \'EOL\'\n{script_content}\n\'EOL\''
+        'bash', '-c', f'cat > {temp_script} << \'EOL\'\n{script_content}\nEOL'
     ]
     subprocess.run(cmd_write, check=True)
     

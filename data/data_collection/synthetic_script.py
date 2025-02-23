@@ -179,7 +179,10 @@ def create_synthetic_dataset(n=1, max_workers=None, memory_per_worker='2g'):
     print(f"Using {max_workers} workers")
     
     # Initialize clean state first
-    #clean_state = initialize_clean_state()
+    if False:
+        clean_state = initialize_clean_state()
+    else:
+        clean_state = 'computer'
     
     try:
         # Generate all trajectories first with progress bar

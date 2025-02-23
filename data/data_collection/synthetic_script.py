@@ -45,7 +45,7 @@ def record_trajectory(container_id, trajectory_data, record_idx):
     #{'pos': array([48, 14]), 'left_click': False, 'right_click': False, 'key_events': {('keydown', 'browserback')}}
     def convert_trajectory(traj):
         return [
-            ((int(d['pos'][0]), int(d['pos'][1])), d['left_click'], d['right_click'], list(d['key_events']))  # Use Python's True/False
+            ((int(d['pos'][0]), int(d['pos'][1])), True if d['left_click'] else False, True if d['right_click'] else False, list(d['key_events']))  # Use Python's True/False
             for d in traj
         ]
     

@@ -45,10 +45,11 @@ def generate_human_like_trajectory(screen_width, screen_height,
                                    num_control_points=25, 
                                    double_click_prob=0.3,
                                    right_click_prob=0.01,
-                                   key_event_prob=0.3):  # Probability of double click
+                                   max_key_event_prob=0.5):  # Probability of double click
     # Calculate number of points based on duration and fps
     num_points = int(duration * fps)
     HUMAN = random.random() > 0.5
+    key_event_prob = random.random() * max_key_event_prob
     
     if HUMAN:
         # Generate more control points for more complex paths

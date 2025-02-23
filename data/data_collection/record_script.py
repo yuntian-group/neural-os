@@ -174,6 +174,8 @@ def record(save_dir: str = 'raw_data', save_name: str = 'record_0',
                 if should_right_click:
                     pyautogui.rightClick()
                 for action, key in key_events:
+                    print (f"action: {action}, key: {key}")
+                    print ('*'*100)
                     if action == 'keydown':
                         pyautogui.keyDown(key)
                     elif action == 'keyup':

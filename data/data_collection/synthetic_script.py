@@ -40,6 +40,7 @@ def initialize_clean_state():
 
 def record_trajectory(container_id, trajectory_data, record_idx):
     """Send trajectory data to container and record"""
+    import pdb; pdb.set_trace()
     # Convert numpy arrays to lists for JSON serialization
     def convert_trajectory(traj):
         return [
@@ -136,15 +137,18 @@ def process_trajectory(args, screen_width, screen_height, clean_state, memory_li
     print(f"Recording trajectory {trajectory_idx}")
     
     # Create a fresh container from clean state
-    container_id = subprocess.check_output([
-        'docker', 'run', '-d',
-        '-v', f'{os.getcwd()}/raw_data:/app/raw_data',
+    if False:
+        container_id = subprocess.check_output([
+            'docker', 'run', '-d',
+            '-v', f'{os.getcwd()}/raw_data:/app/raw_data',
         '--env', 'DISPLAY=:99',
         '--env', f'SCREEN_WIDTH={screen_width}',
         '--env', f'SCREEN_HEIGHT={screen_height}',
-        clean_state,
-        '/app/start.sh'
-    ]).decode().strip()
+            clean_state,
+            '/app/start.sh'
+        ]).decode().strip()
+    else:
+        container_id = 'computer'
     
     try:
         time.sleep(20)  # Wait for container to initialize
@@ -195,6 +199,8 @@ def create_synthetic_dataset(n=1, max_workers=None, memory_per_worker='2g'):
             clean_state=clean_state,
             memory_limit=memory_per_worker
         )
+
+        process_func(*trajectories[0])
         
         if False:
             with multiprocessing.Pool(max_workers) as pool:

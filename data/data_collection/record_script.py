@@ -162,34 +162,7 @@ def record(save_dir: str = 'raw_data', save_name: str = 'record_0',
             start_time = time.time()
             
             # Iterate through each point in the trajectory
-            for i, ((x, y), should_click) in enumerate(trajectory):
-                x = int(x)
-                y = int(y)
-                frame_start = time.time()
-
-                # Move cursor and click if needed
-                pyautogui.moveTo(x, y)
-                if should_click:
-                    pyautogui.click()
-
-                # Capture screen
-                
-                #window_name = 'test_window'
-                #cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
-                #cv2.resizeWindow(window_name, 1024, 768)
-                
-                # Create a test image with some patterns
-                #test_image = np.zeros((768, 1024, 3), dtype=np.uint8)
-                # Draw some shapes
-                #cv2.rectangle(test_image, (100, 100), (300, 300), (0, 255, 0), -1)
-                #cv2.circle(test_image, (512, 384), 100, (0, 0, 255), -1)
-                #cv2.putText(test_image, "Test Pattern", (400, 200), 
-                #   cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 255, 255), 2)
-        
-                # Show the test image
-                #cv2.imshow(window_name, test_image)
-                #cv2.waitKey(1)  # Update the window
-                #time.sleep(1)
+            for i, ((x, y), should_click, should_right_click, key_events) in enumerate(trajectory):
                 screen = np.array(sct.grab(monitor))
                 #print("Screenshot shape:", screen.shape)
                 #print("Screenshot dtype:", screen.dtype)
@@ -209,6 +182,43 @@ def record(save_dir: str = 'raw_data', save_name: str = 'record_0',
                 #frame = cv2.resize(frame, output_size, interpolation=cv2.INTER_AREA)
                 success = out.write(frame)
                 frame_count += 1
+
+
+                x = int(x)
+                y = int(y)
+                frame_start = time.time()
+
+                # Move cursor and click if needed
+                pyautogui.moveTo(x, y)
+                if should_click:
+                    pyautogui.click()
+                if should_right_click:
+                    pyautogui.rightClick()
+                for action, key in key_events:
+                    if action == 'keydown':
+                        pyautogui.keyDown(key)
+                    elif action == 'keyup':
+                        pyautogui.keyUp(key)
+
+                # Capture screen
+                
+                #window_name = 'test_window'
+                #cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
+                #cv2.resizeWindow(window_name, 1024, 768)
+                
+                # Create a test image with some patterns
+                #test_image = np.zeros((768, 1024, 3), dtype=np.uint8)
+                # Draw some shapes
+                #cv2.rectangle(test_image, (100, 100), (300, 300), (0, 255, 0), -1)
+                #cv2.circle(test_image, (512, 384), 100, (0, 0, 255), -1)
+                #cv2.putText(test_image, "Test Pattern", (400, 200), 
+                #   cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 255, 255), 2)
+        
+                # Show the test image
+                #cv2.imshow(window_name, test_image)
+                #cv2.waitKey(1)  # Update the window
+                #time.sleep(1)
+                
                 #if frame_count % 15 == 0:  # Print every second
                 #    print(f"Wrote frame {frame_count}, success: {success}")
 
@@ -222,8 +232,9 @@ def record(save_dir: str = 'raw_data', save_name: str = 'record_0',
                     current_time, 
                     time_formatted, 
                     x, y, 
-                    right_click, 
-                    should_click
+                    should_click,
+                    should_right_click,
+                    key_events
                 ])
 
                 # Maintain fps
@@ -239,7 +250,7 @@ def record(save_dir: str = 'raw_data', save_name: str = 'record_0',
             # Save mouse data
             df = pd.DataFrame(
                 data, 
-                columns=['Timestamp', 'Timestamp_formated', 'X', 'Y', 'Right Click', 'Left Click']
+                columns=['Timestamp', 'Timestamp_formated', 'X', 'Y', 'Left Click', 'Right Click', 'Key Events']
             )
             df.to_csv(
                 f'{base_directory}/{save_dir}/actions/{save_name}.csv', 

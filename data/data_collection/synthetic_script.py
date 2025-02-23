@@ -40,12 +40,13 @@ def initialize_clean_state():
 
 def record_trajectory(container_id, trajectory_data, record_idx):
     """Send trajectory data to container and record"""
-    import pdb; pdb.set_trace()
+    #import pdb; pdb.set_trace()
     # Convert numpy arrays to lists for JSON serialization
+    #{'pos': array([48, 14]), 'left_click': False, 'right_click': False, 'key_events': {('keydown', 'browserback')}}
     def convert_trajectory(traj):
         return [
-            ((int(x), int(y)), True if click else False)  # Use Python's True/False
-            for ((x, y), click) in traj
+            ((int(d['pos'][0]), int(d['pos'][1])), d['left_click'], d['right_click'], list(d['key_events']))  # Use Python's True/False
+            for d in traj
         ]
     
     # Convert and serialize
@@ -137,18 +138,16 @@ def process_trajectory(args, screen_width, screen_height, clean_state, memory_li
     print(f"Recording trajectory {trajectory_idx}")
     
     # Create a fresh container from clean state
-    if False:
-        container_id = subprocess.check_output([
-            'docker', 'run', '-d',
-            '-v', f'{os.getcwd()}/raw_data:/app/raw_data',
+    
+    container_id = subprocess.check_output([
+        'docker', 'run', '-d',
+        '-v', f'{os.getcwd()}/raw_data:/app/raw_data',
         '--env', 'DISPLAY=:99',
         '--env', f'SCREEN_WIDTH={screen_width}',
         '--env', f'SCREEN_HEIGHT={screen_height}',
             clean_state,
             '/app/start.sh'
         ]).decode().strip()
-    else:
-        container_id = 'computer'
     
     try:
         time.sleep(20)  # Wait for container to initialize
@@ -179,10 +178,7 @@ def create_synthetic_dataset(n=1, max_workers=None, memory_per_worker='2g'):
     print(f"Using {max_workers} workers")
     
     # Initialize clean state first
-    if False:
-        clean_state = initialize_clean_state()
-    else:
-        clean_state = 'computer'
+    clean_state = initialize_clean_state()
     
     try:
         # Generate all trajectories first with progress bar
@@ -204,14 +200,15 @@ def create_synthetic_dataset(n=1, max_workers=None, memory_per_worker='2g'):
         )
 
         process_func(list(enumerate(trajectories))[0])
+        #max_workers = 1
         
-        if False:
-            with multiprocessing.Pool(max_workers) as pool:
-                list(tqdm(
-                    pool.imap(process_func, enumerate(trajectories)),
-                    total=len(trajectories),
-                    desc="Processing trajectories"
-                ))
+        
+        #with multiprocessing.Pool(max_workers) as pool:
+        #    list(tqdm(
+        #        pool.imap(process_func, enumerate(trajectories)),
+        #        total=len(trajectories),
+        #        desc="Processing trajectories"
+        #    ))
     
     finally:
         # Cleanup

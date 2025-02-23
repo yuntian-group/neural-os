@@ -66,10 +66,7 @@ try:
     print("Python path:", sys.path)
     print("Contents of /app:", os.listdir('/app'))
     print("Current working directory:", os.getcwd())
-    import pyautogui
-    print("pyautogui version:", pyautogui.__version__)
-    print ('pyautogui keys:', pyautogui.KEYBOARD_KEYS)
-    
+
     trajectory_data = {trajectory_list!r}  # Direct Python literal
     print("Starting recording with trajectory:", len(trajectory_data), "points")
 

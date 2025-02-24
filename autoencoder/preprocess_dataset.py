@@ -6,13 +6,13 @@ import os
 from einops import rearrange
 from omegaconf import OmegaConf
 from computer.util import load_model_from_config
-from data.data_processing.datasets import normalize_image
 from tqdm import tqdm
 import shutil
 import multiprocessing as mp
 from functools import partial
 
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+
 
 def load_single_image(image_path):
     """Helper function to load and process a single image"""
@@ -34,33 +34,36 @@ def process_folder(model, input_folder, output_folder, batch_size=16, debug_firs
     # Collect all PNG files
     img_files = [f for f in sorted(os.listdir(input_folder)) if f.endswith('.png')]
     
-    # Create pool for parallel processing
-    num_workers = 8
-    pool = mp.Pool(num_workers)
-    
     # Process in batches
     for i in tqdm(range(0, len(img_files), batch_size)):
         batch_files = img_files[i:i+batch_size]
         
-        # Load images in parallel
-        image_paths = [os.path.join(input_folder, img_file) for img_file in batch_files]
-        images = pool.map(load_single_image, image_paths)
+        # Load raw images
+        images = []
+        for img_file in batch_files:
+            image = Image.open(os.path.join(input_folder, img_file))
+            if not image.mode == "RGB":
+                image = image.convert("RGB")
+            images.append(np.array(image))
         
-        # Stack images and move to device
-        images = torch.cat(images, dim=0).to(device)
+        # Stack and process all images at once on CPU
+        images = np.stack(images)
+        images = (images / 127.5 - 1.0).astype(np.float32)
+        images = torch.tensor(images)
+        images = rearrange(images, 'b h w c -> b c h w')
         
-        # Get latent representations through full encoding process
+        # Only move to GPU right before model inference
+        images = images.to(device)
         posterior = model.encode(images)
         latents = posterior.sample()  # Sample from the posterior
         
-        # Prepare save info
-        save_info = [
-            (os.path.join(output_folder, img_file.replace('.png', '.npy')), latent.cpu().numpy())
-            for img_file, latent in zip(batch_files, latents)
-        ]
+        # Move back to CPU for saving
+        latents = latents.cpu()
         
-        # Save latents in parallel
-        pool.map(save_single_latent, save_info)
+        # Save latents
+        for img_file, latent in zip(batch_files, latents):
+            latent_path = os.path.join(output_folder, img_file.replace('.png', '.npy'))
+            np.save(latent_path, latent.numpy())  # No need for cpu() since we already moved it
         
         # Debug first batch after saving (if enabled)
         if debug_first_batch and i == 0:
@@ -106,9 +109,6 @@ def process_folder(model, input_folder, output_folder, batch_size=16, debug_firs
                     os.path.join(debug_dir, f'debug_{idx}_{fname}')
                 )
             print(f"\nDebug visualizations saved to {debug_dir}")
-    
-    pool.close()
-    pool.join()
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Pre-process dataset using trained encoder.")

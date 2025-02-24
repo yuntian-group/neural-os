@@ -6,6 +6,7 @@ import os
 from einops import rearrange
 from omegaconf import OmegaConf
 from computer.util import load_model_from_config
+from data.data_processing.datasets import normalize_image
 from tqdm import tqdm
 import shutil
 import multiprocessing as mp

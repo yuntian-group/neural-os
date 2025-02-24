@@ -40,10 +40,33 @@ def create_mapping():
         if numbers is not None:  # not a padding image
             mapping_dict[numbers] = actions[-1]
     
+    # mapping_dict has key_events like [('keydown', 'space'), ('keydown', 'esc')], but we want to convert it to [('down', 'space'), ('down', 'esc')] by looking up all frames up to this point to check if the key is down or up
+    mapping_dict_with_key_states = {}
+    for (record_num, image_num), action in tqdm(mapping_dict.items(), desc="Creating mapping with key states"):
+        import pdb; pdb.set_trace()
+        if record_num == -1:
+            assert image_num == -1
+            x, y, left_click, right_click, key_events = action
+            mapping_dict_with_key_states[(record_num, image_num)] = (x, y, left_click, right_click, [])
+            continue
+        assert record_num >= 0 and image_num >= 0, (record_num, image_num)
+        down_keys = set([])
+        for image_num_prev in range(image_num+1):
+            action_prev = mapping_dict[(record_num, image_num_prev)]
+            key_events = action_prev[-1]
+            for key_state, key in key_events:
+                if key_state == 'keydown':
+                    down_keys.add(key)
+                elif key_state == 'keyup':
+                    down_keys.remove(key)
+                else:
+                    assert False, key_state
+        x, y, left_click, right_click, key_events = action
+        mapping_dict_with_key_states[(record_num, image_num)] = (x, y, left_click, right_click, list(down_keys))
     # Save dictionary using pickle
-    print(f"Saving mapping with {len(mapping_dict)} entries...")
-    with open('image_action_mapping.pkl', 'wb') as f:
-        pickle.dump(mapping_dict, f)
+    print(f"Saving mapping with {len(mapping_dict_with_key_states)} entries...")
+    with open('image_action_mapping_with_key_states.pkl', 'wb') as f:
+        pickle.dump(mapping_dict_with_key_states, f)
     print("Done!")
 
 

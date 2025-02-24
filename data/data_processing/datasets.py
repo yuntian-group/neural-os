@@ -205,6 +205,35 @@ class ActionsData(Dataset):
         self.data_std = 6.78
         self.data_min = -27.681446075439453
         self.data_max = 30.854148864746094
+
+        KEYS = ['\t', '\n', '\r', ' ', '!', '"', '#', '$', '%', '&', "'", '(',
+        ')', '*', '+', ',', '-', '.', '/', '0', '1', '2', '3', '4', '5', '6', '7',
+        '8', '9', ':', ';', '<', '=', '>', '?', '@', '[', '\\', ']', '^', '_', '`',
+        'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o',
+        'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '{', '|', '}', '~',
+        'accept', 'add', 'alt', 'altleft', 'altright', 'apps', 'backspace',
+        'browserback', 'browserfavorites', 'browserforward', 'browserhome',
+        'browserrefresh', 'browsersearch', 'browserstop', 'capslock', 'clear',
+        'convert', 'ctrl', 'ctrlleft', 'ctrlright', 'decimal', 'del', 'delete',
+        'divide', 'down', 'end', 'enter', 'esc', 'escape', 'execute', 'f1', 'f10',
+        'f11', 'f12', 'f13', 'f14', 'f15', 'f16', 'f17', 'f18', 'f19', 'f2', 'f20',
+        'f21', 'f22', 'f23', 'f24', 'f3', 'f4', 'f5', 'f6', 'f7', 'f8', 'f9',
+        'final', 'fn', 'hanguel', 'hangul', 'hanja', 'help', 'home', 'insert', 'junja',
+        'kana', 'kanji', 'launchapp1', 'launchapp2', 'launchmail',
+        'launchmediaselect', 'left', 'modechange', 'multiply', 'nexttrack',
+        'nonconvert', 'num0', 'num1', 'num2', 'num3', 'num4', 'num5', 'num6',
+        'num7', 'num8', 'num9', 'numlock', 'pagedown', 'pageup', 'pause', 'pgdn',
+        'pgup', 'playpause', 'prevtrack', 'print', 'printscreen', 'prntscrn',
+        'prtsc', 'prtscr', 'return', 'right', 'scrolllock', 'select', 'separator',
+        'shift', 'shiftleft', 'shiftright', 'sleep', 'space', 'stop', 'subtract', 'tab',
+        'up', 'volumedown', 'volumemute', 'volumeup', 'win', 'winleft', 'winright', 'yen',
+        'command', 'option', 'optionleft', 'optionright']
+        INVALID_KEYS = ['f13', 'f14', 'f15', 'f16', 'f17', 'f18', 'f19', 'f20', 'f21', 'f22', 'f23', 'f24', 'select', 'separator', 'execute']
+        KEYS = [key for key in KEYS if key not in INVALID_KEYS]
+
+        self.itos = KEYS
+        self.stoi = {key: i for i, key in enumerate(KEYS)}
+
         
     def setup(self):
         print ('setup called')
@@ -324,14 +353,20 @@ class ActionsData(Dataset):
             if frame_num < 0:
                 # Use padding for negative frame numbers
                 image_paths.append('train_dataset/padding.png')
-                actions.append('N N N N N N : N N N N N')
+                x, y, left_click, right_click, key_events = 0, 0, False, False, []
+                #actions.append('N N N N N N : N N N N N')
             else:
                 # Use actual image and look up action
                 image_paths.append(f'train_dataset/record_{record_num}/image_{frame_num}.png')
-                actions.append(self.mapping_dict.get((record_num, frame_num), 'N N N N N N : N N N N N'))
+                assert (record_num, frame_num) in self.mapping_dict, f"No action found for record {record_num} and frame {frame_num}"
+                x, y, left_click, right_click, key_events = self.mapping_dict.get((record_num, frame_num))
+                #actions.append(self.mapping_dict.get((record_num, frame_num), 'N N N N N N : N N N N N'))
+            actions.append((x, y, left_click, right_click, key_events))
         
         # Add target frame action
-        actions.append(self.mapping_dict.get((record_num, target_frame), 'N N N N N N : N N N N N'))
+        assert (record_num, target_frame) in self.mapping_dict, f"No action found for record {record_num} and frame {target_frame}"
+        actions.append(self.mapping_dict.get((record_num, target_frame)))
+        #actions.append(self.mapping_dict.get((record_num, target_frame), 'N N N N N N : N N N N N'))
         assert len(actions) == self.context_length*2+1, f"Action sequence must be {self.context_length*2+1} actions long"
         
         example["image_processed"] = self.normalize_features(self.load_processed_image(f'train_dataset/record_{record_num}/image_{target_frame}.png'))
@@ -342,27 +377,40 @@ class ActionsData(Dataset):
         
         # Rest of action processing remains the same
         for j in range(self.context_length + 1):
-            example[f"action_{j}"] = actions[j:j+self.context_length+1]
-            assert len(example[f"action_{j}"]) == self.context_length+1, f"Action sequence {j} must be 8 actions long"
-            example[f"action_{j}"] = ' '.join(example[f"action_{j}"])
-            x, y, action_type = parse_action_string(actions[j+self.context_length])
-            position_map, leftclick_map = create_position_and_click_map((x,y), action_type)
-            example[f"position_map_{j}"] = position_map
-            example[f"leftclick_map_{j}"] = leftclick_map
+            #example[f"action_{j}"] = actions[j:j+self.context_length+1]
+            #assert len(example[f"action_{j}"]) == self.context_length+1, f"Action sequence {j} must be 8 actions long"
+            #example[f"action_{j}"] = ' '.join(example[f"action_{j}"])
+            #x, y, action_type = parse_action_string(actions[j+self.context_length])
+            x, y, left_click, right_click, key_events = actions[j+self.context_length]
+            #position_map, leftclick_map = create_position_and_click_map((x,y), action_type)
+            #example[f"position_map_{j}"] = position_map
+            #example[f"leftclick_map_{j}"] = leftclick_map
             example[f"x_{j}"] = torch.LongTensor([x if x is not None else 0])
             example[f"y_{j}"] = torch.LongTensor([y if y is not None else 0])
-            example[f"is_leftclick_{j}"] = torch.BoolTensor([action_type == 'L'])
+            example[f"is_leftclick_{j}"] = torch.BoolTensor(left_click)
+            example[f"is_rightclick_{j}"] = torch.BoolTensor(right_click)
+            example[f"key_events_{j}"] = torch.LongTensor([0 for _ in self.itos])
+            for key_state, key in key_events:
+                if key_state == 'down':
+                    example[f"key_events_{j}"][self.stoi[key]] = 1
+            
 
         for j in range(-1, -(self.context_length + 1), -1):
-            x, y, action_type = parse_action_string(actions[j+self.context_length])
-            position_map, leftclick_map = create_position_and_click_map((x,y), action_type)
-            example[f"position_map_{j}"] = position_map
-            example[f"leftclick_map_{j}"] = leftclick_map
+            x, y, left_click, right_click, key_events = actions[j+self.context_length]
+            #position_map, leftclick_map = create_position_and_click_map((x,y), action_type)
+            #example[f"position_map_{j}"] = position_map
+            #example[f"leftclick_map_{j}"] = leftclick_map
             example[f"x_{j}"] = torch.LongTensor([x if x is not None else 0])
             example[f"y_{j}"] = torch.LongTensor([y if y is not None else 0])
-            example[f"is_leftclick_{j}"] = torch.BoolTensor([action_type == 'L'])
+            example[f"is_leftclick_{j}"] = torch.BoolTensor(left_click)
+            example[f"is_rightclick_{j}"] = torch.BoolTensor(right_click)
+            example[f"key_events_{j}"] = torch.LongTensor([0 for _ in self.itos])
+            for key_state, key in key_events:
+                if key_state == 'down':
+                    example[f"key_events_{j}"][self.stoi[key]] = 1
 
         if self.normalization == 'standard_maskprev0':
+            assert False
             example['c_concat_processed'] = example['c_concat_processed'] * 0
             assert False
 

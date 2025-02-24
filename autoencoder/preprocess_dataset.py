@@ -104,11 +104,11 @@ def parse_args():
                         help="Path to model config.")
     
     parser.add_argument("--input_dir", type=str, 
-                        default="train_dataset",
+                        default="../data/data_processing/train_dataset",
                         help="Path to input dataset directory.")
     
     parser.add_argument("--output_dir", type=str, 
-                        default="train_dataset_encoded",
+                        default="../computer/train_dataset_encoded",
                         help="Where to save processed dataset.")
     
     parser.add_argument("--batch_size", type=int, default=16,

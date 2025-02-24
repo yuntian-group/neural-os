@@ -13,10 +13,10 @@ def parse_args():
     parser.add_argument("--save_dir", type=str, default='train_dataset',
                         help="directory to save the entire training set.")
 
-    parser.add_argument("--video_dir", type=str, default='../raw_data/videos',
+    parser.add_argument("--video_dir", type=str, default='../data_collection/raw_data/raw_data/videos',
                         help="directory where the videos are saved.")
     
-    parser.add_argument("--actions_dir", type=str, default='../raw_data/actions',
+    parser.add_argument("--actions_dir", type=str, default='../data_collection/raw_data/raw_data/actions',
                         help="directory where the actions are saved.")
     
     parser.add_argument("--seq_len", type=int, default=1,

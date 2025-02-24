@@ -27,8 +27,8 @@ def format_action(x: int, y: int, left_click: bool, right_click: bool, key_event
     key_events = ast.literal_eval(key_events)
     if is_padding:
         x, y, left_click, right_click, key_events = 0, 0, False, False, []
-    formatted_action = (x, y, left_click, right_click, key_events)
-    return f'{formatted_action}'
+    formatted_action = (int(x), int(y), True if left_click else False, True if right_click else False, key_events)
+    return formatted_action
     #if is_padding:
     #    return "N N N N N N : N N N N N"
     #if left_click and not right_click:
@@ -139,16 +139,16 @@ def video_to_frames(video_path: str, actions_path: str, video_num: int, save_pat
             Image.fromarray(frame).save(path)
 
             images_paths.append(path)
-            actions.append(str(action))
+            actions.append(action)
 
 
-    df = pd.DataFrame()
+    df = {}
     df['Image_path'] = images_paths
     df['Action'] = actions
     return df
 
 
-def sequence_creator(dataframe: pd.DataFrame, save_path: str, seq_len: int) -> pd.DataFrame:
+def sequence_creator(dataframe, save_path: str, seq_len: int) -> pd.DataFrame:
     """
     Creates sequences from video frames and actions.
     
@@ -164,8 +164,8 @@ def sequence_creator(dataframe: pd.DataFrame, save_path: str, seq_len: int) -> p
     #if seq_len < 2:
     #    raise ValueError("seq_len must be at least 2")
 
-    image_paths = dataframe['Image_path'].tolist()
-    actions = dataframe['Action'].tolist()
+    image_paths = dataframe['Image_path']
+    actions = dataframe['Action']
 
     #If padding, prepend the padding image and first action to the list.
     

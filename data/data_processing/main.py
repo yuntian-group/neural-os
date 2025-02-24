@@ -19,7 +19,7 @@ def parse_args():
     parser.add_argument("--actions_dir", type=str, default='../data_collection/raw_data/raw_data/actions',
                         help="directory where the actions are saved.")
     
-    parser.add_argument("--seq_len", type=int, default=1,
+    parser.add_argument("--seq_len", type=int, default=2,
                         help="This number -1 is the number of frames conditioned on.")
 
     args = parser.parse_args()
@@ -57,7 +57,7 @@ def process_video(i: int, args: argparse.Namespace, save_dir: str, video_files: 
         )
         
         seq_df = sequence_creator(df, save_dir, seq_len=args.seq_len)
-        del df  # Clean up memory
+        #del df  # Clean up memory
         return seq_df
         
     except Exception as e:

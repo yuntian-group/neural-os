@@ -6,10 +6,10 @@ from PIL import Image
 import os
 import argparse
 from math import exp, floor
+import ast
 
 
-
-def format_action(x: int, y: int, left_click: bool, right_click: bool, is_padding: bool = False) -> str:
+def format_action(x: int, y: int, left_click: bool, right_click: bool, key_events: str, is_padding: bool = False) -> str:
     """
     Format mouse action data into a standardized string format.
     
@@ -18,30 +18,36 @@ def format_action(x: int, y: int, left_click: bool, right_click: bool, is_paddin
         y: Y coordinate
         left_click: Left mouse button state
         right_click: Right mouse button state
+        key_events: Key events
         is_padding: Whether this is a padding action
         
     Returns:
         Formatted action string
     """
+    key_events = ast.literal_eval(key_events)
     if is_padding:
-        return "N N N N N N : N N N N N"
-    if left_click and not right_click:
-        prefix = 'L'
-    elif right_click and not left_click:
-        prefix = 'R'
-    elif right_click and left_click:
-        prefix = 'B'
-    else:
-        prefix = 'N'
+        x, y, left_click, right_click, key_events = 0, 0, False, False, []
+    formatted_action = (x, y, left_click, right_click, key_events)
+    return f'{formatted_action}'
+    #if is_padding:
+    #    return "N N N N N N : N N N N N"
+    #if left_click and not right_click:
+    #    prefix = 'L'
+    #elif right_click and not left_click:
+    #    prefix = 'R'
+    #elif right_click and left_click:
+    #    prefix = 'B'
+    #else:
+    #    prefix = 'N'
     
     # Convert numbers to padded strings and add spaces between digits
-    x_str = f"{abs(x):04d}"
-    y_str = f"{abs(y):04d}"
-    x_spaced = ' '.join(x_str)
-    y_spaced = ' '.join(y_str)
+    #x_str = f"{abs(x):04d}"
+    #y_str = f"{abs(y):04d}"
+    #x_spaced = ' '.join(x_str)
+    #y_spaced = ' '.join(y_str)
     
     # Format with sign and proper spacing
-    return prefix + ' ' + f"{'+ ' if x >= 0 else '- '}{x_spaced} : {'+ ' if y >= 0 else '- '}{y_spaced}"
+    #return prefix + ' ' + f"{'+ ' if x >= 0 else '- '}{x_spaced} : {'+ ' if y >= 0 else '- '}{y_spaced}"
 
 #Creates the padding image for your model as a starting point for the generation process.
 def create_padding_img(width, height):
@@ -113,7 +119,7 @@ def video_to_frames(video_path: str, actions_path: str, video_num: int, save_pat
         
         # Make FPS check a warning instead of hard assertion
         if fps != 15:
-            print(f"Warning: Expected FPS of 24, got {fps}")
+            print(f"Warning: Expected FPS of 15, got {fps}")
             assert False
         
         for frame_number in range(0, int(fps * duration)):
@@ -121,6 +127,7 @@ def video_to_frames(video_path: str, actions_path: str, video_num: int, save_pat
             action = format_action(action_row['X'], action_row['Y'], 
                                  action_row['Left Click'], 
                                  action_row['Right Click'], 
+                                 action_row['Key Events'],
                                  is_padding=False)
             
             save_dir = f'{save_path}/record_{video_num}'
@@ -163,7 +170,7 @@ def sequence_creator(dataframe: pd.DataFrame, save_path: str, seq_len: int) -> p
     #If padding, prepend the padding image and first action to the list.
     
     image_paths_padding = [save_path + '/padding.png' for _ in range(seq_len - 1)]
-    actions_padding = [format_action(0, 0, False, False, is_padding=True) for _ in range(seq_len - 1)]
+    actions_padding = [format_action(0, 0, False, False, '[]', is_padding=True) for _ in range(seq_len - 1)]
 
     #prepend the padding if needed.
     image_paths = image_paths_padding + image_paths

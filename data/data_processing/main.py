@@ -19,7 +19,7 @@ def parse_args():
     parser.add_argument("--actions_dir", type=str, default='../raw_data/actions',
                         help="directory where the actions are saved.")
     
-    parser.add_argument("--seq_len", type=int, default=15,
+    parser.add_argument("--seq_len", type=int, default=1,
                         help="This number -1 is the number of frames conditioned on.")
 
     args = parser.parse_args()
@@ -127,8 +127,11 @@ if __name__ == "__main__":
     process_video_partial = partial(process_video, args=args, save_dir=save_dir, video_files=video_files)
 
     # Use all available CPU cores (removed hardcoding to 1)
-    num_workers = min(multiprocessing.cpu_count(), 32)
+    num_workers = min(multiprocessing.cpu_count(), 64)
     print(f"Using {num_workers} workers.")
+
+    process_video_partial(0)
+    sys.exit(1)
 
     try:
         # Create a multiprocessing pool

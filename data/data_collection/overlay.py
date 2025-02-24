@@ -41,12 +41,12 @@ def overlay_mouse_actions(video_file, csv_file, output_file):
         x_pos = int(action['X'])
         y_pos = int(action['Y'])
         screen_width, screen_height = pyautogui.size()
-        screen_width, screen_height = 1920, 1080
+        screen_width, screen_height = 512, 384
         #x_pos = int(video_width / screen_width * x_pos)
         #y_pos = int(video_height / screen_height * y_pos)
         #print (screen_width, screen_height, video_width, video_height)
-        x_pos = x_pos - (screen_width / 2 - video_width / 2)
-        y_pos = y_pos - (screen_height / 2 - video_height / 2)
+        #x_pos = x_pos - (screen_width / 2 - video_width / 2)
+        #y_pos = y_pos - (screen_height / 2 - video_height / 2)
         x_pos = int(x_pos)
         y_pos = int(y_pos)
         # Draw base red dot for cursor position

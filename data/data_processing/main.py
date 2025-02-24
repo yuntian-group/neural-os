@@ -130,9 +130,6 @@ if __name__ == "__main__":
     num_workers = min(multiprocessing.cpu_count(), 64)
     print(f"Using {num_workers} workers.")
 
-    process_video_partial(0)
-    sys.exit(1)
-
     try:
         # Create a multiprocessing pool
         with multiprocessing.Pool(num_workers) as pool:
@@ -154,8 +151,8 @@ if __name__ == "__main__":
         all_seqs_df.to_csv(os.path.join(save_dir, 'train_dataset.csv'))
         
         # Clean up memory
-        del results
-        del all_seqs
+        #del results
+        #del all_seqs
         
     except Exception as e:
         print(f"Error during processing: {str(e)}")

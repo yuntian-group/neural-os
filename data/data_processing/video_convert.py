@@ -191,7 +191,7 @@ def sequence_creator(dataframe, save_path: str, seq_len: int) -> pd.DataFrame:
     seq_df['Target_image'] = target_image
 
     #Saves an individual video if specified
-    seq_df.to_csv(os.path.join(save_path, 'train_dataset.csv'), index=False)
+    #seq_df.to_csv(os.path.join(save_path, 'train_dataset.csv'), index=False)
 
     return seq_df
 

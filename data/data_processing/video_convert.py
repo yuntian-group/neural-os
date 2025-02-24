@@ -161,8 +161,8 @@ def sequence_creator(dataframe: pd.DataFrame, save_path: str, seq_len: int) -> p
     Returns:
         DataFrame containing sequences
     """
-    if seq_len < 2:
-        raise ValueError("seq_len must be at least 2")
+    #if seq_len < 2:
+    #    raise ValueError("seq_len must be at least 2")
 
     image_paths = dataframe['Image_path'].tolist()
     actions = dataframe['Action'].tolist()

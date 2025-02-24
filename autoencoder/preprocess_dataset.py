@@ -111,7 +111,7 @@ def parse_args():
                         default="../computer/train_dataset_encoded",
                         help="Where to save processed dataset.")
     
-    parser.add_argument("--batch_size", type=int, default=256,
+    parser.add_argument("--batch_size", type=int, default=128,
                         help="Batch size for processing images.")
     
     parser.add_argument("--start_idx", type=int, default=None,

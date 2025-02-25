@@ -197,7 +197,7 @@ class ActionsData(Dataset):
         self.context_length = context_length
         
         # Load action mapping
-        with open('image_action_mapping.pkl', 'rb') as f:
+        with open('image_action_mapping_with_key_states.pkl', 'rb') as f:
             self.mapping_dict = pickle.load(f)
         
         # Constants for normalization (based on your analysis)
@@ -390,9 +390,8 @@ class ActionsData(Dataset):
             example[f"is_leftclick_{j}"] = torch.BoolTensor(left_click)
             example[f"is_rightclick_{j}"] = torch.BoolTensor(right_click)
             example[f"key_events_{j}"] = torch.LongTensor([0 for _ in self.itos])
-            for key_state, key in key_events:
-                if key_state == 'down':
-                    example[f"key_events_{j}"][self.stoi[key]] = 1
+            for key in key_events:
+                example[f"key_events_{j}"][self.stoi[key]] = 1
             
 
         for j in range(-1, -(self.context_length + 1), -1):
@@ -405,9 +404,8 @@ class ActionsData(Dataset):
             example[f"is_leftclick_{j}"] = torch.BoolTensor(left_click)
             example[f"is_rightclick_{j}"] = torch.BoolTensor(right_click)
             example[f"key_events_{j}"] = torch.LongTensor([0 for _ in self.itos])
-            for key_state, key in key_events:
-                if key_state == 'down':
-                    example[f"key_events_{j}"][self.stoi[key]] = 1
+            for key in key_events:
+                example[f"key_events_{j}"][self.stoi[key]] = 1
 
         if self.normalization == 'standard_maskprev0':
             assert False

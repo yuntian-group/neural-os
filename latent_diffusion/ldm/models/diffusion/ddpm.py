@@ -826,6 +826,8 @@ class LatentDiffusion(DDPM):
                     inputs_t['x'] = batch[f'x_{t+1}']
                     inputs_t['y'] = batch[f'y_{t+1}']
                     inputs_t['is_leftclick'] = batch[f'is_leftclick_{t+1}']
+                    inputs_t['is_rightclick'] = batch[f'is_rightclick_{t+1}']
+                    inputs_t['key_events'] = batch[f'key_events_{t+1}']
                     inputs_to_rnn.append(inputs_t)
                 #for j in range(history_length_to_consider):
                 #    image_part = batch[f'c_concat_processed'][:, actual_history_length-history_length_to_consider+j]

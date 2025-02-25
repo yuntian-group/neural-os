@@ -76,7 +76,7 @@ def load_model(config):
     # model.initialize_weights_diffusion_model()
     return model
 
-def load_model_from_config(config, ckpt, verbose=False):
+def load_model_from_config(config, ckpt, verbose=True):
 
     """
     Loads a pretrained model from config and ckpt.

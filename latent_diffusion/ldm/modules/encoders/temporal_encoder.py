@@ -160,7 +160,8 @@ class TemporalEncoder(nn.Module):
 
             # compute embedding for key events
             offset = torch.arange(len(self.itos), device=embedding_x.device) * 2
-            embedding_key_events = self.embedding_key_events(key_events + offset.unsqueeze(0)) # bsz, hidden_size
+            embedding_key_events = self.embedding_key_events(key_events + offset.unsqueeze(0)) # bsz, num_keys, hidden_size
+            embedding_key_events = embedding_key_events.sum(dim=1) # bsz, hidden_size
 
             embedding_all = embedding_is_leftclick + embedding_is_rightclick + embedding_key_events
             embedding_input = torch.cat([embedding_x, embedding_y, embedding_all, feedback], dim=-1) # bsz, hidden_size*4

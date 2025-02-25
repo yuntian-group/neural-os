@@ -137,7 +137,7 @@ class TemporalEncoder(nn.Module):
         hidden_states_c_upper = self.initial_state_unknown_c_upper.repeat(1, batch_size, 1) # bsz, hidden_size
         feedback = self.initial_feedback_unknown.repeat(batch_size, 1) # bsz, hidden_size
         sequence_length = len(inputs)
-        import pdb; pdb.set_trace()
+        #import pdb; pdb.set_trace()
         for t in range(sequence_length):
             inputs_t = inputs[t]
             is_padding = inputs_t['is_padding']

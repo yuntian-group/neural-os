@@ -387,8 +387,8 @@ class ActionsData(Dataset):
             #example[f"leftclick_map_{j}"] = leftclick_map
             example[f"x_{j}"] = torch.LongTensor([x if x is not None else 0])
             example[f"y_{j}"] = torch.LongTensor([y if y is not None else 0])
-            example[f"is_leftclick_{j}"] = torch.BoolTensor(left_click)
-            example[f"is_rightclick_{j}"] = torch.BoolTensor(right_click)
+            example[f"is_leftclick_{j}"] = torch.BoolTensor([left_click])
+            example[f"is_rightclick_{j}"] = torch.BoolTensor([right_click])
             example[f"key_events_{j}"] = torch.LongTensor([0 for _ in self.itos])
             for key in key_events:
                 example[f"key_events_{j}"][self.stoi[key]] = 1
@@ -401,8 +401,8 @@ class ActionsData(Dataset):
             #example[f"leftclick_map_{j}"] = leftclick_map
             example[f"x_{j}"] = torch.LongTensor([x if x is not None else 0])
             example[f"y_{j}"] = torch.LongTensor([y if y is not None else 0])
-            example[f"is_leftclick_{j}"] = torch.BoolTensor(left_click)
-            example[f"is_rightclick_{j}"] = torch.BoolTensor(right_click)
+            example[f"is_leftclick_{j}"] = torch.BoolTensor([left_click])
+            example[f"is_rightclick_{j}"] = torch.BoolTensor([right_click])
             example[f"key_events_{j}"] = torch.LongTensor([0 for _ in self.itos])
             for key in key_events:
                 example[f"key_events_{j}"][self.stoi[key]] = 1

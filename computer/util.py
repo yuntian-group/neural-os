@@ -55,6 +55,7 @@ def load_autoencoder_from_ckpt(model: LatentDiffusion, ckpt: str, verbose=False)
         print(u)
 
     #Disables training for the autoencoder
+    print ('DISABLED training for the autoencoder')
     model.first_stage_model.eval()
     model.first_stage_model.train = disabled_train
     for param in model.first_stage_model.parameters():

@@ -43,7 +43,7 @@ def create_mapping():
     # mapping_dict has key_events like [('keydown', 'space'), ('keydown', 'esc')], but we want to convert it to [('down', 'space'), ('down', 'esc')] by looking up all frames up to this point to check if the key is down or up
     mapping_dict_with_key_states = {}
     for (record_num, image_num), action in tqdm(mapping_dict.items(), desc="Creating mapping with key states"):
-        import pdb; pdb.set_trace()
+        #import pdb; pdb.set_trace()
         if record_num == -1:
             assert image_num == -1
             x, y, left_click, right_click, key_events = action

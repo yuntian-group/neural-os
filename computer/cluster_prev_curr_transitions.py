@@ -223,7 +223,7 @@ if __name__ == "__main__":
     eps = 0.01  # Maximum distance between two samples to be in same cluster
     min_samples = 50  # Minimum number of samples in a cluster
     #min_samples = 1
-    device = 'cpu'  # Use 'cpu' if no GPU available
+    device = 'cuda'  # Use 'cpu' if no GPU available
     history_length = 3  # Number of previous frames to show in transitions
     
     clusters, distances, labels = cluster_transitions(

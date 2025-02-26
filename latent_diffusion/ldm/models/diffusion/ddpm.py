@@ -1227,7 +1227,7 @@ class LatentDiffusion(DDPM):
                         cv2.rectangle(img, (x1, y1), (x2, y2), (255, 255, 0), 2)  # Yellow rectangle
                     
                     
-                    if is_leftclick::
+                    if is_leftclick:
                         # Red circle for clicks
                         inside_icon = False
                         for name, icon in ICONS.items():

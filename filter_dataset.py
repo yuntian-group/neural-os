@@ -62,8 +62,8 @@ def compute_dataset_distances(input_csv, distances_csv, num_workers=None):
     print(f"Computing frame differences using {num_workers} workers...")
     with Pool(num_workers) as pool:
         differences = list(tqdm(
-            pool.imap(compute_frame_difference, image_pairs),
-            total=len(image_pairs)
+            pool.imap(compute_frame_difference, images),
+            total=len(images)
         ))
     
     # Add the difference as a new column

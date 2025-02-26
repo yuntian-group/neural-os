@@ -10,14 +10,14 @@ def compute_frame_difference(image):
     """Compute MSE between two frames"""
     record_num, image_num = image
 
-    current_path = f"../data/data_processing/train_dataset/record_{record_num}/image_{image_num}.png"
+    current_path = f"./data/data_processing/train_dataset/record_{record_num}/image_{image_num}.png"
     if image_num == 0:
-        prev_path = f"../data/data_processing/train_dataset/record_0/image_0.png"
+        prev_path = f"./data/data_processing/train_dataset/record_0/image_0.png"
     else:
-        prev_path = f"../data/data_processing/train_dataset/record_{record_num}/image_{image_num - 1}.png"
+        prev_path = f"./data/data_processing/train_dataset/record_{record_num}/image_{image_num - 1}.png"
 
     # compute distance from current frame to desktop
-    desktop_path = f"../data/data_processing/train_dataset/record_0/image_0.png"
+    desktop_path = f"./data/data_processing/train_dataset/record_0/image_0.png"
     if 'padding.png' in prev_path:
         distance_prev_to_desktop = -1
     else:
@@ -102,9 +102,9 @@ def filter_dataset(input_csv, output_csv, distances_csv, threshold=0.001, force_
     return filtered_df
 
 if __name__ == "__main__":
-    input_csv = "train_dataset/train_dataset.target_frames.csv"  # Update this path
-    distances_csv = "train_dataset/dataset_with_distances.csv"  # Intermediate file with distances
-    output_csv = "train_dataset/filtered_dataset.target_frames.csv"   # Final filtered dataset
+    input_csv = "computer/train_dataset/train_dataset.target_frames.csv"  # Update this path
+    distances_csv = "computer/train_dataset/dataset_with_distances.csv"  # Intermediate file with distances
+    output_csv = "computer/train_dataset/filtered_dataset.target_frames.csv"   # Final filtered dataset
     
     # By default, it will use (CPU count - 1) workers
     # You can specify a different number of workers if desired

@@ -84,6 +84,7 @@ def filter_dataset(input_csv, output_csv, distances_csv, threshold=0.001, force_
     else:
         print(f"Loading pre-computed distances from {distances_csv}")
         df = pd.read_csv(distances_csv)
+        df['frame_difference'] = df['frame_difference'].apply(ast.literal_eval)
     
     # Step 2: Filter based on threshold
     def filter_frame_difference(row):

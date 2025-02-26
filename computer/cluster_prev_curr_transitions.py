@@ -239,7 +239,7 @@ if __name__ == "__main__":
     output_dir = "filtered_transition_clusters"
     
     # Parameters
-    sample_size = 30000 # Number of images to sample
+    sample_size = 25000 # Number of images to sample
     #sample_size = 1000
     eps = 0.01  # Maximum distance between two samples to be in same cluster
     min_samples = 50  # Minimum number of samples in a cluster

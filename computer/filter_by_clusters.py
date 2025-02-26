@@ -54,10 +54,13 @@ def process_row(row_data, cluster_centers, cluster_ids, transform, threshold, de
         print(f"Error processing row {row['record_num']}, {row['image_num']}: {e}")
     return None
 
-def filter_by_clusters(input_csv, cluster_dir, output_csv, threshold=0.01, device='cpu', num_workers=8):
+def filter_by_clusters(input_csv, cluster_dir, output_csv, threshold=0.01, device='cpu', num_workers=8, debug=False):
     # Load the dataset
     df = pd.read_csv(input_csv)
     print(f"Loaded {len(df)} rows from {input_csv}")
+    if debug:
+        print("Debug mode: processing only 1000 rows")
+        df = df.head(1000)
     
     # Load cluster centers
     cluster_centers = []
@@ -141,7 +144,8 @@ if __name__ == "__main__":
     output_csv = "train_dataset/filtered_dataset.target_frames.clustered.csv"
     threshold = 0.01
     device = 'cuda'
+    debug = True
     # use cpu cores as num_workers
     num_workers = os.cpu_count()
     
-    filter_by_clusters(input_csv, cluster_dir, output_csv, threshold, device, num_workers)
+    filter_by_clusters(input_csv, cluster_dir, output_csv, threshold, device, num_workers, debug)

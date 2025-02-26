@@ -38,7 +38,7 @@ def compute_distance_matrix(df, device='cuda', num_workers=None):
     print("Loading all images...")
     if num_workers is None:
         num_workers = os.cpu_count() - 1
-        num_workers = min(num_workers, 16)
+        num_workers = min(num_workers, 32)
     # Load images in parallel using multiprocessing
     with Pool(num_workers) as pool:
         images = list(tqdm(

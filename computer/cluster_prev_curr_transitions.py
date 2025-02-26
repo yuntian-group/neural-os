@@ -180,8 +180,8 @@ def cluster_transitions(input_csv, output_dir, sample_size=2000, eps=0.01, min_s
             else:
                 center_image_prev = f'../data/data_processing/train_dataset/record_{record_num}/image_{image_num - 1}.png'
             center_image_curr = f'../data/data_processing/train_dataset/record_{record_num}/image_{image_num}.png'
-            shutil.copy2(center_image_prev, cluster_dir / "cluster_center_prev.png")
-            shutil.copy2(center_image_curr, cluster_dir / "cluster_center_curr.png")
+            shutil.copy2(center_image_prev, cluster_dir / f"cluster_center_prev_{record_num}_{image_num-1}.png")
+            shutil.copy2(center_image_curr, cluster_dir / f"cluster_center_curr_{record_num}_{image_num}.png")
         
         # Save representative transitions
         num_examples = min(5, len(cluster_sequences))

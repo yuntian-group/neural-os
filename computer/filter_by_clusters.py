@@ -109,9 +109,9 @@ def filter_by_clusters(input_csv, cluster_dir, output_csv, threshold=0.01, devic
         print(f"Cluster {cluster_id}: {count} transitions")
 
 if __name__ == "__main__":
-    input_csv = "train_dataset/train_dataset.target_frames.csv"
+    input_csv = "train_dataset/filtered_dataset.target_frames.csv"
     cluster_dir = "filtered_transition_clusters"
-    output_csv = "train_dataset/train_dataset.target_frames.filtered.csv"
+    output_csv = "train_dataset/filtered_dataset.target_frames.clustered.csv"
     threshold = 0.01
     device = 'cuda'
     

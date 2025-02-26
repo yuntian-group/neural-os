@@ -62,6 +62,7 @@ def compute_distance_matrix(df, device='cuda', num_workers=None):
             images = torch.stack(images_temp).to(device)
         else:
             images = torch.cat([images, torch.stack(images_temp).to(device)], dim=0)
+        images_temp = []
     
     # Stack all images into a single tensor
     #images = torch.stack(images).to(device)

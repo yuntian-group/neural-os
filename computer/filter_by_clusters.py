@@ -9,7 +9,7 @@ import re  # Add to imports at top
 from multiprocessing import Pool
 import functools
 import os
-def compute_distance_to_centers(row, cluster_centers, cluster_ids, transform, device='cuda'):
+def compute_distance_to_centers(row, cluster_centers, cluster_ids, transform, device='cpu'):
     """Compute distance between a transition and all cluster centers"""
     # Load the transition images
     record_num = row['record_num']

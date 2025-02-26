@@ -72,11 +72,12 @@ def compute_distance_matrix(df, device='cuda', num_workers=None):
         # Compute squared differences for all pairs at once
         # Using (a-b)^2 = a^2 + b^2 - 2ab formula
         norm = torch.norm(images,dim=1, keepdim=True) ** 2
+        norm = norm.cpu()
         #a2 = torch.sum(images**2, dim=(1,2,3))[:, None]  # [N, 1]
         #b2 = torch.sum(images**2, dim=(1,2,3))[None, :]  # [1, N]
         #ab = torch.mm(images.view(images.size(0), -1), 
         #             images.view(images.size(0), -1).t())  # [N, N]
-        distances = norm + norm.T - 2 * torch.einsum('ij,kj->ik', images, images)
+        distances = norm + norm.T - 2 * torch.einsum('ij,kj->ik', images, images).cpu()
         distances /= images.size(-1)
         #distances = (a2 + b2 - 2*ab) / (images.size(1) * images.size(2) * images.size(3))
         distances.clamp_(min=0)

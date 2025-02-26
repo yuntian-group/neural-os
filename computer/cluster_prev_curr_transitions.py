@@ -10,11 +10,19 @@ import shutil
 from pathlib import Path
 import torch
 from torchvision import transforms
+from multiprocessing import Pool
 
-def compute_distance_matrix(df, device='cuda'):
+def load_image_pair(paths):
+    prev_path, curr_path = paths
+    prev_img = transform(Image.open(prev_path))
+    curr_img = transform(Image.open(curr_path))
+    return torch.cat([prev_img, curr_img], dim=0)
+
+def compute_distance_matrix(df, device='cuda', num_workers=None):
     """Compute pairwise distance matrix between all images using GPU in one shot"""
     transform = transforms.ToTensor()
 
+    # Collect image paths
     image_paths = []
     for _, row in df.iterrows():
         record_num = row['record_num']
@@ -25,12 +33,20 @@ def compute_distance_matrix(df, device='cuda'):
             prev_path = f'../data/data_processing/train_dataset/record_{record_num}/image_{image_num - 1}.png'
         curr_path = f'../data/data_processing/train_dataset/record_{record_num}/image_{image_num}.png'
         image_paths.append((prev_path, curr_path))
+
     print("Loading all images...")
-    # Load all images into a single tensor [N, C, H, W]
-    images = torch.stack([
-        torch.cat([transform(Image.open(prev_path)), transform(Image.open(curr_path))], dim=0)
-        for prev_path, curr_path in tqdm(image_paths)
-    ]).to(device)
+    if num_workers is None:
+        num_workers = os.cpu_count() - 1
+        num_workers = min(num_workers, 16)
+    # Load images in parallel using multiprocessing
+    with Pool(num_workers) as pool:
+        images = list(tqdm(
+            pool.imap(load_image_pair, image_paths),
+            total=len(image_paths)
+        ))
+    
+    # Stack all images into a single tensor
+    images = torch.stack(images).to(device)
     
     print("Computing all pairwise distances...")
     with torch.no_grad():

@@ -1029,6 +1029,52 @@ class LatentDiffusion(DDPM):
             self.i = 0
 
         if DEBUG:
+            print("Loading cluster centers...")
+            # Define cluster directories
+            if False:
+                cluster_paths = {
+                    'terminal': "desktop_transition_clusters/cluster_01_size_1499_desktop_terminal",
+                    'firefox': "desktop_transition_clusters/cluster_03_size_1275_desktop_firefox",
+                'root': "desktop_transition_clusters/cluster_04_size_799_desktop_root",
+                'trash': "desktop_transition_clusters/cluster_05_size_738_desktop_trash",
+                'desktop': "desktop_transition_clusters/cluster_00_size_24373_desktop_desktop"
+                }
+            
+                # Load cluster centers
+                cluster_centers = {}
+                for name, dir in cluster_paths.items():
+                    center_path = os.path.join(dir, "cluster_center.png")
+                    center = cv2.imread(center_path)
+                    center = cv2.cvtColor(center, cv2.COLOR_BGR2RGB)
+                    cluster_centers[name] = center
+            else:
+                cluster_dir = "filtered_transition_clusters"
+                cluster_paths = sorted(Path(cluster_dir).glob("cluster_*_size_*"))
+                for cluster_path in cluster_paths:
+                    if "noise" in str(cluster_path):
+                        continue
+                        
+                    # Extract cluster ID using regex (e.g., "cluster_5_size_100" -> 5)
+                    match = re.search(r'cluster_(\d+)_size_', str(cluster_path.name))
+                    if not match:
+                        continue
+                    cluster_id = int(match.group(1))
+                    
+                    # Find center images
+                    center_files = list(cluster_path.glob("cluster_center_*.png"))
+                    if not center_files:
+                        continue
+                        
+                    # Load and concatenate center images
+                    prev_img = transform(Image.open([f for f in center_files if 'prev' in str(f)][0])).view(-1)
+                    curr_img = transform(Image.open([f for f in center_files if 'curr' in str(f)][0])).view(-1)
+                    center = torch.cat([prev_img, curr_img], dim=0).to(device)
+                    
+                    cluster_centers.append(center)
+                    cluster_ids.append(cluster_id)
+                cluster_centers = torch.stack(cluster_centers)
+            
+            print(f"Loaded {len(cluster_centers)} cluster centers")
             data_mean = -0.54
             data_std = 6.78
             data_min = -27.681446075439453
@@ -1092,47 +1138,39 @@ class LatentDiffusion(DDPM):
                 #Image.fromarray(combined_img).save(f'{exp_name}/real_vs_generated_debug_comparison_{self.i}.png')
                 
                 # Save the corresponding action texts
-                with open(f'{exp_name}/real_vs_generated_debug_comparison_{self.i}.txt', 'w') as f:
-                    action_7 = batch[f'action_{self.context_length}'][i]
-                    action_0 = batch[f'action_0'][i]
-                    f.write(f"Current action (7): {action_7}\n")
-                    f.write(f"First action (0): {action_0}\n")
+                #with open(f'{exp_name}/real_vs_generated_debug_comparison_{self.i}.txt', 'w') as f:
+                #    action_7 = batch[f'action_{self.context_length}'][i]
+                #    action_0 = batch[f'action_0'][i]
+                #    f.write(f"Current action (7): {action_7}\n")
+                #    f.write(f"First action (0): {action_0}\n")
 
-                # Define cluster directories
-                cluster_paths = {
-                    'terminal': "desktop_transition_clusters/cluster_01_size_1499_desktop_terminal",
-                    'firefox': "desktop_transition_clusters/cluster_03_size_1275_desktop_firefox",
-                    'root': "desktop_transition_clusters/cluster_04_size_799_desktop_root",
-                    'trash': "desktop_transition_clusters/cluster_05_size_738_desktop_trash",
-                    'desktop': "desktop_transition_clusters/cluster_00_size_24373_desktop_desktop"
-                }
                 
-                # Load cluster centers
-                cluster_centers = {}
-                for name, dir in cluster_paths.items():
-                    center_path = os.path.join(dir, "cluster_center.png")
-                    center = cv2.imread(center_path)
-                    center = cv2.cvtColor(center, cv2.COLOR_BGR2RGB)
-                    cluster_centers[name] = center
-
                 # Initialize confusion matrix if not exists
                 if not hasattr(self, 'confusion_matrix'):
-                    cluster_names = list(cluster_paths.keys())
-                    self.confusion_matrix = np.zeros((len(cluster_names), len(cluster_names)), dtype=int)
+                    #cluster_names = list(cluster_paths.keys())
+                    cluster_names = [str(cluster_id) for cluster_id in cluster_ids]
+                    self.confusion_matrix = np.zeros((len(cluster_ids), len(cluster_ids)), dtype=int)
                     self.cluster_names = cluster_names
                 
                 # Function to find closest cluster
-                def get_closest_cluster(img):
-                    min_mse = float('inf')
-                    closest_name = None
-                    img_np = ((img.transpose(0,1).transpose(1,2).cpu().float().numpy() + 1) * 127.5).astype(np.uint8)
+                def get_closest_cluster(prev_img, curr_img):
+                    #min_mse = float('inf')
+                    #closest_name = None
+                    img_prev = (prev_img.transpose(0,1).transpose(1,2) + 1) * 127.5
+                    img_curr = (curr_img.transpose(0,1).transpose(1,2) + 1) * 127.5
+                    img_prev = (img_prev).to(device).view(1, -1)
+                    img_curr = (img_curr).to(device).view(1, -1)
+                    img = torch.cat([img_prev, img_curr], dim=0)
+                    distances = torch.norm(img - cluster_centers, dim=1)
+                    min_idx = distances.argmin().item()
+                    return cluster_ids[min_idx]
                     
-                    for name, center in cluster_centers.items():
-                        mse = np.mean((img_np - center) ** 2)
-                        if mse < min_mse:
-                            min_mse = mse
-                            closest_name = name
-                    return closest_name
+                    #for name, center in cluster_centers.items():
+                    #    mse = np.mean((img_np - center) ** 2)
+                    #    if mse < min_mse:
+                    #        min_mse = mse
+                    #        closest_name = name
+                    #return closest_name
 
                 # Get cluster assignments
                 target_cluster = get_closest_cluster(zz)
@@ -1156,10 +1194,13 @@ class LatentDiffusion(DDPM):
                     actions = re.findall(r'([NL])\+(\d+):\+(\d+)', action_str)
                     return [(action_type, int(x), int(y)) for action_type, x, y in actions]
 
-                actions = parse_action_sequence(action_7)
-                if len(actions) < self.context_length+1:
-                    actions = [('N', 0, 0)] * (self.context_length+1 - len(actions)) + actions
-                assert len(actions) == self.context_length+1, (action_7, actions)
+                #actions = parse_action_sequence(action_7)
+                is_leftclicks = [batch[f'is_left_click_{j}'][i] for j in range(self.context_length+1)]
+                is_rightclicks = [batch[f'is_right_click_{j}'][i] for j in range(self.context_length+1)]
+                xs = [batch[f'x_{j}'][i] for j in range(self.context_length+1)]
+                ys = [batch[f'y_{j}'][i] for j in range(self.context_length+1)]
+                
+                #assert len(actions) == self.context_length+1, (action_7, actions)
                 #actions = actions[-7:]
                 
                 # Calculate grid dimensions (roughly 2:1 aspect ratio)
@@ -1171,7 +1212,7 @@ class LatentDiffusion(DDPM):
                 frame_height, frame_width = 48*8, 64*8
                 combined_img = np.zeros((frame_height * rows, frame_width * cols, 3), dtype=np.uint8)
                 
-                def draw_action_on_frame(img, action_type, x, y):
+                def draw_action_on_frame(img, is_leftclick, is_rightclick, x, y):
                     img = img.copy()
                     for name, icon in ICONS.items():
                         center = (int(icon['center'][0]), int(icon['center'][1]))
@@ -1186,7 +1227,7 @@ class LatentDiffusion(DDPM):
                         cv2.rectangle(img, (x1, y1), (x2, y2), (255, 255, 0), 2)  # Yellow rectangle
                     
                     
-                    if action_type == 'L':
+                    if is_leftclick::
                         # Red circle for clicks
                         inside_icon = False
                         for name, icon in ICONS.items():
@@ -1201,6 +1242,9 @@ class LatentDiffusion(DDPM):
                         # Green circle for clicks inside icons, red for clicks outside
                         color = (0, 255, 0) if inside_icon else (255, 0, 0)
                         cv2.circle(img, (x, y), 10, color, 3)
+                    elif is_rightclick:
+                        # Blue circle for right clicks
+                        cv2.circle(img, (x, y), 10, (255, 0, 0), 3)
                     else:
                         # White dot for moves
                         cv2.circle(img, (x, y), 5, (255, 255, 255), -1)
@@ -1214,7 +1258,7 @@ class LatentDiffusion(DDPM):
                     col = j % cols
                     if j == 0:
                         frame = np.zeros((frame_height, frame_width, 3), dtype=np.uint8)
-                        frame = draw_action_on_frame(frame, *actions[j])
+                        frame = draw_action_on_frame(frame, is_leftclicks[j], is_rightclicks[j], xs[j], ys[j])
                         combined_img[row*frame_height:(row+1)*frame_height, 
                                    col*frame_width:(col+1)*frame_width] = frame
                     elif j < self.context_length+1:  # History frames
@@ -1222,7 +1266,7 @@ class LatentDiffusion(DDPM):
                         prev_frame_img = ((prev_frame.transpose(0,1).transpose(1,2).cpu().float().numpy()+1)*255/2).astype(np.uint8)
                         frame = prev_frame_img
                         #frame = np.zeros((frame_height, frame_width, 3), dtype=np.uint8)
-                        frame = draw_action_on_frame(frame, *actions[j])
+                        frame = draw_action_on_frame(frame, is_leftclicks[j], is_rightclicks[j], xs[j], ys[j])
                         combined_img[row*frame_height:(row+1)*frame_height, 
                                    col*frame_width:(col+1)*frame_width] = frame
                     elif j == self.context_length+1:  # Target frame

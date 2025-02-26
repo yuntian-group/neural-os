@@ -14,7 +14,7 @@ def split_by_clusters(input_csv, train_csv, test_csv, samples_per_cluster=5):
     # Group by cluster_id
     clusters = defaultdict(list)
     for _, row in df.iterrows():
-        clusters[row['cluster_id']].append(row)
+        clusters[row['cluster_id']].append(row.to_dict())
     
     # Select test samples
     test_rows = []
@@ -23,7 +23,7 @@ def split_by_clusters(input_csv, train_csv, test_csv, samples_per_cluster=5):
     print(f"Selecting {samples_per_cluster} samples per cluster for test set...")
     for cluster_id, rows in clusters.items():
         # Shuffle rows for this cluster
-        cluster_rows = np.random.permutation(rows)
+        cluster_rows = list(np.random.permutation(rows))
         selected = 0
         
         # Try to select samples_per_cluster rows that don't share record_nums with already selected rows

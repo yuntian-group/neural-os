@@ -47,12 +47,15 @@ def compute_distance_matrix(df, device='cuda', num_workers=None):
     #        pool.imap(load_image_pair, image_paths),
     #        total=len(image_paths)
     #    ))
-    images = []
+    images = None
     for prev_path, curr_path in tqdm(image_paths):
-        images.append(load_image_pair((prev_path, curr_path)).to(device))
+        if images is None:
+            images = load_image_pair((prev_path, curr_path)).unsqueeze(0)
+        else:
+            images = torch.cat([images, load_image_pair((prev_path, curr_path)).unsqueeze(0)], dim=0)
     
     # Stack all images into a single tensor
-    images = torch.stack(images)
+    images = images.to(device)
     
     print("Computing all pairwise distances...")
     with torch.no_grad():

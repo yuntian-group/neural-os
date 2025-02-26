@@ -1181,16 +1181,16 @@ class LatentDiffusion(DDPM):
                     #return closest_name
 
                 # Get cluster assignments
-                target_cluster = get_closest_cluster(prev_frames[-1], zz)
-                pred_cluster = get_closest_cluster(prev_frames[-1], sample_i)
+                target_idx = get_closest_cluster(prev_frames[-1], zz)
+                pred_idx = get_closest_cluster(prev_frames[-1], sample_i)
                 
                 # Update confusion matrix
-                target_idx = self.cluster_names.index(target_cluster)
-                pred_idx = self.cluster_names.index(pred_cluster)
+                #target_idx = self.cluster_names.index(target_cluster)
+                #pred_idx = self.cluster_names.index(pred_cluster)
                 self.confusion_matrix[target_idx][pred_idx] += 1
                 
                 # Create directory for this pair
-                pair_dir = f'{exp_name}/target_{target_cluster}_pred_{pred_cluster}'
+                pair_dir = f'{exp_name}/target_{target_idx}_pred_{pred_idx}'
                 os.makedirs(pair_dir, exist_ok=True)
 
                 # [Keep existing visualization code here]

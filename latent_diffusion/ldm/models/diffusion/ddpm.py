@@ -1203,8 +1203,8 @@ class LatentDiffusion(DDPM):
                     return [(action_type, int(x), int(y)) for action_type, x, y in actions]
 
                 #actions = parse_action_sequence(action_7)
-                is_leftclicks = [batch[f'is_left_click_{j}'][i] for j in range(self.context_length+1)]
-                is_rightclicks = [batch[f'is_right_click_{j}'][i] for j in range(self.context_length+1)]
+                is_leftclicks = [batch[f'is_leftclick_{j}'][i] for j in range(self.context_length+1)]
+                is_rightclicks = [batch[f'is_rightclick_{j}'][i] for j in range(self.context_length+1)]
                 xs = [batch[f'x_{j}'][i] for j in range(self.context_length+1)]
                 ys = [batch[f'y_{j}'][i] for j in range(self.context_length+1)]
                 
@@ -1298,15 +1298,15 @@ class LatentDiffusion(DDPM):
                     plt.ylabel('Target')
                     plt.savefig(f'{exp_name}/confusion_matrix.png')
                     plt.close()
-                    # Inside your model code where confusion matrix is calculated
-                    history_length = self.context_length
-                    if 'train' not in exp_name:
-                        for icon in self.cluster_names:
-                            i = self.cluster_names.index(icon)
-                            total = self.confusion_matrix[i].sum()
-                            if total > 0:
-                                accuracy = self.confusion_matrix[i,i] / total
-                                update_accuracy_csv(history_length, icon, accuracy, total)
+                    ## Inside your model code where confusion matrix is calculated
+                    #history_length = self.context_length
+                    #if 'train' not in exp_name:
+                    #    for icon in self.cluster_names:
+                    #        i = self.cluster_names.index(icon)
+                    #        total = self.confusion_matrix[i].sum()
+                    #        if total > 0:
+                    #            accuracy = self.confusion_matrix[i,i] / total
+                    #            update_accuracy_csv(history_length, icon, accuracy, total)
 
                 self.i += 1
                 if self.i > 100:

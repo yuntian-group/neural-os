@@ -62,7 +62,6 @@ def compute_distance_matrix(df, device='cuda', num_workers=None):
             images = torch.stack(images_temp).to(device)
         else:
             images = torch.cat([images, torch.stack(images_temp).to(device)], dim=0)
-    images_temp = []
     
     # Stack all images into a single tensor
     #images = torch.stack(images).to(device)
@@ -239,12 +238,12 @@ if __name__ == "__main__":
     output_dir = "filtered_transition_clusters"
     
     # Parameters
-    sample_size = 30000 # Number of images to sample
+    sample_size = 20000 # Number of images to sample
     #sample_size = 1000
     eps = 0.01  # Maximum distance between two samples to be in same cluster
     min_samples = 50  # Minimum number of samples in a cluster
     #min_samples = 1
-    device = 'cpu'  # Use 'cpu' if no GPU available
+    device = 'cuda'  # Use 'cpu' if no GPU available
     history_length = 3  # Number of previous frames to show in transitions
     
     clusters, distances, labels = cluster_transitions(

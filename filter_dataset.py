@@ -57,7 +57,7 @@ def compute_dataset_distances(input_csv, distances_csv, num_workers=None):
     # Use max(1, cpu_count() - 1) workers by default
     if num_workers is None:
         num_workers = max(1, cpu_count() - 1)
-        num_workers = min(num_workers, 32)
+        num_workers = min(num_workers, 64)
     
     print(f"Computing frame differences using {num_workers} workers...")
     with Pool(num_workers) as pool:

@@ -51,7 +51,7 @@ def compute_distance_matrix(df, device='cuda', num_workers=None):
     images = None
     for prev_path, curr_path in tqdm(image_paths):
         images_temp.append(load_image_pair((prev_path, curr_path)))
-        if len(images_temp) == 10000:
+        if len(images_temp) == -1:
             if images is None:
                 images = torch.stack(images_temp).to(device)
             else:
@@ -243,7 +243,7 @@ if __name__ == "__main__":
     eps = 0.01  # Maximum distance between two samples to be in same cluster
     min_samples = 50  # Minimum number of samples in a cluster
     #min_samples = 1
-    device = 'cuda'  # Use 'cpu' if no GPU available
+    device = 'cpu'  # Use 'cpu' if no GPU available
     history_length = 3  # Number of previous frames to show in transitions
     
     clusters, distances, labels = cluster_transitions(

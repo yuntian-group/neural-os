@@ -112,7 +112,7 @@ if __name__ == "__main__":
         input_csv, 
         output_csv, 
         distances_csv, 
-        threshold=0.001, 
+        threshold=0.1, # old value 0.001 
         force_recompute=True,
         num_workers=None# Set to a specific number (e.g., 4) if desired
-    ) 
+    )

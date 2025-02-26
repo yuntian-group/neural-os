@@ -51,7 +51,7 @@ def compute_distance_matrix(df, device='cuda', num_workers=None):
     images = None
     for prev_path, curr_path in tqdm(image_paths):
         images_temp.append(load_image_pair((prev_path, curr_path)))
-        if len(images_temp) == 1000:
+        if len(images_temp) == 10000:
             if images is None:
                 images = torch.stack(images_temp).to(device)
             else:

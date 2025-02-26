@@ -16,8 +16,8 @@ transform = transforms.ToTensor()
 
 def load_image_pair(paths):
     prev_path, curr_path = paths
-    prev_img = transform(Image.open(prev_path))
-    curr_img = transform(Image.open(curr_path))
+    prev_img = transform(Image.open(prev_path)).view(-1)
+    curr_img = transform(Image.open(curr_path)).view(-1)
     return torch.cat([prev_img, curr_img], dim=0)
 
 def compute_distance_matrix(df, device='cuda', num_workers=None):
@@ -47,23 +47,38 @@ def compute_distance_matrix(df, device='cuda', num_workers=None):
     #        pool.imap(load_image_pair, image_paths),
     #        total=len(image_paths)
     #    ))
-    images = []
+    images_temp = []
+    images = None
     for prev_path, curr_path in tqdm(image_paths):
-        images.append(load_image_pair((prev_path, curr_path)))
+        images_temp.append(load_image_pair((prev_path, curr_path)))
+        if len(images_temp) == 1000:
+            if images is None:
+                images = torch.stack(images_temp).to(device)
+            else:
+                images = torch.cat([images, torch.stack(images_temp).to(device)], dim=0)
+            images_temp = []
+    if len(images_temp) > 0:
+        if images is None:
+            images = torch.stack(images_temp).to(device)
+        else:
+            images = torch.cat([images, torch.stack(images_temp).to(device)], dim=0)
     
     # Stack all images into a single tensor
-    images = torch.stack(images).to(device)
+    #images = torch.stack(images).to(device)
     
     print("Computing all pairwise distances...")
     with torch.no_grad():
         # Compute squared differences for all pairs at once
         # Using (a-b)^2 = a^2 + b^2 - 2ab formula
-        a2 = torch.sum(images**2, dim=(1,2,3))[:, None]  # [N, 1]
-        b2 = torch.sum(images**2, dim=(1,2,3))[None, :]  # [1, N]
-        ab = torch.mm(images.view(images.size(0), -1), 
-                     images.view(images.size(0), -1).t())  # [N, N]
-        distances = (a2 + b2 - 2*ab) / (images.size(1) * images.size(2) * images.size(3))
-        distances = torch.clamp(distances, min=0)
+        norm = torch.norm(images,dim=1, keepdim=True) ** 2
+        #a2 = torch.sum(images**2, dim=(1,2,3))[:, None]  # [N, 1]
+        #b2 = torch.sum(images**2, dim=(1,2,3))[None, :]  # [1, N]
+        #ab = torch.mm(images.view(images.size(0), -1), 
+        #             images.view(images.size(0), -1).t())  # [N, N]
+        distances = norm + norm.T - 2 * torch.einsum('ij,kj->ik', images, images)
+        distances /= images.size(-1)
+        #distances = (a2 + b2 - 2*ab) / (images.size(1) * images.size(2) * images.size(3))
+        distances.clamp_(min=0)
         
         return distances.cpu().numpy()
 
@@ -223,7 +238,7 @@ if __name__ == "__main__":
     output_dir = "filtered_transition_clusters"
     
     # Parameters
-    sample_size = 25000 # Number of images to sample
+    sample_size = 30000 # Number of images to sample
     #sample_size = 1000
     eps = 0.01  # Maximum distance between two samples to be in same cluster
     min_samples = 50  # Minimum number of samples in a cluster

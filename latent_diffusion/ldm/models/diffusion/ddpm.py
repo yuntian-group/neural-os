@@ -1181,6 +1181,7 @@ class LatentDiffusion(DDPM):
                     #return closest_name
 
                 # Get cluster assignments
+                import pdb; pdb.set_trace()
                 target_idx = get_closest_cluster(prev_frames[-1], zz)
                 pred_idx = get_closest_cluster(prev_frames[-1], sample_i)
                 

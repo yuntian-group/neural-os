@@ -106,14 +106,18 @@ def filter_by_clusters(input_csv, cluster_dir, output_csv, threshold=0.01, devic
     
     # Process rows in parallel
     print("Computing distances and filtering...")
-    with Pool(num_workers) as pool:
-        results = list(tqdm(
-            pool.imap(process_row_partial, row_dicts, chunksize=100),
-            total=len(row_dicts)
-        ))
+    #with Pool(num_workers) as pool:
+    #    results = list(tqdm(
+    #        pool.imap(process_row_partial, row_dicts, chunksize=100),
+    #        total=len(row_dicts)
+    #    ))
+    results = []
+    for row in tqdm(row_dicts):
+        result = process_row_partial(row)
+        if result is not None:
+            results.append(result)
     
     # Filter out None results and create DataFrame
-    results = [r for r in results if r is not None]
     filtered_df = pd.DataFrame(results)
     print(f"Filtered to {len(filtered_df)} rows")
     

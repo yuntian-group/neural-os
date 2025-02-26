@@ -1105,6 +1105,7 @@ class LatentDiffusion(DDPM):
                 pass
             z_vis = self.decode_first_stage(batch['image_processed'])
             #prev_frames = self.decode_first_stage(batch['c_concat_processed'][:, -1])
+            c['c_concat'] = c['c_concat'].data.clone()
             for i, zz in enumerate(z_vis):
                 prev_frames = self.decode_first_stage(batch['c_concat_processed'][i, -self.context_length:])
                 prev_frames = prev_frames.clamp(-1, 1)
@@ -1112,7 +1113,7 @@ class LatentDiffusion(DDPM):
                 from PIL import Image
                 import copy
                 #Image.fromarray(((zz.transpose(0,1).transpose(1,2).cpu().float().numpy()+1)*255/2).astype(np.uint8)).save(f'leftclick_debug_image_{i}.png')
-
+                
                 c_i = copy.deepcopy(c)
                 c_i['c_concat'] = c['c_concat'][i:i+1]
                 #c_i['c_crossattn'] = c['c_crossattn'][i:i+1]

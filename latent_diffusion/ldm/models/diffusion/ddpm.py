@@ -1031,6 +1031,7 @@ class LatentDiffusion(DDPM):
 
         if DEBUG:
             from torchvision import transforms
+            from PIL import Image
             transform = transforms.ToTensor()
             print("Loading cluster centers...")
             # Define cluster directories

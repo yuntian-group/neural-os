@@ -1166,9 +1166,9 @@ class LatentDiffusion(DDPM):
                     #closest_name = None
                     img_prev = (prev_img.transpose(0,1).transpose(1,2) + 1) * 127.5
                     img_curr = (curr_img.transpose(0,1).transpose(1,2) + 1) * 127.5
-                    img_prev = (img_prev).to(device).reshape(1, -1)
-                    img_curr = (img_curr).to(device).reshape(1, -1)
-                    img = torch.cat([img_prev, img_curr], dim=0)
+                    img_prev = (img_prev).to(device).reshape(-1)
+                    img_curr = (img_curr).to(device).reshape(-1)
+                    img = torch.cat([img_prev, img_curr], dim=0).unsqueeze(0)
                     distances = torch.norm(img - cluster_centers, dim=1)
                     min_idx = distances.argmin().item()
                     return cluster_ids[min_idx]

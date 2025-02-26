@@ -1171,6 +1171,7 @@ class LatentDiffusion(DDPM):
                     img = torch.cat([img_prev, img_curr], dim=0).unsqueeze(0)
                     distances = torch.norm(img - cluster_centers, dim=1)
                     min_idx = distances.argmin().item()
+                    
                     return cluster_ids[min_idx]
                     
                     #for name, center in cluster_centers.items():
@@ -1181,7 +1182,7 @@ class LatentDiffusion(DDPM):
                     #return closest_name
 
                 # Get cluster assignments
-                #import pdb; pdb.set_trace()
+                import pdb; pdb.set_trace()
                 target_idx = get_closest_cluster(prev_frames[-1], zz)
                 pred_idx = get_closest_cluster(prev_frames[-1], sample_i)
                 

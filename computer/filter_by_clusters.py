@@ -140,7 +140,7 @@ if __name__ == "__main__":
     cluster_dir = "filtered_transition_clusters"
     output_csv = "train_dataset/filtered_dataset.target_frames.clustered.csv"
     threshold = 0.01
-    device = 'cpu'
+    device = 'cuda'
     # use cpu cores as num_workers
     num_workers = os.cpu_count()
     

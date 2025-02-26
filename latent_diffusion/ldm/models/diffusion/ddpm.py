@@ -1030,6 +1030,8 @@ class LatentDiffusion(DDPM):
             self.i = 0
 
         if DEBUG:
+            from torchvision import transforms
+            transform = transforms.ToTensor()
             print("Loading cluster centers...")
             # Define cluster directories
             if False:

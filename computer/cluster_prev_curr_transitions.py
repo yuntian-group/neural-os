@@ -12,6 +12,8 @@ import torch
 from torchvision import transforms
 from multiprocessing import Pool
 
+transform = transforms.ToTensor()
+
 def load_image_pair(paths):
     prev_path, curr_path = paths
     prev_img = transform(Image.open(prev_path))
@@ -20,7 +22,6 @@ def load_image_pair(paths):
 
 def compute_distance_matrix(df, device='cuda', num_workers=None):
     """Compute pairwise distance matrix between all images using GPU in one shot"""
-    transform = transforms.ToTensor()
 
     # Collect image paths
     image_paths = []

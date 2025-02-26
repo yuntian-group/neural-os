@@ -1205,8 +1205,8 @@ class LatentDiffusion(DDPM):
                 #actions = parse_action_sequence(action_7)
                 is_leftclicks = [batch[f'is_leftclick_{j}'][i] for j in range(self.context_length+1)]
                 is_rightclicks = [batch[f'is_rightclick_{j}'][i] for j in range(self.context_length+1)]
-                xs = [batch[f'x_{j}'][i] for j in range(self.context_length+1)]
-                ys = [batch[f'y_{j}'][i] for j in range(self.context_length+1)]
+                xs = [batch[f'x_{j}'][i].item() for j in range(self.context_length+1)]
+                ys = [batch[f'y_{j}'][i].item() for j in range(self.context_length+1)]
                 
                 #assert len(actions) == self.context_length+1, (action_7, actions)
                 #actions = actions[-7:]

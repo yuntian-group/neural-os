@@ -1181,8 +1181,8 @@ class LatentDiffusion(DDPM):
                     #return closest_name
 
                 # Get cluster assignments
-                target_cluster = get_closest_cluster(zz)
-                pred_cluster = get_closest_cluster(sample_i)
+                target_cluster = get_closest_cluster(prev_frames[-1], zz)
+                pred_cluster = get_closest_cluster(prev_frames[-1], sample_i)
                 
                 # Update confusion matrix
                 target_idx = self.cluster_names.index(target_cluster)

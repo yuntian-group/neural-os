@@ -6,7 +6,9 @@ import numpy as np
 from tqdm import tqdm
 from pathlib import Path
 import re  # Add to imports at top
-
+from multiprocessing import Pool
+import functools
+import os
 def compute_distance_to_centers(row, cluster_centers, cluster_ids, transform, device='cuda'):
     """Compute distance between a transition and all cluster centers"""
     # Load the transition images
@@ -37,7 +39,22 @@ def compute_distance_to_centers(row, cluster_centers, cluster_ids, transform, de
         min_idx = distances.argmin().item()
         return distances[min_idx].item(), cluster_ids[min_idx]
 
-def filter_by_clusters(input_csv, cluster_dir, output_csv, threshold=0.01, device='cuda'):
+def process_row(row_data, cluster_centers, cluster_ids, transform, threshold, device='cuda'):
+    """Process a single row (to be used with multiprocessing)"""
+    try:
+        row = pd.Series(row_data)
+        min_dist, cluster_id = compute_distance_to_centers(row, cluster_centers, cluster_ids, transform, device)
+        if min_dist <= threshold:
+            return {
+                **row_data,
+                'cluster_id': cluster_id,
+                'distance_to_center': min_dist
+            }
+    except Exception as e:
+        print(f"Error processing row {row['record_num']}, {row['image_num']}: {e}")
+    return None
+
+def filter_by_clusters(input_csv, cluster_dir, output_csv, threshold=0.01, device='cuda', num_workers=8):
     # Load the dataset
     df = pd.read_csv(input_csv)
     print(f"Loaded {len(df)} rows from {input_csv}")
@@ -74,23 +91,29 @@ def filter_by_clusters(input_csv, cluster_dir, output_csv, threshold=0.01, devic
     
     print(f"Loaded {len(cluster_centers)} cluster centers")
     
-    # Compute distances and filter
-    print("Computing distances and filtering...")
-    results = []
-    for _, row in tqdm(df.iterrows(), total=len(df)):
-        try:
-            min_dist, cluster_id = compute_distance_to_centers(row, cluster_centers, cluster_ids, transform, device)
-            if min_dist <= threshold:
-                results.append({
-                    **row.to_dict(),
-                    'cluster_id': cluster_id,
-                    'distance_to_center': min_dist
-                })
-        except Exception as e:
-            print(f"Error processing row {row['record_num']}, {row['image_num']}: {e}")
-            continue
+    # Prepare the worker function with fixed arguments
+    process_row_partial = functools.partial(
+        process_row,
+        cluster_centers=cluster_centers,
+        cluster_ids=cluster_ids,
+        transform=transform,
+        threshold=threshold,
+        device=device
+    )
     
-    # Create filtered dataframe
+    # Convert DataFrame rows to dictionaries for multiprocessing
+    row_dicts = df.to_dict('records')
+    
+    # Process rows in parallel
+    print("Computing distances and filtering...")
+    with Pool(num_workers) as pool:
+        results = list(tqdm(
+            pool.imap(process_row_partial, row_dicts, chunksize=100),
+            total=len(row_dicts)
+        ))
+    
+    # Filter out None results and create DataFrame
+    results = [r for r in results if r is not None]
     filtered_df = pd.DataFrame(results)
     print(f"Filtered to {len(filtered_df)} rows")
     
@@ -114,5 +137,7 @@ if __name__ == "__main__":
     output_csv = "train_dataset/filtered_dataset.target_frames.clustered.csv"
     threshold = 0.01
     device = 'cuda'
+    # use cpu cores as num_workers
+    num_workers = os.cpu_count()
     
-    filter_by_clusters(input_csv, cluster_dir, output_csv, threshold, device)
+    filter_by_clusters(input_csv, cluster_dir, output_csv, threshold, device, num_workers)

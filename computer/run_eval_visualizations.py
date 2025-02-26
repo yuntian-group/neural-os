@@ -33,13 +33,13 @@ ckpt_dir = 'saved_bsz64_acc1_lr8e5_512_leftclick_histpos_512_384_cont2_ddd_diffi
 
 #for context_length in [2, 4, 8, 16, 32, 64]:
 #for context_length in [4, 8, 16, 32]:
-for context_length in [88]:
+for context_length in [7]:
     ckpt_dir = f'saved_standard_challenging_context{context_length}'
     ckpt_dir = f'saved_standard_challenging_context32_nocond_cont_cont_all_cont/'
     ckpt_dir = f'saved_standard_challenging_context32_nocond_fixnorm_all/'
     ckpt_dir = f'saved_standard_challenging_context32_nocond_fixnorm_all_scheduled_sampling_0.2_feedz_comb0.1/'
     ckpt_dir = f'saved_standard_challenging_context32_nocond_fixnorm_all_scheduled_sampling_0.2_feedz_comb0.1_rnn/'
-    ckpt_dir = f'saved_standard_challenging_context32_nocond_fixnorm_all_scheduled_sampling_0.2_feedz_comb0.1_rnn_fixrnn_enablegrad_all/'
+    ckpt_dir = f'saved_standard_challenging_context32_nocond_fixnorm_all_scheduled_sampling_0.2_feedz_comb0.1_rnn_fixrnn_enablegrad_all_keyevent_cont/'
     print ('='*10)
     print (f'processing context length {context_length}')
     # Get all checkpoint files and sort them
@@ -47,7 +47,7 @@ for context_length in [88]:
     for f in os.listdir(ckpt_dir):
         if f.endswith('.ckpt'):
             step = int(re.search(r'step=(\d+)', f).group(1))
-            if step != 32000:
+            if step != 6000:
                 continue
             ckpts.append((step, f))
     ckpts.sort()  # Sort by step number
@@ -92,11 +92,11 @@ for context_length in [88]:
                 else:
                     print(line, end='')
         
-        try:
-            subprocess.run(f'CUDA_VISIBLE_DEVICES=0 python main.py --config {config_file}', shell=True)
-        except Exception as e:
-            print(f"Error in training run: {e}")
-            pass
+        #try:
+        #    subprocess.run(f'CUDA_VISIBLE_DEVICES=0 python main.py --config {config_file}', shell=True)
+        #except Exception as e:
+        #    print(f"Error in training run: {e}")
+        #    pass
         
         if os.path.exists('../latent_diffusion/ldm/models/diffusion/ddpm.py.bak'):
             os.replace('../latent_diffusion/ldm/models/diffusion/ddpm.py.bak', '../latent_diffusion/ldm/models/diffusion/ddpm.py')
@@ -106,7 +106,7 @@ for context_length in [88]:
             for line in file:
                 if 'data_csv_path' in line:
                     #print('        data_csv_path: desktop_sequences_filtered_with_desktop_1.5k_last100.csv')
-                    print('        data_csv_path: desktop_sequences_filtered_with_desktop_1.5k.challenging.test.target_frames.csv')
+                    print('        data_csv_path: train_dataset/filtered_dataset.target_frames.clustered.test.csv')
                 else:
                     print(line, end='')
         

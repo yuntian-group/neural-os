@@ -1055,6 +1055,8 @@ class LatentDiffusion(DDPM):
             else:
                 cluster_dir = "filtered_transition_clusters"
                 cluster_paths = sorted(Path(cluster_dir).glob("cluster_*_size_*"))
+                cluster_centers = []
+                cluster_ids = []
                 for cluster_path in cluster_paths:
                     if "noise" in str(cluster_path):
                         continue

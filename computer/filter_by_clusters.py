@@ -144,7 +144,7 @@ if __name__ == "__main__":
     output_csv = "train_dataset/filtered_dataset.target_frames.clustered.csv"
     threshold = 0.01
     device = 'cuda'
-    debug = True
+    debug = False
     # use cpu cores as num_workers
     num_workers = os.cpu_count()
     

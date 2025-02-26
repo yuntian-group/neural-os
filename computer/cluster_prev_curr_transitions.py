@@ -34,17 +34,22 @@ def compute_distance_matrix(df, device='cuda', num_workers=None):
             prev_path = f'../data/data_processing/train_dataset/record_{record_num}/image_{image_num - 1}.png'
         curr_path = f'../data/data_processing/train_dataset/record_{record_num}/image_{image_num}.png'
         image_paths.append((prev_path, curr_path))
+        assert os.path.exists(prev_path)
+        assert os.path.exists(curr_path)
 
     print("Loading all images...")
-    if num_workers is None:
-        num_workers = os.cpu_count() - 1
-        #num_workers = min(num_workers, 32)
+    #if num_workers is None:
+    #    num_workers = os.cpu_count() - 1
+    #    num_workers = min(num_workers, 32)
     # Load images in parallel using multiprocessing
-    with Pool(num_workers) as pool:
-        images = list(tqdm(
-            pool.imap(load_image_pair, image_paths),
-            total=len(image_paths)
-        ))
+    #with Pool(num_workers) as pool:
+    #    images = list(tqdm(
+    #        pool.imap(load_image_pair, image_paths),
+    #        total=len(image_paths)
+    #    ))
+    images = []
+    for prev_path, curr_path in tqdm(image_paths):
+        images.append(load_image_pair((prev_path, curr_path)))
     
     # Stack all images into a single tensor
     images = torch.stack(images).to(device)

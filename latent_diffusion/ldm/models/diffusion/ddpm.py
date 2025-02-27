@@ -1270,6 +1270,9 @@ class LatentDiffusion(DDPM):
                     font_scale = 0.5
                     thickness = 2
                     line_spacing = 5
+                    
+                    # Get initial text height using a sample text
+                    (_, text_height), _ = cv2.getTextSize("Sample", cv2.FONT_HERSHEY_SIMPLEX, font_scale, thickness)
                     y_position = frame_height - (len(texts) * (line_spacing + text_height))  # Start from bottom
                     
                     for text in texts:
@@ -1277,19 +1280,11 @@ class LatentDiffusion(DDPM):
                         (text_width, text_height), baseline = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, font_scale, thickness)
                         text_x = (frame_width - text_width) // 2  # Center horizontally
                         
-                        # Draw black background
-                        padding = 5
-                        cv2.rectangle(img, 
-                            (text_x - padding, y_position - text_height - padding),
-                            (text_x + text_width + padding, y_position + padding),
-                            (0, 0, 0), -1)
-                        
-                        # Draw white text
+                        # Draw red text
                         cv2.putText(img, text, (text_x, y_position), 
-                                  cv2.FONT_HERSHEY_SIMPLEX, font_scale, (255, 255, 255), thickness)
+                                  cv2.FONT_HERSHEY_SIMPLEX, font_scale, (255, 0, 0), thickness)
                         
-                        y_position += text_height + line_spacing                    
-                    return img
+                        y_position += text_height + line_spacing
 
                 # Draw all frames in grid
                 for j in range(rows * cols):

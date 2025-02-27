@@ -1207,6 +1207,7 @@ class LatentDiffusion(DDPM):
                 #actions = parse_action_sequence(action_7)
                 is_leftclicks = [batch[f'is_leftclick_{j}'][i] for j in range(self.context_length+1)]
                 is_rightclicks = [batch[f'is_rightclick_{j}'][i] for j in range(self.context_length+1)]
+                key_events = [batch[f'key_events_{j}'][i] for j in range(self.context_length+1)]
                 xs = [batch[f'x_{j}'][i].item() for j in range(self.context_length+1)]
                 ys = [batch[f'y_{j}'][i].item() for j in range(self.context_length+1)]
                 
@@ -1222,7 +1223,7 @@ class LatentDiffusion(DDPM):
                 frame_height, frame_width = 48*8, 64*8
                 combined_img = np.zeros((frame_height * rows, frame_width * cols, 3), dtype=np.uint8)
                 
-                def draw_action_on_frame(img, is_leftclick, is_rightclick, x, y):
+                def draw_action_on_frame(img, is_leftclick, is_rightclick, key_events, x, y):
                     img = img.copy()
                     for name, icon in ICONS.items():
                         center = (int(icon['center'][0]), int(icon['center'][1]))
@@ -1254,11 +1255,40 @@ class LatentDiffusion(DDPM):
                         cv2.circle(img, (x, y), 10, color, 3)
                     elif is_rightclick:
                         # Blue circle for right clicks
-                        cv2.circle(img, (x, y), 10, (255, 0, 0), 3)
+                        cv2.circle(img, (x, y), 10, (0, 0, 255), 3)
                     else:
                         # White dot for moves
                         cv2.circle(img, (x, y), 5, (255, 255, 255), -1)
+                    # write key downs on the frame
+                    texts = []
+                    for key_id, is_down in enumerate(key_events):
+                        if is_down:
+                            key_name = self.trainer.datamodule.datasets['train'].itos[key_id]
+                            texts.append(key_name)
+                    # write all texts on the center of the frame, one per line
+                    # Draw each key on a separate line
+                    font_scale = 0.5
+                    thickness = 2
+                    line_spacing = 5
+                    y_position = frame_height - (len(texts) * (line_spacing + text_height))  # Start from bottom
                     
+                    for text in texts:
+                        # Calculate text size for centering
+                        (text_width, text_height), baseline = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, font_scale, thickness)
+                        text_x = (frame_width - text_width) // 2  # Center horizontally
+                        
+                        # Draw black background
+                        padding = 5
+                        cv2.rectangle(img, 
+                            (text_x - padding, y_position - text_height - padding),
+                            (text_x + text_width + padding, y_position + padding),
+                            (0, 0, 0), -1)
+                        
+                        # Draw white text
+                        cv2.putText(img, text, (text_x, y_position), 
+                                  cv2.FONT_HERSHEY_SIMPLEX, font_scale, (255, 255, 255), thickness)
+                        
+                        y_position += text_height + line_spacing                    
                     return img
 
                 # Draw all frames in grid
@@ -1268,7 +1298,7 @@ class LatentDiffusion(DDPM):
                     col = j % cols
                     if j == 0:
                         frame = np.zeros((frame_height, frame_width, 3), dtype=np.uint8)
-                        frame = draw_action_on_frame(frame, is_leftclicks[j], is_rightclicks[j], xs[j], ys[j])
+                        frame = draw_action_on_frame(frame, is_leftclicks[j], is_rightclicks[j], key_events[j], xs[j], ys[j])
                         combined_img[row*frame_height:(row+1)*frame_height, 
                                    col*frame_width:(col+1)*frame_width] = frame
                     elif j < self.context_length+1:  # History frames
@@ -1276,7 +1306,7 @@ class LatentDiffusion(DDPM):
                         prev_frame_img = ((prev_frame.transpose(0,1).transpose(1,2).cpu().float().numpy()+1)*255/2).astype(np.uint8)
                         frame = prev_frame_img
                         #frame = np.zeros((frame_height, frame_width, 3), dtype=np.uint8)
-                        frame = draw_action_on_frame(frame, is_leftclicks[j], is_rightclicks[j], xs[j], ys[j])
+                        frame = draw_action_on_frame(frame, is_leftclicks[j], is_rightclicks[j], key_events[j], xs[j], ys[j])
                         combined_img[row*frame_height:(row+1)*frame_height, 
                                    col*frame_width:(col+1)*frame_width] = frame
                     elif j == self.context_length+1:  # Target frame

@@ -1273,7 +1273,12 @@ class LatentDiffusion(DDPM):
                     
                     # Get initial text height using a sample text
                     (_, text_height), _ = cv2.getTextSize("Sample", cv2.FONT_HERSHEY_SIMPLEX, font_scale, thickness)
-                    y_position = frame_height - (len(texts) * (line_spacing + text_height))  # Start from bottom
+                    
+                    # Calculate total height of all text lines
+                    total_height = len(texts) * (text_height + line_spacing) - line_spacing
+                    
+                    # Start from vertical center
+                    y_position = (frame_height - total_height) // 2
                     
                     for text in texts:
                         # Calculate text size for centering

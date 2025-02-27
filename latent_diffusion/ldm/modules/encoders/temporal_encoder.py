@@ -224,3 +224,130 @@ class TemporalEncoder(nn.Module):
     def encode(self, x):
         """Alias for forward() to match the encoder interface"""
         return self.forward(x) 
+
+    def forward_step(self, input):
+        """
+        Args:
+            input: a dictionary containing the following keys:
+                'image_features': Tensor of shape [B, C, H, W]
+                'is_padding': Tensor of shape [B]
+                'x': Tensor of shape [B, 1]
+                'y': Tensor of shape [B, 1]
+                'is_leftclick': Tensor of shape [B, 1]
+                'is_rightclick': Tensor of shape [B, 1]
+                'key_events': Tensor of shape [B, len(self.itos)]
+                'hidden_states': dictionary of previous hidden states
+        Returns:
+            output: Tensor of shape [B, output_channels, output_height, output_width]
+        """
+        # initial RNN state: if starts with padding, then use padding state, otherwise use unknown state
+        #import pdb; pdb.set_trace()
+        if not hasattr(self, 'num_times'):
+            self.num_times = 0
+        self.num_times += 1
+
+        batch_size = input['image_features'].shape[0]
+
+        if 'hidden_states' in input:
+            hidden_states_h_lower = input['hidden_states']['h_lower']
+            hidden_states_h_upper = input['hidden_states']['h_upper']
+            hidden_states_c_lower = input['hidden_states']['c_lower']
+            hidden_states_c_upper = input['hidden_states']['c_upper']
+            feedback = input['hidden_states']['feedback']
+        else:
+            hidden_states_h_lower = self.initial_state_unknown_h_lower.repeat(1, batch_size, 1) # bsz, hidden_size
+            hidden_states_h_upper = self.initial_state_unknown_h_upper.repeat(1, batch_size, 1) # bsz, hidden_size
+            hidden_states_c_lower = self.initial_state_unknown_c_lower.repeat(1, batch_size, 1) # bsz, hidden_size
+            hidden_states_c_upper = self.initial_state_unknown_c_upper.repeat(1, batch_size, 1) # bsz, hidden_size
+            feedback = self.initial_feedback_unknown.repeat(batch_size, 1) # bsz, hidden_size
+        #import pdb; pdb.set_trace()
+
+        inputs_t = input
+        is_padding = inputs_t['is_padding']
+        x = inputs_t['x'].squeeze(-1)
+        y = inputs_t['y'].squeeze(-1)
+        is_leftclick = inputs_t['is_leftclick'].squeeze(-1).long()
+        is_rightclick = inputs_t['is_rightclick'].squeeze(-1).long()
+        key_events = inputs_t['key_events'] # bsz, len(self.itos)
+        if is_padding.any():
+            hidden_states_h_lower = torch.where(is_padding.view(1, batch_size, 1), self.initial_state_padding_h_lower, hidden_states_h_lower) # 1, bsz, hidden_size
+            hidden_states_h_upper = torch.where(is_padding.view(1, batch_size, 1), self.initial_state_padding_h_upper, hidden_states_h_upper) # 1, bsz, hidden_size
+            hidden_states_c_lower = torch.where(is_padding.view(1, batch_size, 1), self.initial_state_padding_c_lower, hidden_states_c_lower) # 1, bsz, hidden_size
+            hidden_states_c_upper = torch.where(is_padding.view(1, batch_size, 1), self.initial_state_padding_c_upper, hidden_states_c_upper) # 1, bsz, hidden_size
+            feedback = torch.where(is_padding.unsqueeze(-1), self.initial_feedback_padding, feedback) # bsz, hidden_size
+            
+        embedding_x = self.embedding_x(x) # bsz, hidden_size    
+        embedding_y = self.embedding_y(y) # bsz, hidden_size
+        embedding_is_leftclick = self.embedding_is_leftclick(is_leftclick) # bsz, hidden_size
+        embedding_is_rightclick = self.embedding_is_rightclick(is_rightclick) # bsz, hidden_size
+
+        # compute embedding for key events
+        offset = torch.arange(len(self.itos), device=embedding_x.device) * 2
+        embedding_key_events = self.embedding_key_events(key_events + offset.unsqueeze(0)) # bsz, num_keys, hidden_size
+        embedding_key_events = embedding_key_events.sum(dim=1) # bsz, hidden_size
+
+        embedding_all = embedding_is_leftclick + embedding_is_rightclick + embedding_key_events
+        embedding_input = torch.cat([embedding_x, embedding_y, embedding_all, feedback], dim=-1) # bsz, hidden_size*4
+        embedding_input = self.input_projection(embedding_input) # bsz, hidden_size*4
+        embedding_input = embedding_input.unsqueeze(1) # bsz, 1, hidden_size*4
+
+        
+        lstm_out_lower, (hidden_states_h_lower, hidden_states_c_lower) = self.lstm_lower(embedding_input, (hidden_states_h_lower, hidden_states_c_lower))
+        image_features = inputs_t['image_features'] # bsz, num_channels, height, width
+        image_features = torch.einsum('bchw->bhwc', image_features).reshape(batch_size, -1, 4)
+        image_features = self.image_feature_projection(image_features)
+        image_features_with_position = image_features + self.image_position_embeddings
+        # apply multi-headed attention to attend lstm_out_lower to image_features_with_position
+        context, attention_weights = self.multi_head_attention(lstm_out_lower, image_features_with_position, image_features_with_position, need_weights=True, average_attn_weights=False)
+        context = context + lstm_out_lower
+
+        # visualize attention weights and also x and y positions in the same image, but only for the first element in the batch
+        if self.num_times % 1000 == 0 and False:
+            # Get first batch element's attention weights and coordinates
+            attn = attention_weights[0].reshape(-1, self.output_height, self.output_width)  # [num_heads, H, W]
+            x_pos = x[0].item()
+            y_pos = y[0].item()
+            is_click = is_leftclick[0].item()
+            
+            # Create subplot for each attention head
+            num_heads = attn.shape[0]
+            fig, axes = plt.subplots(1, num_heads, figsize=(4*num_heads, 4))
+            if num_heads == 1:
+                axes = [axes]
+            
+            for head_idx, ax in enumerate(axes):
+                # Plot attention heatmap
+                im = ax.imshow(attn[head_idx].detach().cpu(), cmap='Greens')
+                
+                # Plot click/no-click circle
+                circle_color = 'red' if is_click else 'yellow'
+                circle = plt.Circle((x_pos/8, y_pos/8), 3, color=circle_color, fill=False, linewidth=2)
+                ax.add_patch(circle)
+                
+                ax.set_title(f'Head {head_idx+1}')
+                plt.colorbar(im, ax=ax)
+            
+            plt.tight_layout()
+            plt.savefig(f'attention_vis_{self.num_times}_{t:03d}.png')
+            plt.close()
+        
+        lstm_out_upper, (hidden_states_h_upper, hidden_states_c_upper) = self.lstm_upper(context, (hidden_states_h_upper, hidden_states_c_upper))
+        feedback = lstm_out_upper.squeeze(1)
+        
+        hidden_last = lstm_out_upper
+        
+        # Project to desired output shape
+        output = self.projection(hidden_last)
+        
+        # Reshape to spatial feature map: [B, output_channels*output_height*output_width] -> [B, output_channels, output_height, output_width]
+        output = output.reshape(batch_size, self.output_channels, self.output_height, self.output_width)
+
+        hidden_states = {
+            'h_lower': hidden_states_h_lower,
+            'h_upper': hidden_states_h_upper,
+            'c_lower': hidden_states_c_lower,
+            'c_upper': hidden_states_c_upper,
+            'feedback': feedback
+        }
+        
+        return output, hidden_states

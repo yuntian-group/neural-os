@@ -1164,8 +1164,8 @@ class LatentDiffusion(DDPM):
                 def get_closest_cluster(prev_img, curr_img):
                     #min_mse = float('inf')
                     #closest_name = None
-                    img_prev = (prev_img + 1) * 127.5
-                    img_curr = (curr_img + 1) * 127.5
+                    img_prev = (prev_img + 1) * 127.5 / 255
+                    img_curr = (curr_img + 1) * 127.5 / 255
                     img_prev = (img_prev).to(device).reshape(-1)
                     img_curr = (img_curr).to(device).reshape(-1)
                     img = torch.cat([img_prev, img_curr], dim=0).unsqueeze(0)

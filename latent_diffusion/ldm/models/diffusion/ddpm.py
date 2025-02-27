@@ -1285,6 +1285,8 @@ class LatentDiffusion(DDPM):
                                   cv2.FONT_HERSHEY_SIMPLEX, font_scale, (255, 0, 0), thickness)
                         
                         y_position += text_height + line_spacing
+                        
+                    return img
 
                 # Draw all frames in grid
                 for j in range(rows * cols):

@@ -48,7 +48,7 @@ for context_length in [77]:
     for f in os.listdir(ckpt_dir):
         if f.endswith('.ckpt'):
             step = int(re.search(r'step=(\d+)', f).group(1))
-            if step != 20000:
+            if step != 46000:
                 continue
             ckpts.append((step, f))
     ckpts.sort()  # Sort by step number

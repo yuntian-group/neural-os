@@ -40,6 +40,7 @@ LOCAL_CHECKPOINT_PATH = "saved_standard_challenging_context32_nocond_fixnorm_all
 LOCAL_CHECKPOINT_PATH = "saved_standard_challenging_context32_nocond_fixnorm_all_scheduled_sampling_0.2/model-step=018000.ckpt"
 LOCAL_CHECKPOINT_PATH = "saved_standard_challenging_context32_nocond_fixnorm_all_scheduled_sampling_0.2_feedz/model-step=030000.ckpt"
 LOCAL_CHECKPOINT_PATH = "saved_standard_challenging_context32_nocond_fixnorm_all_scheduled_sampling_0.2_feedz_comb0.1/model-step=020000.ckpt"
+LOCAL_CHECKPOINT_PATH = "saved_standard_challenging_context32_nocond_fixnorm_all_scheduled_sampling_0.2_feedz_comb0.1_rnn_fixrnn_enablegrad_all_keyevent_cont_clusters/model-step=044000.ckpt"
 CONFIG_PATH = "config_csllm.yaml"
 CONFIG_PATH = "configs/2e5_debug_gpt_firstframe.yaml"
 CONFIG_PATH = "configs/2e5_debug_gpt_firstframe_identity.yaml"
@@ -48,6 +49,7 @@ CONFIG_PATH = "configs/2e5_debug_gpt_firstframe_posmap_longtrainh200.yaml"
 CONFIG_PATH = "configs/pssearch_bsz64_acc1_lr8e5_512_leftclick_histpos.yaml"
 CONFIG_PATH = "configs/pssearch_bsz64_acc1_lr8e5_512_leftclick_histpos_512_384.yaml"
 CONFIG_PATH = "configs/standard_challenging_context32_nocond_all.yaml"
+CONFIG_PATH = "configs/standard_challenging_context32_nocond_all_rnn.eval.yaml"
 
 def upload_model_to_hub():
     # Load the configuration

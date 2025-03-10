@@ -36,7 +36,7 @@ class AttentionPool2d(nn.Module):
 
     def __init__(
         self,
-        spacial_dim: int | tuple,
+        spacial_dim,
         embed_dim: int,
         num_heads_channels: int,
         output_dim: int = None,

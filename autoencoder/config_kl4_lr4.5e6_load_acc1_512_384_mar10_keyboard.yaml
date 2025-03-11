@@ -44,7 +44,7 @@ data:
       target: data.data_processing.datasets.ActionsData
       params:
         use_original_image: true
-        data_csv_path: train_dataset/train_dataset.csv
+        data_csv_path: ../computer/train_dataset/train_dataset.target_frames.csv
     # validation:
     #   target: data.data_processing.datasets.ActionsData
     #   params:

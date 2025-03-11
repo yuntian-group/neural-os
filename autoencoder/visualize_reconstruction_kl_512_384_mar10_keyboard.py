@@ -35,9 +35,11 @@ def visualize_reconstruction(model, image_path, save_path):
     reconstruction = model.decode(latent)
     
     # Save original image
+    image_base_name = os.path.basename(image_path).split('.')[0]
+
     original = torch.clamp((image+1.0)/2.0, min=0.0, max=1.0)
     original = 255. * rearrange(original.squeeze(0).cpu().numpy(), 'c h w -> h w c')
-    Image.fromarray(original.astype(np.uint8)).save(os.path.join(save_path, 'original.png'))
+    Image.fromarray(original.astype(np.uint8)).save(os.path.join(save_path, f'original_{image_base_name}.png'))
     
     # Save latent visualization (normalize to 0-255 range)
     latent_viz = latent.squeeze(0).cpu().numpy()
@@ -45,12 +47,11 @@ def visualize_reconstruction(model, image_path, save_path):
     latent_viz = (255 * latent_viz / latent_viz.max()).astype(np.uint8)
     # Save each latent channel
     for i, channel in enumerate(latent_viz):
-        Image.fromarray(channel).save(os.path.join(save_path, f'latent_channel_{i}.png'))
+        Image.fromarray(channel).save(os.path.join(save_path, f'latent_channel_{i}_{image_base_name}.png'))
     
     # Save reconstruction
     reconstruction = torch.clamp((reconstruction+1.0)/2.0, min=0.0, max=1.0)
     reconstruction = 255. * rearrange(reconstruction.squeeze(0).cpu().numpy(), 'c h w -> h w c')
-    image_base_name = os.path.basename(image_path).split('.')[0]
     Image.fromarray(reconstruction.astype(np.uint8)).save(os.path.join(save_path, f'reconstruction_{image_base_name}.png'))
 
 def parse_args():

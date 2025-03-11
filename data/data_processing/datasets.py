@@ -376,9 +376,9 @@ class ActionsData(Dataset):
             example['image'] = normalize_image(f'../data/data_processing/train_dataset/record_{record_num}/image_{target_frame}.png')
         else:
             example["image_processed"] = self.normalize_features(self.load_processed_image(f'train_dataset/record_{record_num}/image_{target_frame}.png'))
-        example["c_concat_processed"] = self.normalize_features(torch.stack([
-            self.load_processed_image(path) for path in image_paths
-        ]))
+            example["c_concat_processed"] = self.normalize_features(torch.stack([
+                self.load_processed_image(path) for path in image_paths
+            ]))
         example['is_padding'] = torch.BoolTensor([frame_num < 0 for frame_num in frame_numbers])
         
         # Rest of action processing remains the same

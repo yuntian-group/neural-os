@@ -196,10 +196,12 @@ class ActionsData(Dataset):
         self.use_processed = False  # Will be set in setup
         self.normalization = normalization
         self.context_length = context_length
-        
+        self.use_original_image = use_original_image
+
         # Load action mapping
-        with open('image_action_mapping_with_key_states.pkl', 'rb') as f:
-            self.mapping_dict = pickle.load(f)
+        if not self.use_original_image: 
+            with open('image_action_mapping_with_key_states.pkl', 'rb') as f:
+                self.mapping_dict = pickle.load(f)
         
         # Constants for normalization (based on your analysis)
         self.data_mean = -0.54
@@ -234,7 +236,6 @@ class ActionsData(Dataset):
 
         self.itos = KEYS
         self.stoi = {key: i for i, key in enumerate(KEYS)}
-        self.use_original_image = use_original_image
 
         
     def setup(self):

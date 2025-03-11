@@ -7,8 +7,8 @@ from omegaconf import OmegaConf
 from einops import rearrange
 import os
 from PIL import Image
-from data.processing.video_convert import create_video_from_frames
-from data.processing.datasets import normalize_image, ActionsData
+from data.data_processing.video_convert import create_video_from_frames
+from data.data_processing.datasets import normalize_image, ActionsData
 from computer.util import init_and_load_model, create_loss_plot, get_mse_image
 
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")

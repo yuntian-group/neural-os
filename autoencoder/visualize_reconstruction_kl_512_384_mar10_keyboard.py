@@ -80,5 +80,6 @@ if __name__ == '__main__':
     model.eval()
     
     # Process image
-    visualize_reconstruction(model, args.image_path, args.save_path)
+    for image_path in args.image_paths:
+        visualize_reconstruction(model, image_path, args.save_path)
     print(f"Visualizations saved to {args.save_path}") 

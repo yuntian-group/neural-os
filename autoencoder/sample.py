@@ -106,13 +106,13 @@ def parse_args():
     parser.add_argument("--ckpt_path", type=str, required=True,
                         help="what model to sample from.")
     
-    parser.add_argument("--config", type=str, default="config_kl4_lr4.5e6_load_acc1_512_384_mar10_keyboard.yaml"),
+    parser.add_argument("--config", type=str, default="config_kl4_lr4.5e6_load_acc1_512_384_mar10_keyboard.yaml",
                         help="specifies the model config to load.")
     
     parser.add_argument("--image_paths", nargs='+', required=True,
                         help="A list of image paths.")
     
-    parser.add_argument("--save_path", type=str, default='sample_keyboard_mar10',
+    parser.add_argument("--save_path", type=str, default='sample_keyboard_mar10_oldautoencoder',
                         help="where to save the output.")
 
 

@@ -33,7 +33,6 @@ data:
   target: data.data_processing.datasets.DataModule
   params:
     batch_size: 8
-    use_original_image: true
     num_workers: 4
     wrap: false
     shuffle: true
@@ -44,6 +43,7 @@ data:
     train:
       target: data.data_processing.datasets.ActionsData
       params:
+        use_original_image: true
         data_csv_path: train_dataset/train_dataset.csv
     # validation:
     #   target: data.data_processing.datasets.ActionsData

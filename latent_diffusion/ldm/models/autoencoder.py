@@ -390,6 +390,7 @@ class AutoencoderKL(pl.LightningModule):
         return x
 
     def training_step(self, batch, batch_idx, optimizer_idx):
+        import pdb; pdb.set_trace()
         inputs = self.get_input(batch, self.image_key)
         reconstructions, posterior = self(inputs)
         #import pdb; pdb.set_trace()

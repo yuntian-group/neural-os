@@ -41,10 +41,10 @@ def train_model(model: VQModel, data: DataModule, save_path: str, config: OmegaC
         print(f"Resuming from step {global_step}")
 
     #Disables training for the encoder side.
-    model.encoder.eval()
-    model.encoder.train = disabled_train
-    for param in model.encoder.parameters():
-        param.requires_grad = False
+    #model.encoder.eval()
+    #model.encoder.train = disabled_train
+    #for param in model.encoder.parameters():
+    #    param.requires_grad = False
 
     # configure learning rate
     base_lr = config.model.base_learning_rate

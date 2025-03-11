@@ -15,13 +15,13 @@ def parse_args():
     #parser.add_argument("--save_path", type=str, default=os.path.join('autoencoder_vq8', 'ae_finetune_0'),
     #                    help="where to save the ckpt and resulting samples.")
     
-    parser.add_argument("--from_ckpt", type=str, default='autoencoder_kl.ckpt',
+    parser.add_argument("--from_ckpt", type=str, default='saved_kl4_bsz8_acc8_lr4.5e6_load_acc1_512_384/model-354000.ckpt',
                         help="initializes the model from an existing ckpt path.")
 
     parser.add_argument("--sample_model", action='store_true', default=True,
                         help="Runs some samples on some training data.")
 
-    parser.add_argument("--config", type=str, default=os.path.join("config_vq8.yaml"),
+    parser.add_argument("--config", type=str, default=os.path.join("config_kl4_lr4.5e6_load_acc1_512_384_mar10_keyboard.yaml"),
                         help="specifies the model config to load.")
 
     return parser.parse_args()

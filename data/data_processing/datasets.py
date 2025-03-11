@@ -185,6 +185,7 @@ class ActionsData(Dataset):
     
     def __init__(self,
                  data_csv_path,
+                 use_original_image=False,
                  debug_mode=False,
                  normalization='none',  # Options: 'none', 'minmax', 'standard'
                  context_length=7  # New parameter for flexible context length
@@ -233,6 +234,7 @@ class ActionsData(Dataset):
 
         self.itos = KEYS
         self.stoi = {key: i for i, key in enumerate(KEYS)}
+        self.use_original_image = use_original_image
 
         
     def setup(self):
@@ -369,7 +371,10 @@ class ActionsData(Dataset):
         #actions.append(self.mapping_dict.get((record_num, target_frame), 'N N N N N N : N N N N N'))
         assert len(actions) == self.context_length*2+1, f"Action sequence must be {self.context_length*2+1} actions long"
         
-        example["image_processed"] = self.normalize_features(self.load_processed_image(f'train_dataset/record_{record_num}/image_{target_frame}.png'))
+        if self.use_original_image:
+            example['image'] = normalize_image(f'../data/data_processing/train_dataset/record_{record_num}/image_{target_frame}.png')
+        else:
+            example["image_processed"] = self.normalize_features(self.load_processed_image(f'train_dataset/record_{record_num}/image_{target_frame}.png'))
         example["c_concat_processed"] = self.normalize_features(torch.stack([
             self.load_processed_image(path) for path in image_paths
         ]))

@@ -30,7 +30,7 @@ def train_model(model: VQModel, data: DataModule, save_path: str, config: OmegaC
 
     # If resuming from checkpoint, set the starting step for the callback
     if ckpt_path:
-        ckpt = torch.load(ckpt_path)
+        ckpt = torch.load(ckpt_path, weights_only=False)
         global_step = ckpt['global_step']
         checkpoint_callback.last_model_path = os.path.join(save_path, f'model-{global_step:06d}.ckpt')
         checkpoint_callback.current_score = None

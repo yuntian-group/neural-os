@@ -50,7 +50,8 @@ def visualize_reconstruction(model, image_path, save_path):
     # Save reconstruction
     reconstruction = torch.clamp((reconstruction+1.0)/2.0, min=0.0, max=1.0)
     reconstruction = 255. * rearrange(reconstruction.squeeze(0).cpu().numpy(), 'c h w -> h w c')
-    Image.fromarray(reconstruction.astype(np.uint8)).save(os.path.join(save_path, 'reconstruction.png'))
+    image_base_name = os.path.basename(image_path).split('.')[0]
+    Image.fromarray(reconstruction.astype(np.uint8)).save(os.path.join(save_path, f'reconstruction_{image_base_name}.png'))
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Visualize autoencoder encoding and decoding.")
@@ -61,7 +62,7 @@ def parse_args():
     parser.add_argument("--config", type=str, default="config_kl4_lr4.5e6_load_acc1_512_384_mar10_keyboard.yaml",
                         help="Path to model config.")
     
-    parser.add_argument("--image_path", type=str, required=True,
+    parser.add_argument("--image_paths", nargs='+', required=True,
                         help="Path to input image.")
     
     parser.add_argument("--save_path", type=str, default="visualization_kl_512_384",

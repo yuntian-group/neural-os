@@ -29,7 +29,7 @@ def visualize_reconstruction(model, image_path, save_path):
     
     # Get latent representation
     latent = model.encode(image).sample()
-    import pdb; pdb.set_trace()
+    #import pdb; pdb.set_trace()
     
     # Decode back to image
     reconstruction = model.decode(latent)

@@ -9,7 +9,7 @@ import os
 from PIL import Image
 from data.data_processing.video_convert import create_video_from_frames
 from data.data_processing.datasets import normalize_image, ActionsData
-from computer.util import init_and_load_model, create_loss_plot, get_mse_image
+from computer.util import load_model_from_config, create_loss_plot, get_mse_image
 
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
@@ -127,7 +127,7 @@ if __name__ == '__main__':
     args = parse_args()
 
     config = OmegaConf.load(args.config)
-    model = init_and_load_model(config, args.ckpt_path)
+    model = load_model_from_config(config, args.ckpt_path)
     model = model.to(device)
     
     images = torch.stack([normalize_image(str(path)) for path in args.image_paths])

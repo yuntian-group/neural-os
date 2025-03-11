@@ -414,7 +414,7 @@ class ActionsData(Dataset):
 
         return example 
 
-def normalize_image(image_path : str | Image.Image): 
+def normalize_image(image_path): 
 
     """
     Takes in an image path or an image and returns the normalized image in a tensor.

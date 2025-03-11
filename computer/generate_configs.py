@@ -149,7 +149,7 @@ def generate_configs(base_config_path, output_dir, num_configs=10, random_sampli
                         for model_channels in param_options['unet.model_channels']:
                             for output_channels in param_options['temporal_encoder.output_channels']:
                                 max_attention_resolution = 2 ** (len(channel_mult) - 1)
-                                if max(attention_resolutions) > max_attention_resolution:
+                                if len(attention_resolutions) > 0 and max(attention_resolutions) > max_attention_resolution:
                                     continue
                                 # Calculate in_channels as 4 + output_channels
                                 in_channels = 4 + output_channels

@@ -65,7 +65,7 @@ def parse_args():
     parser.add_argument("--image_paths", nargs='+', required=True,
                         help="Path to input image.")
     
-    parser.add_argument("--save_path", type=str, default="visualization_kl_512_384",
+    parser.add_argument("--save_path", type=str, default="visualization_kl_512_384_mar10_keyboard",
                         help="Where to save visualizations.")
     
     return parser.parse_args()

@@ -199,9 +199,9 @@ class ActionsData(Dataset):
         self.use_original_image = use_original_image
 
         # Load action mapping
-        if not self.use_original_image: 
-            with open('image_action_mapping_with_key_states.pkl', 'rb') as f:
-                self.mapping_dict = pickle.load(f)
+        
+        with open('../computer/image_action_mapping_with_key_states.pkl', 'rb') as f:
+            self.mapping_dict = pickle.load(f)
         
         # Constants for normalization (based on your analysis)
         self.data_mean = -0.54

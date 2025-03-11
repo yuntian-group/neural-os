@@ -9,7 +9,7 @@ import os
 from PIL import Image
 from data.data_processing.video_convert import create_video_from_frames
 from data.data_processing.datasets import normalize_image, ActionsData
-from computer.util import load_model_from_config, create_loss_plot, get_mse_image
+from computer.util import load_model_from_config#, create_loss_plot, get_mse_image
 
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
@@ -41,7 +41,7 @@ def sample_model(model: VQModel, images: list, save_path: str, create_video: boo
 
             latent = model.encode_to_prequant(image)
             image = model.decode(latent)
-            if targets: mse_losses.append(get_mse_image(rearrange(image.squeeze(0).cpu(),'c h w -> h w c'), targets[i]))
+            #if targets: mse_losses.append(get_mse_image(rearrange(image.squeeze(0).cpu(),'c h w -> h w c'), targets[i]))
 
             image = torch.clamp((image+1.0)/2.0, min=0.0, max=1.0)
             
@@ -52,7 +52,7 @@ def sample_model(model: VQModel, images: list, save_path: str, create_video: boo
             generated_frames.append(img)
 
     if create_video: create_video_from_frames(generated_frames, os.path.join(save_path, 'sample_video.mp4'), fps=15)
-    if targets: create_loss_plot(mse_losses, save_path, title='Sample MSE', dot_plot=True)
+    #if targets: create_loss_plot(mse_losses, save_path, title='Sample MSE', dot_plot=True)
 
 @torch.no_grad()
 def sample_model_from_dataset(model: VQModel, dataset: ActionsData, idxs: list, save_path: str, create_video: bool = False, targets: bool = False):

@@ -28,7 +28,8 @@ def visualize_reconstruction(model, image_path, save_path):
     image = rearrange(image, 'b h w c -> b c h w').to(device)
     
     # Get latent representation
-    latent = model.encode(image).sample()
+    #latent = model.encode(image).sample()
+    latent = model.encode(image).mode()
     #import pdb; pdb.set_trace()
     
     # Decode back to image

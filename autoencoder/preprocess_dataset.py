@@ -56,7 +56,8 @@ def process_folder(model, input_folder, output_folder, batch_size=16, debug_firs
         # Only move to GPU right before model inference
         images = images.to(device)
         posterior = model.encode(images)
-        latents = posterior.sample()  # Sample from the posterior
+        #latents = posterior.sample()  # Sample from the posterior
+        latents = posterior.mode()  # Sample from the posterior
         
         # Move back to CPU for saving
         latents = latents.cpu()
@@ -167,7 +168,8 @@ if __name__ == '__main__':
             
             # Get latent shape through encoder
             posterior = model.encode(image)
-            latent = posterior.sample()
+            #latent = posterior.sample()
+            latent = posterior.mode()
             
             # Set all values to 0 and save
             latent = torch.zeros_like(latent).squeeze(0)

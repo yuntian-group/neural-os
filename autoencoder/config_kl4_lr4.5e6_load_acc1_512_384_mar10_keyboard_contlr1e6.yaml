@@ -1,4 +1,4 @@
-save_path: saved_kl4_bsz8_acc8_lr4.5e6_load_acc1_512_384_mar10_keyboard_cont
+save_path: saved_kl4_bsz8_acc8_lr4.5e6_load_acc1_512_384_mar10_keyboard_cont2
 
 model:
   base_learning_rate: 1e-06

@@ -225,7 +225,7 @@ def process_config(config_path, num_frames=10):
     model = create_dummy_model(config)
     model = model.to(device)
     
-    previous_frame = torch.zeros(1, 48, 64, 4).to(device)
+    previous_frame = torch.zeros(*LATENT_DIMS).unsqueeze(0).to(device)
     hidden_states = None
     all_timings = []
     

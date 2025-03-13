@@ -66,7 +66,7 @@ class TemporalEncoder(nn.Module):
         assert hidden_size % 8 == 0, "hidden_size must be divisible by 8"
 
         self.image_position_embeddings = nn.Parameter(torch.randn(1, self.output_height*self.output_width, hidden_size))
-        self.image_feature_projection = nn.Linear(4, hidden_size)
+        self.image_feature_projection = nn.Linear(self.input_channels, hidden_size)
         self.embedding_x = nn.Embedding(self.output_width * 8, hidden_size)
         self.embedding_y = nn.Embedding(self.output_height * 8, hidden_size)
         self.embedding_is_leftclick = nn.Embedding(2, hidden_size)
@@ -171,7 +171,8 @@ class TemporalEncoder(nn.Module):
             
             lstm_out_lower, (hidden_states_h_lower, hidden_states_c_lower) = self.lstm_lower(embedding_input, (hidden_states_h_lower, hidden_states_c_lower))
             image_features = inputs_t['image_features'] # bsz, num_channels, height, width
-            image_features = torch.einsum('bchw->bhwc', image_features).reshape(batch_size, -1, 4)
+            assert image_features.shape[1] == self.input_channels, f"image_features.shape[1] = {image_features.shape[-1]} != self.input_channels = {self.input_channels}"
+            image_features = torch.einsum('bchw->bhwc', image_features).reshape(batch_size, -1, self.input_channels)
             image_features = self.image_feature_projection(image_features)
             image_features_with_position = image_features + self.image_position_embeddings
             # apply multi-headed attention to attend lstm_out_lower to image_features_with_position
@@ -294,7 +295,8 @@ class TemporalEncoder(nn.Module):
         
         lstm_out_lower, (hidden_states_h_lower, hidden_states_c_lower) = self.lstm_lower(embedding_input, (hidden_states_h_lower, hidden_states_c_lower))
         image_features = inputs_t['image_features'] # bsz, num_channels, height, width
-        image_features = torch.einsum('bchw->bhwc', image_features).reshape(batch_size, -1, 4)
+        assert image_features.shape[1] == self.input_channels, f"image_features.shape[1] = {image_features.shape[-1]} != self.input_channels = {self.input_channels}"
+        image_features = torch.einsum('bchw->bhwc', image_features).reshape(batch_size, -1, self.input_channels)
         image_features = self.image_feature_projection(image_features)
         image_features_with_position = image_features + self.image_position_embeddings
         # apply multi-headed attention to attend lstm_out_lower to image_features_with_position

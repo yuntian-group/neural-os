@@ -12,4 +12,7 @@ export BASE=/n/netscratch/shieber_lab/Lab/yuntian/computer/autoencoder
 cd $BASE
 conda activate /n/netscratch/shieber_lab/Lab/yuntian/main
 which python
-stdbuf -oL -eL python main_kl_512_384_mar10_keyboard.py --config config_kl4_lr4.5e6_load_acc1_512_384_mar10_keyboard.yaml > log.ae.kl.bsz8_acc3_lr4.5e6_load_acc1.save.512_384.mar10.keyboard 2>&1
+#stdbuf -oL -eL python main_kl_512_384_mar10_keyboard.py --config config_kl4_lr4.5e6_load_acc1_512_384_mar10_keyboard.yaml > log.ae.kl.bsz8_acc3_lr4.5e6_load_acc1.save.512_384.mar10.keyboard 2>&1
+
+
+stdbuf -oL -eL python main_kl_512_384_mar10_keyboard.py --config config_kl4_lr4.5e6_load_acc1_512_384_mar10_keyboard_contlr1e6.yaml --from_ckpt saved_kl4_bsz8_acc8_lr4.5e6_load_acc1_512_384_mar10_keyboard/model-585000.ckpt > log.ae.kl.bsz8_acc3_lr4.5e6_load_acc1.save.512_384.mar10.keyboard.cont 2>&1

@@ -65,7 +65,7 @@ class TemporalEncoder(nn.Module):
         self.initial_state_unknown_c_upper = nn.Parameter(torch.randn(1, 1, hidden_size))
         assert hidden_size % 8 == 0, "hidden_size must be divisible by 8"
 
-        self.image_position_embeddings = nn.Parameter(torch.randn(1, self.output_height*self.output_width, hidden_size))
+        self.image_position_embeddings = nn.Parameter(torch.randn(1, self.output_height*self.output_width, self.input_channels))
         self.image_feature_projection = nn.Linear(self.input_channels, hidden_size)
         self.embedding_x = nn.Embedding(self.output_width * 8, hidden_size)
         self.embedding_y = nn.Embedding(self.output_height * 8, hidden_size)
@@ -176,7 +176,7 @@ class TemporalEncoder(nn.Module):
             image_features = self.image_feature_projection(image_features)
             image_features_with_position = image_features + self.image_position_embeddings
             # apply multi-headed attention to attend lstm_out_lower to image_features_with_position
-            context, attention_weights = self.multi_head_attention(lstm_out_lower, image_features_with_position, image_features_with_position, need_weights=True, average_attn_weights=False)
+            context, attention_weights = self.multi_head_attention(lstm_out_lower, image_features_with_position, image_features_with_position, need_weights=False, average_attn_weights=False)
             context = context + lstm_out_lower
 
             # visualize attention weights and also x and y positions in the same image, but only for the first element in the batch
@@ -300,7 +300,7 @@ class TemporalEncoder(nn.Module):
         image_features = self.image_feature_projection(image_features)
         image_features_with_position = image_features + self.image_position_embeddings
         # apply multi-headed attention to attend lstm_out_lower to image_features_with_position
-        context, attention_weights = self.multi_head_attention(lstm_out_lower, image_features_with_position, image_features_with_position, need_weights=True, average_attn_weights=False)
+        context, attention_weights = self.multi_head_attention(lstm_out_lower, image_features_with_position, image_features_with_position, need_weights=False, average_attn_weights=False)
         context = context + lstm_out_lower
 
         # visualize attention weights and also x and y positions in the same image, but only for the first element in the batch

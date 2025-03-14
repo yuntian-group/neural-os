@@ -18,7 +18,7 @@ def initialize_clean_state():
     # Start a container and let it initialize
     base_container_id = subprocess.check_output([
         'docker', 'run', '-d',
-        '--hostname', 'computer',
+        '--hostname', 'neural-os',
         '--env', f'SCREEN_WIDTH={SCREEN_WIDTH}',
         '--env', f'SCREEN_HEIGHT={SCREEN_HEIGHT}',
         'synthetic_data_generator',
@@ -139,7 +139,7 @@ def process_trajectory(args, screen_width, screen_height, clean_state, memory_li
             container_id = subprocess.check_output([
                 'docker', 'run', '-d',
                 '-v', f'{os.getcwd()}/raw_data:/app/raw_data',
-                '--hostname', 'computer',
+                '--hostname', 'neural-os',
                 '--env', 'DISPLAY=:99',
                 '--env', f'SCREEN_WIDTH={screen_width}',
                 '--env', f'SCREEN_HEIGHT={screen_height}',

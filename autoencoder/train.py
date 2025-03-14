@@ -11,7 +11,7 @@ import torch
 
 #from computer.util import LoggingCallback
 
-def train_model(model: VQModel, data: DataModule, save_path: str, config: OmegaConf, ckpt_path: str) -> VQModel:
+def train_model(model: VQModel, data: DataModule, save_path: str, config: OmegaConf, ckpt_path) -> VQModel:
 
     """
     Trains the decoder layers in the autoencoder on specified dataset in the config.
@@ -63,8 +63,10 @@ def train_model(model: VQModel, data: DataModule, save_path: str, config: OmegaC
 
     print("\u2705 Fitting model...")
 
-    trainer.fit(model, data, ckpt_path=ckpt_path)
-    #trainer.fit(model, data)
+    if ckpt_path:
+        trainer.fit(model, data, ckpt_path=ckpt_path)
+    else:
+        trainer.fit(model, data)
     
     if trainer.is_global_zero: print(f"\u2705 Checkpoints saved at {save_path}")
     

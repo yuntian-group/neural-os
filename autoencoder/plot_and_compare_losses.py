@@ -17,7 +17,7 @@ def smooth_losses(losses, window_size=100):
         window_size = max(1, len(losses) // 10)
     return np.convolve(losses, np.ones(window_size)/window_size, mode='valid')
 
-def plot_and_compare_losses(losses_dict, output_png='loss_curve_comparison.png'):
+def plot_and_compare_losses(losses_dict, output_png='loss_curve_comparison.cont.png'):
     """
     Plot and compare multiple loss curves on a single graph.
     
@@ -27,7 +27,7 @@ def plot_and_compare_losses(losses_dict, output_png='loss_curve_comparison.png')
     plt.figure(figsize=(12, 6))
     
     for label, (losses, smoothed_losses) in losses_dict.items():
-        plt.plot(range(len(losses)), losses, alpha=0.3, label=f'{label} Raw Loss')
+        #plt.plot(range(len(losses)), losses, alpha=0.3, label=f'{label} Raw Loss')
         plt.plot(range(len(smoothed_losses)), smoothed_losses, linewidth=2, label=f'{label} Smoothed Loss')
     
     plt.xlabel('Step')
@@ -41,10 +41,10 @@ def plot_and_compare_losses(losses_dict, output_png='loss_curve_comparison.png')
 
 if __name__ == "__main__":
     log_file_paths = [
-        ('init_4', 'log.init.ae.kl.bsz8_acc3_lr4.5e6_load_acc1.save.512_384.mar10.keyboard.4'),
-        ('init_8', 'log.init.ae.kl.bsz8_acc3_lr4.5e6_load_acc1.save.512_384.mar10.keyboard.8'),
-        ('init_16', 'log.init.ae.kl.bsz8_acc3_lr4.5e6_load_acc1.save.512_384.mar10.keyboard.16'),
-        ('cont', 'log.ae.kl.bsz8_acc3_lr4.5e6_load_acc1.save.512_384.mar10.keyboard.cont2')
+        ('init_4', 'log.init.ae.kl.bsz8_acc3_lr4.5e6_load_acc1.save.512_384.mar10.keyboard.4.cont'),
+        ('init_8', 'log.init.ae.kl.bsz8_acc3_lr4.5e6_load_acc1.save.512_384.mar10.keyboard.8.cont'),
+        ('init_16', 'log.init.ae.kl.bsz8_acc3_lr4.5e6_load_acc1.save.512_384.mar10.keyboard.16.cont'),
+        ('cont', 'log.ae.kl.bsz8_acc3_lr4.5e6_load_acc1.save.512_384.mar10.keyboard.cont2.cont')
     ]
     
     losses_dict = {}

@@ -17,7 +17,7 @@ def extract_numbers(path):
 def create_mapping():
     # Read the original dataset
     print("Reading dataset...")
-    df = pd.read_csv('train_dataset/train_dataset.csv')
+    df = pd.read_csv('../data/data_processing/train_dataset/train_dataset.csv')
     
     # Create mapping dictionary
     mapping_dict = {}  # Using (record_num, image_num) as key

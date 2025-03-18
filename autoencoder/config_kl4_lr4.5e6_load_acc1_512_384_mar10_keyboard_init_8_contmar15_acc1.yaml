@@ -1,0 +1,60 @@
+save_path: saved_kl4_bsz8_acc8_lr4.5e6_load_acc1_512_384_mar10_keyboard_init_8_cont_mar15_acc1
+
+model:
+  base_learning_rate: 4.5e-06
+  target: latent_diffusion.ldm.models.autoencoder.AutoencoderKL
+  params:
+    monitor: val/rec_loss
+    embed_dim: 8
+    lossconfig:
+      target: latent_diffusion.ldm.modules.losses.contperceptual.LPIPSWithDiscriminator
+      params:
+        disc_start: 50001
+        kl_weight: 0.000001
+        disc_weight: 0.5
+
+    ddconfig:
+      double_z: true
+      z_channels: 8
+      resolution: 256
+      in_channels: 3
+      out_ch: 3
+      ch: 128
+      ch_mult:
+      - 1
+      - 2
+      - 4
+      - 4
+      num_res_blocks: 2
+      attn_resolutions: []
+      dropout: 0.0
+
+data:
+  target: data.data_processing.datasets.DataModule
+  params:
+    batch_size: 10
+    num_workers: 8
+    wrap: false
+    shuffle: true
+    drop_last: true
+    pin_memory: true
+    prefetch_factor: 2
+    persistent_workers: true
+    train:
+      target: data.data_processing.datasets.ActionsData
+      params:
+        use_original_image: true
+        data_csv_path: ../computer/train_dataset/train_dataset.target_frames.csv
+    # validation:
+    #   target: data.data_processing.datasets.ActionsData
+    #   params:
+    #     data_csv_path: /u4/jlrivard/CSLLM/computer/train_dataset/train_dataset.csv
+
+lightning:
+  trainer:
+    benchmark: True
+    max_epochs: 1
+    limit_val_batches: 0
+    accelerator: gpu
+    devices: 1
+    accumulate_grad_batches: 1

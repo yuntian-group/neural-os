@@ -116,13 +116,13 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Pre-process dataset using trained encoder.")
     
     parser.add_argument("--ckpt_path", type=str, 
-                        default="saved_kl4_bsz8_acc8_lr4.5e6_load_acc1_512_384/model-354000.ckpt",
+                        default="saved_kl4_bsz8_acc8_lr4.5e6_load_acc1_512_384_mar10_keyboard_init_16_cont_mar15_acc1/model-792000.ckpt",
                         help="Path to model checkpoint.")
                         #default="saved_kl4_bsz8_acc8_lr4.5e6_load_acc1/model-603000.ckpt",
                         #help="Path to model checkpoint.")
     
     parser.add_argument("--config", type=str, 
-                        default="config_kl4_lr4.5e6_load_acc1.yaml",
+                        default="config_kl4_lr4.5e6_load_acc1_512_384_mar10_keyboard_init_16_contmar15_acc1.yaml",
                         help="Path to model config.")
     
     parser.add_argument("--input_dir", type=str, 

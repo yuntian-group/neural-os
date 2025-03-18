@@ -44,7 +44,8 @@ if __name__ == "__main__":
         ('init_4', 'log.init.ae.kl.bsz8_acc3_lr4.5e6_load_acc1.save.512_384.mar10.keyboard.4.cont'),
         ('init_8', 'log.init.ae.kl.bsz8_acc3_lr4.5e6_load_acc1.save.512_384.mar10.keyboard.8.cont'),
         ('init_16', 'log.init.ae.kl.bsz8_acc3_lr4.5e6_load_acc1.save.512_384.mar10.keyboard.16.cont'),
-        ('cont', 'log.ae.kl.bsz8_acc3_lr4.5e6_load_acc1.save.512_384.mar10.keyboard.cont2.cont')
+        ('cont', 'log.ae.kl.bsz8_acc3_lr4.5e6_load_acc1.save.512_384.mar10.keyboard.cont2.cont'),
+        ('acc1', 'log.init.ae.kl.bsz8_acc3_lr4.5e6_load_acc1.save.512_384.mar10.keyboard.16.cont.acc1')
     ]
     
     losses_dict = {}
@@ -52,6 +53,9 @@ if __name__ == "__main__":
         losses = extract_losses_from_log(log_file_path)
         smoothed_losses = smooth_losses(losses, window_size=100)
         losses_dict[label] = (losses, smoothed_losses)
+    for label in losses_dict:
+        if label == 'acc1':
+            losses_dict[label] = ([2000]*150000 + losses_dict[label][0], [2000]*150000 + list(losses_dict[label][1]))
     
     plot_and_compare_losses(losses_dict)
 

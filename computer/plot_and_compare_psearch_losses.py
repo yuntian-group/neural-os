@@ -17,7 +17,7 @@ def smooth_losses(losses, window_size=100):
         window_size = max(1, len(losses) // 10)
     return np.convolve(losses, np.ones(window_size)/window_size, mode='valid')
 
-def plot_and_compare_losses(losses_dict, output_png='loss_curve_comparison.cont.png'):
+def plot_and_compare_losses(losses_dict, output_png='psearch_a_loss_curve_comparison.png'):
     """
     Plot and compare multiple loss curves on a single graph.
     
@@ -42,21 +42,21 @@ def plot_and_compare_losses(losses_dict, output_png='loss_curve_comparison.cont.
 
 if __name__ == "__main__":
     log_file_paths = [
-        ('a_hs4096_oc32_nl48_ar_cm1_2_mc320', 'log.psearch_a_hs4096_oc32_nl48_ar_cm1_2_mc320'),
-        ('a_hs4096_oc32_nl48_ar_cm1_2_mc384', 'log.psearch_a_hs4096_oc32_nl48_ar_cm1_2_mc384'),
-        ('a_hs4096_oc32_nl48_ar2_cm1_2_mc320', 'log.psearch_a_hs4096_oc32_nl48_ar2_cm1_2_mc320'),
-        ('a_hs4096_oc32_nl48_ar_cm1_2_3_mc320', 'log.psearch_a_hs4096_oc32_nl48_ar_cm1_2_3_mc320'),
-        ('a_hs4096_oc32_nl48_ar2_cm1_2_3_mc320', 'log.psearch_a_hs4096_oc32_nl48_ar2_cm1_2_3_mc320'),
-        ('a_hs4096_oc32_nl48_ar4_cm1_2_3_mc320', 'log.psearch_a_hs4096_oc32_nl48_ar4_cm1_2_3_mc320'),
-        ('a_hs1024_oc4_nl20_ar2_4_8_cm1_2_3_5_mc192', 'log.psearch_a_hs1024_oc4_nl20_ar2_4_8_cm1_2_3_5_mc192'),
-        ('a_hs4096_oc32_nl48_ar2_4_8_cm1_2_3_5_mc320', 'log.psearch_a_hs4096_oc32_nl48_ar2_4_8_cm1_2_3_5_mc320'),
+        ('a_hs4096_oc32_nl48_ar_cm1_2_mc320', 'log.a_hs4096_oc32_nl48_ar_cm1_2_mc320'),
+        ('a_hs4096_oc32_nl48_ar_cm1_2_mc384', 'log.a_hs4096_oc32_nl48_ar_cm1_2_mc384'),
+        ('a_hs4096_oc32_nl48_ar2_cm1_2_mc320', 'log.a_hs4096_oc32_nl48_ar2_cm1_2_mc320'),
+        ('a_hs4096_oc32_nl48_ar_cm1_2_3_mc320', 'log.a_hs4096_oc32_nl48_ar_cm1_2_3_mc320'),
+        ('a_hs4096_oc32_nl48_ar2_cm1_2_3_mc320', 'log.a_hs4096_oc32_nl48_ar2_cm1_2_3_mc320'),
+        ('a_hs4096_oc32_nl48_ar4_cm1_2_3_mc320', 'log.a_hs4096_oc32_nl48_ar4_cm1_2_3_mc320'),
+        ('a_hs1024_oc4_nl20_ar2_4_8_cm1_2_3_5_mc192', 'log.a_hs1024_oc4_nl20_ar2_4_8_cm1_2_3_5_mc192'),
+        ('a_hs4096_oc32_nl48_ar2_4_8_cm1_2_3_5_mc320', 'log.a_hs4096_oc32_nl48_ar2_4_8_cm1_2_3_5_mc320'),
     ]
     
     losses_dict = {}
     for label, log_file_path in log_file_paths:
         losses = extract_losses_from_log(log_file_path)
         smoothed_losses = smooth_losses(losses, window_size=100)
-        losses_dict[label] = (losses, smoothed_losses)
+        losses_dict[label] = (losses[6000:], smoothed_losses[6000:])
     
     plot_and_compare_losses(losses_dict)
 

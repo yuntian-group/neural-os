@@ -16,7 +16,8 @@ from tqdm import tqdm
 # Configuration constants
 SCREEN_WIDTH = 512
 SCREEN_HEIGHT = 384
-LATENT_DIMS = [4, 48, 64]
+NUM_CHANNELS = 16
+LATENT_DIMS = [NUM_CHANNELS, 48, 64]
 NUM_SAMPLING_STEPS = 8
 DATA_NORMALIZATION = {
     'mean': -0.54,

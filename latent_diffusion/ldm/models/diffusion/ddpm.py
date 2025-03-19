@@ -1124,15 +1124,13 @@ class LatentDiffusion(DDPM):
                 c_i['c_concat'] = c['c_concat'][i:i+1]
                 #c_i['c_crossattn'] = c['c_crossattn'][i:i+1]
                 #c_i = self.get_learned_conditioning(c_i)
-                sample_i = self.p_sample_loop(cond=c_i, shape=[1, 4, 48, 64], return_intermediates=False, verbose=True)
+                sample_i = self.p_sample_loop(cond=c_i, shape=[1, 16, 48, 64], return_intermediates=False, verbose=True)
                 
                 if 'norm_standard' in exp_name:
-                    sample_i = sample_i * data_std + data_mean
+                    sample_i = sample_i * per_channel_std.view(1, -1, 1, 1) + per_channel_mean.view(1, -1, 1, 1)
                     #prev_frame_img = prev_frame_img * data_std + data_mean
-                elif 'without_comp_norm_minmax' in exp_name:
-                    sample_i = (sample_i.clamp(-1, 1) + 1) * (data_max - data_min) / 2 + data_min
                 else:
-                    pass
+                    assert False
                 sample_i = self.decode_first_stage(sample_i)
                 sample_i = sample_i.squeeze(0).clamp(-1, 1)
                 # plot sample_i side by side with zz

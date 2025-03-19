@@ -6,7 +6,7 @@ import json
 from glob import glob
 import pandas as pd
 import random
-
+from ast import literal_eval
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Compute mean and std of preprocessed latent vectors")
@@ -49,36 +49,24 @@ def main():
     np.random.seed(args.seed)
     
     print(f"Reading CSV file: {args.csv_file}")
-    try:
-        # Read the CSV file
-        df = pd.read_csv(args.csv_file, header=None, names=['record_num', 'image_num'])
-        
-        # Get unique record numbers
-        unique_records = df['record_num'].unique()
-        print(f"Found {len(unique_records)} unique record folders in CSV")
-        
-        # Sample a subset of record numbers
-        if args.num_records >= len(unique_records):
-            sampled_records = unique_records
-            print(f"Using all {len(sampled_records)} record folders")
-        else:
-            sampled_records = np.random.choice(unique_records, size=args.num_records, replace=False)
-            print(f"Sampled {len(sampled_records)} record folders out of {len(unique_records)}")
-    except Exception as e:
-        print(f"Error reading CSV file: {e}")
-        print("Falling back to all available record folders in the data directory")
-        
-        # Look for record_* folders in the data directory
-        record_folders = [d for d in os.listdir(args.data_dir) if d.startswith('record_') and os.path.isdir(os.path.join(args.data_dir, d))]
-        unique_records = [int(folder.split('_')[1]) for folder in record_folders]
-        
-        if args.num_records >= len(unique_records):
-            sampled_records = unique_records
-            print(f"Using all {len(sampled_records)} record folders")
-        else:
-            sampled_records = np.random.choice(unique_records, size=args.num_records, replace=False)
-            print(f"Sampled {len(sampled_records)} record folders out of {len(unique_records)}")
+
+    # Read the CSV file
+    df = pd.read_csv(args.csv_file, header=None, names=['record_num', 'image_num'])
+    df['record_num'] = df['record_num'].apply(literal_eval)
+    df['image_num'] = df['image_num'].apply(literal_eval)
     
+    # Get unique record numbers
+    unique_records = df['record_num'].unique()
+    print(f"Found {len(unique_records)} unique record folders in CSV")
+    
+    # Sample a subset of record numbers
+    if args.num_records >= len(unique_records):
+        sampled_records = unique_records
+        print(f"Using all {len(sampled_records)} record folders")
+    else:
+        sampled_records = np.random.choice(unique_records, size=args.num_records, replace=False)
+        print(f"Sampled {len(sampled_records)} record folders out of {len(unique_records)}")
+
     # Initialize list to store selected .npy files
     selected_npy_files = []
     

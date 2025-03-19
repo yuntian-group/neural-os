@@ -38,14 +38,18 @@ def plot_and_compare_losses(losses_dict, output_png='loss_curve_comparison.cont.
     plt.tight_layout()
     plt.savefig(output_png)
     print(f'Loss curve comparison saved as {output_png}')
+#
 
 if __name__ == "__main__":
     log_file_paths = [
-        ('init_4', 'log.init.ae.kl.bsz8_acc3_lr4.5e6_load_acc1.save.512_384.mar10.keyboard.4.cont'),
-        ('init_8', 'log.init.ae.kl.bsz8_acc3_lr4.5e6_load_acc1.save.512_384.mar10.keyboard.8.cont'),
-        ('init_16', 'log.init.ae.kl.bsz8_acc3_lr4.5e6_load_acc1.save.512_384.mar10.keyboard.16.cont'),
-        ('cont', 'log.ae.kl.bsz8_acc3_lr4.5e6_load_acc1.save.512_384.mar10.keyboard.cont2.cont'),
-        ('acc1', 'log.init.ae.kl.bsz8_acc3_lr4.5e6_load_acc1.save.512_384.mar10.keyboard.16.cont.acc1')
+        ('a_hs4096_oc32_nl48_ar_cm1_2_mc320', 'log.psearch_a_hs4096_oc32_nl48_ar_cm1_2_mc320'),
+        ('a_hs4096_oc32_nl48_ar_cm1_2_mc384', 'log.psearch_a_hs4096_oc32_nl48_ar_cm1_2_mc384'),
+        ('a_hs4096_oc32_nl48_ar2_cm1_2_mc320', 'log.psearch_a_hs4096_oc32_nl48_ar2_cm1_2_mc320'),
+        ('a_hs4096_oc32_nl48_ar_cm1_2_3_mc320', 'log.psearch_a_hs4096_oc32_nl48_ar_cm1_2_3_mc320'),
+        ('a_hs4096_oc32_nl48_ar2_cm1_2_3_mc320', 'log.psearch_a_hs4096_oc32_nl48_ar2_cm1_2_3_mc320'),
+        ('a_hs4096_oc32_nl48_ar4_cm1_2_3_mc320', 'log.psearch_a_hs4096_oc32_nl48_ar4_cm1_2_3_mc320'),
+        ('a_hs1024_oc4_nl20_ar2_4_8_cm1_2_3_5_mc192', 'log.psearch_a_hs1024_oc4_nl20_ar2_4_8_cm1_2_3_5_mc192'),
+        ('a_hs4096_oc32_nl48_ar2_4_8_cm1_2_3_5_mc320', 'log.psearch_a_hs4096_oc32_nl48_ar2_4_8_cm1_2_3_5_mc320'),
     ]
     
     losses_dict = {}
@@ -53,9 +57,6 @@ if __name__ == "__main__":
         losses = extract_losses_from_log(log_file_path)
         smoothed_losses = smooth_losses(losses, window_size=100)
         losses_dict[label] = (losses, smoothed_losses)
-    for label in losses_dict:
-        if label == 'acc1':
-            losses_dict[label] = ([2000]*150000 + losses_dict[label][0], [2000]*150000 + list(losses_dict[label][1]))
     
     plot_and_compare_losses(losses_dict)
 

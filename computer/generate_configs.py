@@ -25,7 +25,7 @@ def generate_configs(base_config_path, output_dir, num_configs=10, random_sampli
     
     # Define parameter options to explore
     param_options = {
-        'temporal_encoder.hidden_size': [2048, 3072, 4096],
+        'temporal_encoder.hidden_size': [4096],
         'unet.attention_resolutions': [ # 8 4 2
             [],
             [2],
@@ -60,7 +60,7 @@ def generate_configs(base_config_path, output_dir, num_configs=10, random_sampli
             # [1, 1, 2, 2, 3],
         ],
         'unet.model_channels':  [320, 384], # [32, 64,128, 160, 192, 224, 256, 320],
-        'temporal_encoder.output_channels': [32]
+        'temporal_encoder.output_channels': [32, 48, 64]
     }
     
     # Create shorthand labels for parameters
@@ -101,7 +101,7 @@ def generate_configs(base_config_path, output_dir, num_configs=10, random_sampli
             output_channels = random.choice(param_options['temporal_encoder.output_channels'])
             
             # Calculate in_channels as 4 + output_channels
-            in_channels = 4 + output_channels
+            in_channels = 16 + output_channels
             
             # Combine into selected parameters
             selected_params = {
@@ -152,7 +152,7 @@ def generate_configs(base_config_path, output_dir, num_configs=10, random_sampli
                                 if len(attention_resolutions) > 0 and max(attention_resolutions) > max_attention_resolution:
                                     continue
                                 # Calculate in_channels as 4 + output_channels
-                                in_channels = 4 + output_channels
+                                in_channels = 16 + output_channels
                                 valid_combinations.append((
                                     hidden_size,
                                     attention_resolutions,

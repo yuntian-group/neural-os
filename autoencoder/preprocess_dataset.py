@@ -42,6 +42,18 @@ def process_folder(model, input_folder, output_folder, batch_size=16, debug_firs
         # Load raw images
         images = []
         for img_file in batch_files:
+            flag_exists = False
+            npy_path = os.path.join(output_folder, img_file.replace('.png', '.npy'))
+            if os.path.exists(npy_path):
+                try:
+                    latent = np.load(npy_path)
+                    flag_exists = True
+                except Exception as e:
+                    print (f"Error loading {npy_path}: {e}")
+                    flag_exists = False
+            if flag_exists:
+                print (f"Skipping {img_file} because it already exists")
+                continue
             image = Image.open(os.path.join(input_folder, img_file))
             if not image.mode == "RGB":
                 image = image.convert("RGB")

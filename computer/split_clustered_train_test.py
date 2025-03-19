@@ -65,10 +65,10 @@ def split_by_clusters(input_csv, train_csv, test_csv, samples_per_cluster=5):
         print(f"Cluster {cluster_id}: {count} transitions")
 
 if __name__ == "__main__":
-    input_csv = "train_dataset/filtered_dataset.target_frames.clustered.csv"
-    train_csv = "train_dataset/filtered_dataset.target_frames.clustered.train.csv"
-    test_csv = "train_dataset/filtered_dataset.target_frames.clustered.test.csv"
-    samples_per_cluster = 5
+    input_csv = "../data/data_processing/train_dataset/filtered_dataset.target_frames.clustered.csv"
+    train_csv = "../data/data_processing/train_dataset/filtered_dataset.target_frames.clustered.train.csv"
+    test_csv = "../data/data_processing/train_dataset/filtered_dataset.target_frames.clustered.test.csv"
+    samples_per_cluster = 10
     
     # Set random seed for reproducibility
     np.random.seed(42)

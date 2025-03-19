@@ -800,6 +800,7 @@ class LatentDiffusion(DDPM):
 
         #This is for concat + cross attention conditioning only, indicated with a hybrid key.
         if self.hybrid_key == 'c_concat':
+            import pdb; pdb.set_trace()
             hkey = self.hybrid_key
 
             c = {'c_crossattn': batch[cond_key]} if cond_key is not None else {} #cond_key is converted to cross attention.
@@ -853,6 +854,7 @@ class LatentDiffusion(DDPM):
                 # concatenate with the position map.
                 #assert c[hkey].shape[1] == 4*7 + 2 + 7
             else:
+                assert False
                 #c[hkey] = output_from_rnn
 
                 #c, is_padding = self.enc_concat_seq(c, batch, hkey)
@@ -1082,10 +1084,12 @@ class LatentDiffusion(DDPM):
                 cluster_centers = torch.stack(cluster_centers)
             
             print(f"Loaded {len(cluster_centers)} cluster centers")
-            data_mean = -0.54
-            data_std = 6.78
-            data_min = -27.681446075439453
-            data_max = 30.854148864746094
+            #data_mean = -0.54
+            #data_std = 6.78
+            #data_min = -27.681446075439453
+            #data_max = 30.854148864746094
+            per_channel_mean = self.trainer.datamodule.datasets['train'].per_channel_mean.view(1, -1, 1, 1)
+            per_channel_std = self.trainer.datamodule.datasets['train'].per_channel_std.view(1, -1, 1, 1)
             # Define icon boundaries
             ICONS = {
                     'firefox': {'center': (66, 332-30), 'width': int(22*1.4), 'height': 44},
@@ -1096,13 +1100,15 @@ class LatentDiffusion(DDPM):
             self.eval()
             #import pdb; pdb.set_trace()
             if 'norm_standard' in exp_name:
-                batch['image_processed'] = batch['image_processed'] * data_std + data_mean
-                batch['c_concat_processed'] = batch['c_concat_processed'] * data_std + data_mean
-            elif 'without_comp_norm_minmax' in exp_name:
-                batch['image_processed'] = (batch['image_processed'].clamp(-1, 1) + 1) * (data_max - data_min) / 2 + data_min
-                batch['c_concat_processed'] = (batch['c_concat_processed'].clamp(-1, 1) + 1) * (data_max - data_min) / 2 + data_min
+                batch['image_processed'] = batch['image_processed'] * per_channel_std + per_channel_mean
+                batch['c_concat_processed'] = batch['c_concat_processed'] * per_channel_std + per_channel_mean
             else:
-                pass
+                assert False
+            #elif 'without_comp_norm_minmax' in exp_name:
+            #    batch['image_processed'] = (batch['image_processed'].clamp(-1, 1) + 1) * (data_max - data_min) / 2 + data_min
+            #    batch['c_concat_processed'] = (batch['c_concat_processed'].clamp(-1, 1) + 1) * (data_max - data_min) / 2 + data_min
+            #else:
+            #    pass
             z_vis = self.decode_first_stage(batch['image_processed'])
             #prev_frames = self.decode_first_stage(batch['c_concat_processed'][:, -1])
             c['c_concat'] = c['c_concat'].data.clone()

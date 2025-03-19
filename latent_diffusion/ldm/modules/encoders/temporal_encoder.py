@@ -80,7 +80,7 @@ class TemporalEncoder(nn.Module):
         )
         self.initial_feedback_padding = nn.Parameter(torch.randn(1, hidden_size))
         self.initial_feedback_unknown = nn.Parameter(torch.randn(1, hidden_size))
-        self.multi_head_attention = nn.MultiheadAttention(hidden_size, num_heads=8, batch_first=True)
+        self.multi_head_attention = nn.MultiheadAttention(self.input_channels*8, num_heads=8, batch_first=True)
         
         # LSTM to process the sequence
         self.lstm_lower = nn.LSTM(

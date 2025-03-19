@@ -1088,8 +1088,8 @@ class LatentDiffusion(DDPM):
             #data_std = 6.78
             #data_min = -27.681446075439453
             #data_max = 30.854148864746094
-            per_channel_mean = self.trainer.datamodule.datasets['train'].per_channel_mean.view(1, -1, 1, 1)
-            per_channel_std = self.trainer.datamodule.datasets['train'].per_channel_std.view(1, -1, 1, 1)
+            per_channel_mean = self.trainer.datamodule.datasets['train'].per_channel_mean
+            per_channel_std = self.trainer.datamodule.datasets['train'].per_channel_std
             # Define icon boundaries
             ICONS = {
                     'firefox': {'center': (66, 332-30), 'width': int(22*1.4), 'height': 44},
@@ -1100,8 +1100,8 @@ class LatentDiffusion(DDPM):
             self.eval()
             #import pdb; pdb.set_trace()
             if 'norm_standard' in exp_name:
-                batch['image_processed'] = batch['image_processed'] * per_channel_std + per_channel_mean
-                batch['c_concat_processed'] = batch['c_concat_processed'] * per_channel_std + per_channel_mean
+                batch['image_processed'] = batch['image_processed'] * per_channel_std.view(1, -1, 1, 1) + per_channel_mean.view(1, -1, 1, 1)
+                batch['c_concat_processed'] = batch['c_concat_processed'] * per_channel_std.view(1, 1, -1, 1, 1) + per_channel_mean.view(1, 1, -1, 1, 1)
             else:
                 assert False
             #elif 'without_comp_norm_minmax' in exp_name:

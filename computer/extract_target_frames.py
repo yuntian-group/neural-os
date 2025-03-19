@@ -35,5 +35,5 @@ def extract_targets(filename):
 
 if __name__ == "__main__":
     #for filename in ['desktop_sequences_filtered_with_desktop_1.5k.challenging.train.csv', 'desktop_sequences_filtered_with_desktop_1.5k.challenging.test.csv']:
-    for filename in ['train_dataset/train_dataset.csv']:
+    for filename in ['../data/data_processing/train_dataset/train_dataset.csv']:
         extract_targets(filename)

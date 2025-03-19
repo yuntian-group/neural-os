@@ -236,7 +236,7 @@ def cluster_transitions(input_csv, output_dir, sample_size=2000, eps=0.01, min_s
     return sorted_clusters, distances, labels
 
 if __name__ == "__main__":
-    input_csv = "train_dataset/filtered_dataset.target_frames.csv"
+    input_csv = "../data/data_processing/train_dataset/filtered_dataset.target_frames.csv"
     output_dir = "filtered_transition_clusters"
     
     # Parameters

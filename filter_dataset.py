@@ -103,9 +103,9 @@ def filter_dataset(input_csv, output_csv, distances_csv, threshold=0.001, force_
     return filtered_df
 
 if __name__ == "__main__":
-    input_csv = "computer/train_dataset/train_dataset.target_frames.csv"  # Update this path
-    distances_csv = "computer/train_dataset/dataset_with_distances.csv"  # Intermediate file with distances
-    output_csv = "computer/train_dataset/filtered_dataset.target_frames.csv"   # Final filtered dataset
+    input_csv = "data/data_processing/train_dataset/train_dataset.target_frames.csv"  # Update this path
+    distances_csv = "data/data_processing/train_dataset/dataset_with_distances.csv"  # Intermediate file with distances
+    output_csv = "data/data_processing/train_dataset/filtered_dataset.target_frames.csv"   # Final filtered dataset
     
     # By default, it will use (CPU count - 1) workers
     # You can specify a different number of workers if desired

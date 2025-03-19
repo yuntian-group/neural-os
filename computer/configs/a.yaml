@@ -23,8 +23,8 @@ model:
       target: latent_diffusion.ldm.modules.diffusionmodules.openaimodel.UNetModel
       params:
         image_size: [64, 48]
-        in_channels: 8
-        out_channels: 4
+        in_channels: 48
+        out_channels: 16
         model_channels: 192
         attention_resolutions:
         - 8
@@ -43,22 +43,22 @@ model:
     temporal_encoder_config:
       target: latent_diffusion.ldm.modules.encoders.temporal_encoder.TemporalEncoder
       params:
-        input_channels: 6
+        input_channels: 16
         hidden_size: 1024
         num_layers: 1
         dropout: 0.1
-        output_channels: 4
+        output_channels: 32
         output_height: 48
         output_width: 64
 
     first_stage_config:
       target: latent_diffusion.ldm.models.autoencoder.AutoencoderKL
       params:
-        embed_dim: 4
+        embed_dim: 16
         monitor: val/rec_loss
         ddconfig:
           double_z: true
-          z_channels: 4
+          z_channels: 16
           resolution: 256
           in_channels: 3
           out_ch: 3

@@ -60,7 +60,7 @@ def generate_configs(base_config_path, output_dir, num_configs=10, random_sampli
             # [1, 1, 2, 2, 3],
         ],
         'unet.model_channels':  [320, 384], # [32, 64,128, 160, 192, 224, 256, 320],
-        'temporal_encoder.output_channels': [32, 48, 64]
+        'temporal_encoder.output_channels': [32, 48]
     }
     
     # Create shorthand labels for parameters

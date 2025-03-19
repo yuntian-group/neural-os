@@ -51,7 +51,7 @@ def main():
     print(f"Reading CSV file: {args.csv_file}")
 
     # Read the CSV file
-    df = pd.read_csv(args.csv_file, header=None, names=['record_num', 'image_num'])
+    df = pd.read_csv(args.csv_file)
     df['record_num'] = df['record_num'].astype(int)
     df['image_num'] = df['image_num'].astype(int)
     

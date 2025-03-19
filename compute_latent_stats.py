@@ -6,7 +6,7 @@ import json
 from glob import glob
 import pandas as pd
 import random
-from ast import literal_eval
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Compute mean and std of preprocessed latent vectors")
@@ -52,8 +52,8 @@ def main():
 
     # Read the CSV file
     df = pd.read_csv(args.csv_file, header=None, names=['record_num', 'image_num'])
-    df['record_num'] = df['record_num'].apply(literal_eval)
-    df['image_num'] = df['image_num'].apply(literal_eval)
+    df['record_num'] = df['record_num'].astype(int)
+    df['image_num'] = df['image_num'].astype(int)
     
     # Get unique record numbers
     unique_records = df['record_num'].unique()

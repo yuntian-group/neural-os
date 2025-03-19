@@ -800,7 +800,7 @@ class LatentDiffusion(DDPM):
 
         #This is for concat + cross attention conditioning only, indicated with a hybrid key.
         if self.hybrid_key == 'c_concat':
-            import pdb; pdb.set_trace()
+            #import pdb; pdb.set_trace()
             hkey = self.hybrid_key
 
             c = {'c_crossattn': batch[cond_key]} if cond_key is not None else {} #cond_key is converted to cross attention.

@@ -11,6 +11,7 @@ import pytorch_lightning as pl
 from einops import rearrange
 from omegaconf import OmegaConf
 from latent_diffusion.ldm.util import instantiate_from_config
+import json
 
 from torch.utils.data import DataLoader, Dataset
 from PIL import Image
@@ -188,7 +189,8 @@ class ActionsData(Dataset):
                  use_original_image=False,
                  debug_mode=False,
                  normalization='none',  # Options: 'none', 'minmax', 'standard'
-                 context_length=7  # New parameter for flexible context length
+                 context_length=7,  # New parameter for flexible context length
+                 latent_stats_path='../latent_stats.json'  # Path to the JSON file with per-channel stats
                  ):
         self.data_path = data_csv_path
         self.debug_mode = debug_mode
@@ -197,6 +199,7 @@ class ActionsData(Dataset):
         self.normalization = normalization
         self.context_length = context_length
         self.use_original_image = use_original_image
+        self.latent_stats_path = latent_stats_path
 
         # Load action mapping
         
@@ -208,6 +211,18 @@ class ActionsData(Dataset):
         self.data_std = 6.78
         self.data_min = -27.681446075439453
         self.data_max = 30.854148864746094
+        
+        # Load per-channel statistics if available
+        self.per_channel_mean = None
+        self.per_channel_std = None
+        if latent_stats_path and os.path.exists(latent_stats_path):
+            with open(latent_stats_path, 'r') as f:
+                stats = json.load(f)
+            self.per_channel_mean = torch.tensor(stats['mean'])
+            self.per_channel_std = torch.tensor(stats['std'])
+            print(f"Loaded per-channel statistics from {latent_stats_path}")
+            print(f"Mean shape: {self.per_channel_mean.shape}, Std shape: {self.per_channel_std.shape}")
+           
 
         KEYS = ['\t', '\n', '\r', ' ', '!', '"', '#', '$', '%', '&', "'", '(',
         ')', '*', '+', ',', '-', '.', '/', '0', '1', '2', '3', '4', '5', '6', '7',
@@ -265,7 +280,7 @@ class ActionsData(Dataset):
             print("Found processed data in train_dataset_encoded/")
             
             # Load model for reprocessing if needed
-            if 'train' in self.data_path:
+            if False and 'train' in self.data_path:
                 print('Loading autoencoder model for reprocessing')
                 config = OmegaConf.load("../autoencoder/config_kl4_lr4.5e6_load_acc1_512_384.yaml")
                 #self.model = load_model_from_config(config, "autoencoder_saved_kl4_bsz8_acc8_lr4.5e6_load_acc1_model-603000.ckpt")
@@ -288,8 +303,25 @@ class ActionsData(Dataset):
             # Normalize to [-1, 1]
             return 2.0 * (x - self.data_min) / (self.data_max - self.data_min) - 1.0
         elif self.normalization == 'standard' or 'standard' in self.normalization:
-            # Standardize to mean=0, std=1
-            return (x - self.data_mean) / self.data_std
+            # Check if we have per-channel statistics
+            assert len(x.shape) == 4 or len(x.shape) == 3
+            if self.per_channel_mean is not None and self.per_channel_std is not None:
+                # Add singleton dimensions to match the latent representation
+                if len(x.shape) == 4:
+                    # For batched latent vectors (multiple images)
+                    # Reshape mean and std to match the channel dimension
+                    mean = self.per_channel_mean.view(1, -1, 1, 1)
+                    std = self.per_channel_std.view(1, -1, 1, 1)
+                elif len(x.shape) == 3:
+                    # For a single latent vector
+                    mean = self.per_channel_mean.view(-1, 1, 1)
+                    std = self.per_channel_std.view(-1, 1, 1)
+                # Apply per-channel normalization
+                return (x - mean) / std
+            else:
+                assert False
+                # Fall back to global normalization
+                return (x - self.data_mean) / self.data_std
         else:
             raise ValueError(f"Unknown normalization strategy: {self.normalization}")
 

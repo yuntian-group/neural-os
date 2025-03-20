@@ -1088,8 +1088,8 @@ class LatentDiffusion(DDPM):
             #data_std = 6.78
             #data_min = -27.681446075439453
             #data_max = 30.854148864746094
-            per_channel_mean = self.trainer.datamodule.datasets['train'].per_channel_mean
-            per_channel_std = self.trainer.datamodule.datasets['train'].per_channel_std
+            per_channel_mean = self.trainer.datamodule.datasets['train'].per_channel_mean.to(device)
+            per_channel_std = self.trainer.datamodule.datasets['train'].per_channel_std.to(device)
             # Define icon boundaries
             ICONS = {
                     'firefox': {'center': (66, 332-30), 'width': int(22*1.4), 'height': 44},

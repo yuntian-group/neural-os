@@ -36,10 +36,11 @@ def train_model(model: LatentDiffusion, data: DataModule, save_path: str, config
     trainer: Trainer = Trainer.from_argparse_args(trainer_opt, callbacks=[checkpoint_callback])
 
     trainer.fit(model, data)
-    
-    os.makedirs(save_path, exist_ok=True)
-    trainer.save_checkpoint(f"{save_path}/model_{save_path}.ckpt")
-    print(f"Saved {save_path}/model_{save_path}.ckpt")
+   
+    if 'eval' not in save_path:
+        os.makedirs(save_path, exist_ok=True)
+        trainer.save_checkpoint(f"{save_path}/model_{save_path}.ckpt")
+        print(f"Saved {save_path}/model_{save_path}.ckpt")
 
     return trainer.model
     

@@ -1349,7 +1349,7 @@ class LatentDiffusion(DDPM):
                     #            update_accuracy_csv(history_length, icon, accuracy, total)
 
                 self.i += 1
-                if self.i > 235:
+                if self.i >= 497:
                     sys.exit(1)
             #import pdb; pdb.set_trace()
 

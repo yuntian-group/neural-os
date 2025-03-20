@@ -33,13 +33,13 @@ if __name__ == "__main__":
     print ('='*10)
     #import pdb; pdb.set_trace()
     #from_autoencoder = True
-    from_autoencoder = False
+    #from_autoencoder = False
     from_autoencoder = True
     if 'eval' in args.config:
         from_autoencoder = False
     if not from_autoencoder:
         assert 'eval' in args.config
-    from_autoencoder = True # TODO: fix
+    #from_autoencoder = True # TODO: fix
     if from_autoencoder:
         model = init_model(config)
         #model = load_first_stage_from_config(model, './autoencoder_saved_kl4_bsz8_acc8_lr4.5e6_load_acc1_model-603000.ckpt')
@@ -51,7 +51,7 @@ if __name__ == "__main__":
         #model = load_model_from_config(config, './saved_standard_challenging_context32_nocond_fixnorm_all/model-step=308000.ckpt')
         #model = load_model_from_config(config, './saved_standard_challenging_context32_nocond_fixnorm_all_scheduled_sampling_0.2/model-step=024000.ckpt')
         #model = load_model_from_config(config, './saved_standard_challenging_context32_nocond_fixnorm_all_scheduled_sampling_0.2_feedz_comb0.1_rnn_fixrnn/model-step=004000.ckpt')
-        model = load_model_from_config(config, './saved_standard_challenging_context32_nocond_fixnorm_all_scheduled_sampling_0.2_feedz_comb0.1_rnn_fixrnn_enablegrad_all_keyevent_cont_clusters_all/model-step=014000.ckpt')
+        #model = load_model_from_config(config, './saved_standard_challenging_context32_nocond_fixnorm_all_scheduled_sampling_0.2_feedz_comb0.1_rnn_fixrnn_enablegrad_all_keyevent_cont_clusters_all/model-step=014000.ckpt')
         #model = load_model_from_config(config, 'saved_bsz64_acc1_lr8e5_512_leftclick_histpos_512_384_cont2_ddd_difficult_only_withlstmencoder_without_standard_filtered_with_desktop_1.5k_maskprev0/model-step=010000.ckpt')
         #model = load_model_from_config(config, './saved_bsz64_acc1_lr8e5_512_leftclick_histpos_512_384/model-step=045000.ckpt')
         #model = load_model_from_config(config, 'saved_bsz64_acc1_lr8e5_512_leftclick_histpos_512_384_cont2_ddd_difficult_only_withlstmencoder_without_standard_filtered_with_desktop_1.5k/model-step=530000.ckpt')

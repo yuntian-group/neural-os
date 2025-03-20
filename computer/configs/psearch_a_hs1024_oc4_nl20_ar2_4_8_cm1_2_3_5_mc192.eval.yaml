@@ -1,4 +1,4 @@
-save_path: saved_standard_challenging_context32_nocond_fixnorm_all_scheduled_sampling_0.2_feedz_comb0.1_rnn_fixrnn_enablegrad_all_keyevent_a_hs4096_oc32_nl48_ar2_4_8_cm1_2_3_5_mc320_eval
+save_path: saved_standard_challenging_context32_nocond_fixnorm_all_scheduled_sampling_0.2_feedz_comb0.1_rnn_fixrnn_enablegrad_all_keyevent_a_hs1024_oc4_nl20_ar2_4_8_cm1_2_3_5_mc192_eval
 
 model:
   base_learning_rate: 8.0e-05
@@ -23,13 +23,13 @@ model:
       target: latent_diffusion.ldm.modules.diffusionmodules.openaimodel.UNetModel
       params:
         image_size: [64, 48]
-        in_channels: 48
+        in_channels: 20
         out_channels: 16
-        model_channels: 320
+        model_channels: 192
         attention_resolutions:
-        - 8
-        - 4
         - 2
+        - 4
+        - 8
         num_res_blocks: 2
         channel_mult:
         - 1
@@ -44,10 +44,10 @@ model:
       target: latent_diffusion.ldm.modules.encoders.temporal_encoder.TemporalEncoder
       params:
         input_channels: 16
-        hidden_size: 4096
+        hidden_size: 1024
         num_layers: 1
         dropout: 0.1
-        output_channels: 32
+        output_channels: 4
         output_height: 48
         output_width: 64
 

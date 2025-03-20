@@ -10,7 +10,7 @@ def parse_args():
     parser.add_argument(
         "--train_csv",
         type=str,
-        default="data/data_processing/train_dataset/filtered_dataset.target_frames.clustered.train.csv",
+        default="data/data_processing/train_dataset/filtered_dataset.target_frames.clustered.train_shuffled.shuffled.csv",
         help="Path to training CSV file"
     )
     parser.add_argument(

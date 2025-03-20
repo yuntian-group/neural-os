@@ -1124,7 +1124,19 @@ class LatentDiffusion(DDPM):
                 c_i['c_concat'] = c['c_concat'][i:i+1]
                 #c_i['c_crossattn'] = c['c_crossattn'][i:i+1]
                 #c_i = self.get_learned_conditioning(c_i)
-                sample_i = self.p_sample_loop(cond=c_i, shape=[1, 16, 48, 64], return_intermediates=False, verbose=True)
+                ddpm = False
+                if ddpm:
+                    sample_i = self.p_sample_loop(cond=c_i, shape=[1, 16, 48, 64], return_intermediates=False, verbose=True)
+                else:
+                    print ('ddim')
+                    sampler = DDIMSampler(self)
+                    sample_i , _ = sampler.sample(
+                        S=8,
+                        conditioning=c_i,
+                        batch_size=1,
+                        shape=[16, 48, 64],
+                        verbose=True
+                    )
                 
                 if 'norm_standard' in exp_name:
                     sample_i = sample_i * per_channel_std.view(1, -1, 1, 1) + per_channel_mean.view(1, -1, 1, 1)
@@ -1347,7 +1359,9 @@ class LatentDiffusion(DDPM):
                     #            update_accuracy_csv(history_length, icon, accuracy, total)
 
                 self.i += 1
-                if self.i >= 497:
+                #if self.i >= 497:
+                #    sys.exit(1)
+                if self.i >= 60:
                     sys.exit(1)
             #import pdb; pdb.set_trace()
 

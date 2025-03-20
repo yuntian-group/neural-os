@@ -43,7 +43,8 @@ ckpt_dir = 'saved_bsz64_acc1_lr8e5_512_leftclick_histpos_512_384_cont2_ddd_diffi
 # 14. a_hs4096_oc32_nl48_ar4_cm1_2_3_mc320: 6.24 FPS, 160.33 ms latency
 # 34. a_hs1024_oc4_nl20_ar2_4_8_cm1_2_3_5_mc192: 4.84 FPS, 206.49 ms latency
 # 41. a_hs4096_oc32_nl48_ar2_4_8_cm1_2_3_5_mc320: 4.50 FPS, 222.29 ms latency
-for setting in ['a_hs4096_oc32_nl48_ar_cm1_2_mc320']:#, 'a_hs4096_oc32_nl48_ar_cm1_2_mc384', 'a_hs4096_oc32_nl48_ar2_cm1_2_mc320', 'a_hs4096_oc32_nl48_ar_cm1_2_3_mc320', 'a_hs4096_oc32_nl48_ar2_cm1_2_3_mc320', 'a_hs4096_oc32_nl48_ar4_cm1_2_3_mc320', 'a_hs1024_oc4_nl20_ar2_4_8_cm1_2_3_5_mc192', 'a_hs4096_oc32_nl48_ar2_4_8_cm1_2_3_5_mc320']:
+#for setting in ['a_hs4096_oc32_nl48_ar_cm1_2_mc320']:#, 'a_hs4096_oc32_nl48_ar_cm1_2_mc384', 'a_hs4096_oc32_nl48_ar2_cm1_2_mc320', 'a_hs4096_oc32_nl48_ar_cm1_2_3_mc320', 'a_hs4096_oc32_nl48_ar2_cm1_2_3_mc320', 'a_hs4096_oc32_nl48_ar4_cm1_2_3_mc320', 'a_hs1024_oc4_nl20_ar2_4_8_cm1_2_3_5_mc192', 'a_hs4096_oc32_nl48_ar2_4_8_cm1_2_3_5_mc320']:
+for setting in ['a_hs1024_oc4_nl20_ar2_4_8_cm1_2_3_5_mc192']:#, 'a_hs4096_oc32_nl48_ar_cm1_2_mc384', 'a_hs4096_oc32_nl48_ar2_cm1_2_mc320', 'a_hs4096_oc32_nl48_ar_cm1_2_3_mc320', 'a_hs4096_oc32_nl48_ar2_cm1_2_3_mc320', 'a_hs4096_oc32_nl48_ar4_cm1_2_3_mc320', 'a_hs1024_oc4_nl20_ar2_4_8_cm1_2_3_5_mc192', 'a_hs4096_oc32_nl48_ar2_4_8_cm1_2_3_5_mc320']:
     #ckpt_dir = f'saved_standard_challenging_context{context_length}'
     #ckpt_dir = f'saved_standard_challenging_context32_nocond_cont_cont_all_cont/'
     #ckpt_dir = f'saved_standard_challenging_context32_nocond_fixnorm_all/'

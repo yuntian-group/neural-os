@@ -55,7 +55,7 @@ if __name__ == "__main__":
     losses_dict = {}
     for label, log_file_path in log_file_paths:
         losses = extract_losses_from_log(log_file_path)
-        smoothed_losses = smooth_losses(losses, window_size=100)
+        smoothed_losses = smooth_losses(losses, window_size=500)
         losses_dict[label] = (losses[6000:], smoothed_losses[6000:])
     
     plot_and_compare_losses(losses_dict)

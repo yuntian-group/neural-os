@@ -85,13 +85,12 @@ data:
     train:
       target: data.data_processing.datasets.ActionsData
       params:
-        data_csv_path: ../data/data_processing/train_dataset/filtered_dataset.target_frames.clustered.train.csv
+        data_csv_path: ../data/data_processing/train_dataset/filtered_dataset.target_frames.clustered.train_shuffled.shuffled.csv
         normalization: standard
         context_length: 32
         #validation:
         #  target: data.data_processing.datasets.ActionsData
         #  params:
-        #    data_csv_path: train_dataset/train_dataset_14frames_firstframe_allframes.csv
 
 lightning:
   trainer:

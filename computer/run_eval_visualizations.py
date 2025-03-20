@@ -53,7 +53,7 @@ for setting in ['a_hs4096_oc32_nl48_ar_cm1_2_mc320']:#, 'a_hs4096_oc32_nl48_ar_c
     #ckpt_dir = f'saved_standard_challenging_context32_nocond_fixnorm_all_scheduled_sampling_0.2_feedz_comb0.1_rnn_fixrnn_enablegrad_all_keyevent_cont_clusters/'
     ckpt_dir = f'saved_standard_challenging_context32_nocond_fixnorm_all_scheduled_sampling_0.2_feedz_comb0.1_rnn_fixrnn_enablegrad_all_keyevent_{setting}/'
     print ('='*10)
-    print (f'processing context length {context_length}')
+    print (f'processing setting {setting}')
     # Get all checkpoint files and sort them
     ckpts = []
     for f in os.listdir(ckpt_dir):
@@ -103,7 +103,7 @@ for setting in ['a_hs4096_oc32_nl48_ar_cm1_2_mc320']:#, 'a_hs4096_oc32_nl48_ar_c
             for line in file:
                 if 'data_csv_path' in line:
                     #print('        data_csv_path: desktop_sequences_filtered_with_desktop_1.5k_last100.csv')
-                    print('        data_csv_path: ../data/data_processing/train_dataset/filtered_dataset.target_frames.clustered.train.csv')
+                    print('        data_csv_path: ../data/data_processing/train_dataset/filtered_dataset.target_frames.clustered.train_shuffled.shuffled.csv')
                 else:
                     print(line, end='')
         

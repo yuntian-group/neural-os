@@ -1,6 +1,7 @@
 import re
 import matplotlib.pyplot as plt
 import numpy as np
+import math
 
 def extract_losses_from_log(log_file_path):
     with open(log_file_path, 'r') as file:
@@ -8,7 +9,8 @@ def extract_losses_from_log(log_file_path):
 
     # Extract losses using regex (e.g., loss=1.88e+03)
     loss_pattern = re.compile(r'loss=([\d\.eE+-]+)')
-    losses = [float(loss) for loss in loss_pattern.findall(log_content)]
+    losses = [math.log(float(loss)) for loss in loss_pattern.findall(log_content)]
+    print (len(losses))
     
     return losses
 
@@ -50,13 +52,15 @@ if __name__ == "__main__":
         ('a_hs4096_oc32_nl48_ar4_cm1_2_3_mc320', 'log.a_hs4096_oc32_nl48_ar4_cm1_2_3_mc320'),
         ('a_hs1024_oc4_nl20_ar2_4_8_cm1_2_3_5_mc192', 'log.a_hs1024_oc4_nl20_ar2_4_8_cm1_2_3_5_mc192'),
         ('a_hs4096_oc32_nl48_ar2_4_8_cm1_2_3_5_mc320', 'log.a_hs4096_oc32_nl48_ar2_4_8_cm1_2_3_5_mc320'),
+        ('a_hs4096_oc32_nl48_ar_cm1_2_mc448', 'log.a_hs4096_oc32_nl48_ar_cm1_2_mc448'),
     ]
     
     losses_dict = {}
     for label, log_file_path in log_file_paths:
         losses = extract_losses_from_log(log_file_path)
         smoothed_losses = smooth_losses(losses, window_size=500)
-        losses_dict[label] = (losses[6000:], smoothed_losses[6000:])
+        losses_dict[label] = (losses[0:], smoothed_losses[0:])
+        #losses_dict[label] = (losses[6000:], smoothed_losses[6000:])
     
     plot_and_compare_losses(losses_dict)
 

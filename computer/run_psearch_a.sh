@@ -9,3 +9,9 @@ CUDA_VISIBLE_DEVICES=5 stdbuf -oL -eL python main.py --config configs/psearch_a_
 CUDA_VISIBLE_DEVICES=6 stdbuf -oL -eL python main.py --config configs/psearch_a_hs4096_oc32_nl48_ar_cm1_2_mc320.yaml > log.a_hs4096_oc32_nl48_ar_cm1_2_mc320 2>&1 &
 CUDA_VISIBLE_DEVICES=7 stdbuf -oL -eL python main.py --config configs/psearch_a_hs4096_oc32_nl48_ar_cm1_2_mc384.yaml > log.a_hs4096_oc32_nl48_ar_cm1_2_mc384 2>&1 &
 
+CUDA_VISIBLE_DEVICES=1 stdbuf -oL -eL python main.py --config configs/psearch_a_hs4096_oc32_nl48_ar2_4_8_cm1_2_3_5_mc192.yaml > log.a_hs4096_oc32_nl48_ar2_4_8_cm1_2_3_5_mc192 2>&1 &
+CUDA_VISIBLE_DEVICES=1 stdbuf -oL -eL python main.py --config configs/psearch_a_hs4096_oc32_nl48_ar2_4_8_cm1_2_3_5_mc448.yaml > log.a_hs4096_oc32_nl48_ar2_4_8_cm1_2_3_5_mc448 2>&1 &
+
+
+
+CUDA_VISIBLE_DEVICES=1 stdbuf -oL -eL python main.py --config configs/psearch_a_hs4096_oc32_nl48_ar_cm1_2_mc448.yaml > log.a_hs4096_oc32_nl48_ar_cm1_2_mc448 2>&1 &

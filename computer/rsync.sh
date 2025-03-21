@@ -1,0 +1,18 @@
+#!/bin/bash
+
+rsync -avhP saved_standard_challenging_context32_nocond_fixnorm_all_scheduled_sampling_0.2_feedz_comb0.1_rnn_fixrnn_enablegrad_all_keyevent_a_hs1024_oc4_nl20_ar2_4_8_cm1_2_3_5_mc192/ root@86.38.238.20:~/computer_mar12/computer/ &
+
+rsync -avhP saved_standard_challenging_context32_nocond_fixnorm_all_scheduled_sampling_0.2_feedz_comb0.1_rnn_fixrnn_enablegrad_all_keyevent_a_hs4096_oc32_nl48_ar2_4_8_cm1_2_3_5_mc320/ root@86.38.238.20:~/computer_mar12/computer/ &
+
+rsync -avhP saved_standard_challenging_context32_nocond_fixnorm_all_scheduled_sampling_0.2_feedz_comb0.1_rnn_fixrnn_enablegrad_all_keyevent_a_hs4096_oc32_nl48_ar2_cm1_2_3_mc320/ root@86.38.238.20:~/computer_mar12/computer/ &
+
+rsync -avhP saved_standard_challenging_context32_nocond_fixnorm_all_scheduled_sampling_0.2_feedz_comb0.1_rnn_fixrnn_enablegrad_all_keyevent_a_hs4096_oc32_nl48_ar2_cm1_2_mc320/ root@86.38.238.20:~/computer_mar12/computer/ &
+
+rsync -avhP saved_standard_challenging_context32_nocond_fixnorm_all_scheduled_sampling_0.2_feedz_comb0.1_rnn_fixrnn_enablegrad_all_keyevent_a_hs4096_oc32_nl48_ar4_cm1_2_3_mc320/ root@86.38.238.20:~/computer_mar12/computer/ &
+
+rsync -avhP saved_standard_challenging_context32_nocond_fixnorm_all_scheduled_sampling_0.2_feedz_comb0.1_rnn_fixrnn_enablegrad_all_keyevent_a_hs4096_oc32_nl48_ar_cm1_2_3_mc320/ root@86.38.238.20:~/computer_mar12/computer/ &
+
+rsync -avhP saved_standard_challenging_context32_nocond_fixnorm_all_scheduled_sampling_0.2_feedz_comb0.1_rnn_fixrnn_enablegrad_all_keyevent_a_hs4096_oc32_nl48_ar_cm1_2_mc320/ root@86.38.238.20:~/computer_mar12/computer/ &
+
+rsync -avhP saved_standard_challenging_context32_nocond_fixnorm_all_scheduled_sampling_0.2_feedz_comb0.1_rnn_fixrnn_enablegrad_all_keyevent_a_hs4096_oc32_nl48_ar_cm1_2_mc384/ root@86.38.238.20:~/computer_mar12/computer/ &
+

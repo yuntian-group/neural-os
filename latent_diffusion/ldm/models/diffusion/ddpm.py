@@ -1338,11 +1338,11 @@ class LatentDiffusion(DDPM):
                 
                 # Save confusion matrix periodically
                 # compute accuracy, precision, recall, f1 score
-                precision = self.confusion_matrix.diagonal() / self.confusion_matrix.sum(axis=1).clamp(min=1e-5)
+                precision = self.confusion_matrix.diagonal() / np.clip(self.confusion_matrix.sum(axis=1), 1e-5, None)
                 precision_mean = precision.mean()
-                recall = self.confusion_matrix.diagonal() / self.confusion_matrix.sum(axis=0).clamp(min=1e-5)
+                recall = self.confusion_matrix.diagonal() / np.clip(self.confusion_matrix.sum(axis=0), 1e-5, None)
                 recall_mean = recall.mean()
-                f1_score = 2 * precision * recall / (precision + recall).clamp(min=1e-5)
+                f1_score = 2 * precision * recall / np.clip(precision + recall, 1e-5, None)
                 accuracy = self.confusion_matrix.diagonal().sum() / self.confusion_matrix.sum()
                 setting = exp_name
                 print (f'setting: {setting}')

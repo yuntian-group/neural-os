@@ -1343,6 +1343,7 @@ class LatentDiffusion(DDPM):
                 recall = self.confusion_matrix.diagonal() / np.clip(self.confusion_matrix.sum(axis=0), 1e-5, None)
                 recall_mean = recall.mean()
                 f1_score = 2 * precision * recall / np.clip(precision + recall, 1e-5, None)
+                f1_score_mean = f1_score.mean()
                 accuracy = self.confusion_matrix.diagonal().sum() / self.confusion_matrix.sum()
                 setting = exp_name
                 print (f'setting: {setting}')

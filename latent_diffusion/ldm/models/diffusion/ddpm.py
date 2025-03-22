@@ -1337,6 +1337,14 @@ class LatentDiffusion(DDPM):
                 Image.fromarray(combined_img).save(f'{pair_dir}/comparison_{self.i}.png')
                 
                 # Save confusion matrix periodically
+                # compute accuracy, precision, recall, f1 score
+                precision = self.confusion_matrix.diagonal() / max(1e-5, self.confusion_matrix.sum(axis=1))
+                recall = self.confusion_matrix.diagonal() / max(1e-5, self.confusion_matrix.sum(axis=0))
+                f1_score = 2 * precision * recall / max(1e-5, precision + recall)
+                accuracy = self.confusion_matrix.diagonal().sum() / self.confusion_matrix.sum()
+                setting = exp_name
+                print (f'setting: {setting},precision: {precision}, recall: {recall}, f1_score: {f1_score}, accuracy: {accuracy}')
+                print ('='*100)
                 if True or self.i % 10 == 0:
                     plt.figure(figsize=(10,8))
                     sns.heatmap(self.confusion_matrix, 

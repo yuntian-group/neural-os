@@ -1381,7 +1381,10 @@ class LatentDiffusion(DDPM):
                 print(f"{'Rank':<5}{'Setting':<40}{'Accuracy':<10}{'F1 Score':<10}{'Precision':<10}{'Recall':<10}")
                 print("-" * 85)
                 for i, (setting_name, metrics) in enumerate(all_results_sorted):
-                    print(f"{i+1:<5}{setting_name:<40}{metrics['accuracy']:.4f}{metrics['f1_score_mean']:.4f}{metrics['precision_mean']:.4f}{metrics['recall_mean']:.4f}")
+                    print(f"{i+1:<5}{setting_name:<40}: accuracy: {metrics['accuracy']:.4f}, f1_score: {metrics['f1_score_mean']:.4f}, precision: {metrics['precision_mean']:.4f}, recall: {metrics['recall_mean']:.4f}")
+                    print(f"precision breakdown: {metrics['precision_breakdown']}")
+                    print(f"recall breakdown: {metrics['recall_breakdown']}")
+                    print(f"f1_score breakdown: {metrics['f1_score_breakdown']}")
                 print("=" * 85)
 
                 if True or self.i % 10 == 0:

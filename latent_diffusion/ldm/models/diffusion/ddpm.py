@@ -1135,7 +1135,7 @@ class LatentDiffusion(DDPM):
                         conditioning=c_i,
                         batch_size=1,
                         shape=[16, 48, 64],
-                        verbose=True
+                        verbose=False
                     )
                 
                 if 'norm_standard' in exp_name:

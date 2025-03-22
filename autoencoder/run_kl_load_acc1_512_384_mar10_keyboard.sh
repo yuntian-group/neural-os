@@ -68,3 +68,6 @@ CUDA_VISIBLE_DEVICES=0 stdbuf -oL -eL python main_kl_512_384_mar10_keyboard_init
 CUDA_VISIBLE_DEVICES=1 stdbuf -oL -eL python main_kl_512_384_mar10_keyboard_init.py --config config_kl4_lr4.5e6_load_acc1_512_384_mar10_keyboard_init_8_contmar15_acc1.cont.1e6.yaml --from_ckpt saved_kl4_bsz8_acc8_lr4.5e6_load_acc1_512_384_mar10_keyboard_init_8_cont_mar15_acc1/model-1176000.ckpt > log.init.ae.kl.bsz8_acc3_lr4.5e6_load_acc1.save.512_384.mar10.keyboard.8.cont.mar15.acc1.cont1e6 2>&1&
 # init, 16 channels
 CUDA_VISIBLE_DEVICES=2 stdbuf -oL -eL python main_kl_512_384_mar10_keyboard_init.py --config config_kl4_lr4.5e6_load_acc1_512_384_mar10_keyboard_init_16_contmar15_acc1.cont.1e6.yaml --from_ckpt saved_kl4_bsz8_acc8_lr4.5e6_load_acc1_512_384_mar10_keyboard_init_16_cont_mar15_acc1/model-1164000.ckpt > log.init.ae.kl.bsz8_acc3_lr4.5e6_load_acc1.save.512_384.mar10.keyboard.16.cont.mar15.acc1.cont1e6 2>&1&
+
+
+CUDA_VISIBLE_DEVICES=3 stdbuf -oL -eL python main_kl_512_384_mar10_keyboard_init.py --config config_kl4_lr4.5e6_load_acc1_512_384_mar10_keyboard_init_16_contmar15_acc1.cont.4.5e7.yaml --from_ckpt saved_kl4_bsz8_acc8_lr4.5e6_load_acc1_512_384_mar10_keyboard_init_16_cont_mar15_acc1_cont_1e6/model-1224000.ckpt > log.init.ae.kl.bsz8_acc3_lr4.5e6_load_acc1.save.512_384.mar10.keyboard.16.cont.mar15.acc1.cont4.5e7 2>&1&

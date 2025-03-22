@@ -1352,6 +1352,34 @@ class LatentDiffusion(DDPM):
                 print (f'f1_score breakdown: {f1_score}')
                 print (f'precision: {precision_mean}, recall: {recall_mean}, f1_score: {f1_score_mean}, accuracy: {accuracy}')
                 print ('='*100)
+                # write to a file and compare with previous results
+                if os.path.exists('all_psearch_results.json'):
+                    with open('all_psearch_results.json', 'r') as f:
+                        all_results = json.load(f)
+                else:
+                    all_results = {}
+                all_results[setting] = {
+                    'precision_mean': precision_mean,
+                    'recall_mean': recall_mean,
+                    'f1_score_mean': f1_score_mean,
+                    'precision_breakdown': precision.tolist(),
+                    'recall_breakdown': recall.tolist(),
+                    'f1_score_breakdown': f1_score.tolist(),
+                    'accuracy': accuracy
+                }
+                with open('all_psearch_results.json', 'w') as f:
+                    json.dump(all_results, f)
+                # compare with previous results and sort by accuracy
+                all_results_sorted = sorted(all_results.items(), key=lambda x: x[1]['accuracy'], reverse=True)
+                
+                # Display sorted results in a more readable format
+                print("\n=== RESULTS RANKED BY ACCURACY ===")
+                print(f"{'Rank':<5}{'Setting':<40}{'Accuracy':<10}{'F1 Score':<10}{'Precision':<10}{'Recall':<10}")
+                print("-" * 85)
+                for i, (setting_name, metrics) in enumerate(all_results_sorted):
+                    print(f"{i+1:<5}{setting_name:<40}{metrics['accuracy']:.4f}{metrics['f1_score_mean']:.4f}{metrics['precision_mean']:.4f}{metrics['recall_mean']:.4f}")
+                print("=" * 85)
+
                 if True or self.i % 10 == 0:
                     plt.figure(figsize=(10,8))
                     sns.heatmap(self.confusion_matrix, 

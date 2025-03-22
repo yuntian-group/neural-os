@@ -39,6 +39,40 @@ __conditioning_keys__ = {'concat': 'c_concat',
                          'crossattn': 'c_crossattn',
                          'adm': 'y'}
 
+DEBUG = True
+if DEBUG:
+    from torchvision import transforms
+    from PIL import Image
+    transform = transforms.ToTensor()
+    print("Loading cluster centers...")
+    # Define cluster directories
+    cluster_dir = "filtered_transition_clusters"
+    cluster_paths = sorted(Path(cluster_dir).glob("cluster_*_size_*"))
+    cluster_centers = []
+    cluster_ids = []
+    for cluster_path in cluster_paths:
+        if "noise" in str(cluster_path):
+            continue
+            
+        # Extract cluster ID using regex (e.g., "cluster_5_size_100" -> 5)
+        match = re.search(r'cluster_(\d+)_size_', str(cluster_path.name))
+        if not match:
+            continue
+        cluster_id = int(match.group(1))
+        
+        # Find center images
+        center_files = list(cluster_path.glob("cluster_center_*.png"))
+        if not center_files:
+            continue
+            
+        # Load and concatenate center images
+        prev_img = transform(Image.open([f for f in center_files if 'prev' in str(f)][0])).view(-1)
+        curr_img = transform(Image.open([f for f in center_files if 'curr' in str(f)][0])).view(-1)
+        center = torch.cat([prev_img, curr_img], dim=0)
+        
+        cluster_centers.append(center)
+        cluster_ids.append(cluster_id)
+    cluster_centers = torch.stack(cluster_centers)
 
 def disabled_train(self, mode=True):
     """Overwrite model.train with this function to make sure train/eval mode
@@ -1033,56 +1067,8 @@ class LatentDiffusion(DDPM):
             self.i = 0
 
         if DEBUG:
-            from torchvision import transforms
-            from PIL import Image
-            transform = transforms.ToTensor()
             device = c[hkey].device
-            print("Loading cluster centers...")
-            # Define cluster directories
-            if False:
-                cluster_paths = {
-                    'terminal': "desktop_transition_clusters/cluster_01_size_1499_desktop_terminal",
-                    'firefox': "desktop_transition_clusters/cluster_03_size_1275_desktop_firefox",
-                'root': "desktop_transition_clusters/cluster_04_size_799_desktop_root",
-                'trash': "desktop_transition_clusters/cluster_05_size_738_desktop_trash",
-                'desktop': "desktop_transition_clusters/cluster_00_size_24373_desktop_desktop"
-                }
-            
-                # Load cluster centers
-                cluster_centers = {}
-                for name, dir in cluster_paths.items():
-                    center_path = os.path.join(dir, "cluster_center.png")
-                    center = cv2.imread(center_path)
-                    center = cv2.cvtColor(center, cv2.COLOR_BGR2RGB)
-                    cluster_centers[name] = center
-            else:
-                cluster_dir = "filtered_transition_clusters"
-                cluster_paths = sorted(Path(cluster_dir).glob("cluster_*_size_*"))
-                cluster_centers = []
-                cluster_ids = []
-                for cluster_path in cluster_paths:
-                    if "noise" in str(cluster_path):
-                        continue
-                        
-                    # Extract cluster ID using regex (e.g., "cluster_5_size_100" -> 5)
-                    match = re.search(r'cluster_(\d+)_size_', str(cluster_path.name))
-                    if not match:
-                        continue
-                    cluster_id = int(match.group(1))
-                    
-                    # Find center images
-                    center_files = list(cluster_path.glob("cluster_center_*.png"))
-                    if not center_files:
-                        continue
-                        
-                    # Load and concatenate center images
-                    prev_img = transform(Image.open([f for f in center_files if 'prev' in str(f)][0])).view(-1)
-                    curr_img = transform(Image.open([f for f in center_files if 'curr' in str(f)][0])).view(-1)
-                    center = torch.cat([prev_img, curr_img], dim=0).to(device)
-                    
-                    cluster_centers.append(center)
-                    cluster_ids.append(cluster_id)
-                cluster_centers = torch.stack(cluster_centers)
+            cluster_centers = cluster_centers.to(device)
             
             print(f"Loaded {len(cluster_centers)} cluster centers")
             #data_mean = -0.54

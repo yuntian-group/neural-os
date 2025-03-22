@@ -1355,8 +1355,11 @@ class LatentDiffusion(DDPM):
                 print ('='*100)
                 # write to a file and compare with previous results
                 if os.path.exists('all_psearch_results.json'):
-                    with open('all_psearch_results.json', 'r') as f:
-                        all_results = json.load(f)
+                    try:
+                        with open('all_psearch_results.json', 'r') as f:
+                            all_results = json.load(f)
+                    except:
+                        all_results = {}
                 else:
                     all_results = {}
                 all_results[setting] = {

@@ -25,6 +25,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
 from pathlib import Path
+import json
 
 from latent_diffusion.ldm.util import log_txt_as_img, exists, default, ismap, isimage, mean_flat, count_params, instantiate_from_config
 from latent_diffusion.ldm.modules.ema import LitEma
@@ -38,6 +39,40 @@ __conditioning_keys__ = {'concat': 'c_concat',
                          'crossattn': 'c_crossattn',
                          'adm': 'y'}
 
+DEBUG = True
+if DEBUG:
+    from torchvision import transforms
+    from PIL import Image
+    transform = transforms.ToTensor()
+    print("Loading cluster centers...")
+    # Define cluster directories
+    cluster_dir = "filtered_transition_clusters"
+    cluster_paths = sorted(Path(cluster_dir).glob("cluster_*_size_*"))
+    cluster_centers = []
+    cluster_ids = []
+    for cluster_path in cluster_paths:
+        if "noise" in str(cluster_path):
+            continue
+            
+        # Extract cluster ID using regex (e.g., "cluster_5_size_100" -> 5)
+        match = re.search(r'cluster_(\d+)_size_', str(cluster_path.name))
+        if not match:
+            continue
+        cluster_id = int(match.group(1))
+        
+        # Find center images
+        center_files = list(cluster_path.glob("cluster_center_*.png"))
+        if not center_files:
+            continue
+            
+        # Load and concatenate center images
+        prev_img = transform(Image.open([f for f in center_files if 'prev' in str(f)][0])).view(-1)
+        curr_img = transform(Image.open([f for f in center_files if 'curr' in str(f)][0])).view(-1)
+        center = torch.cat([prev_img, curr_img], dim=0)
+        
+        cluster_centers.append(center)
+        cluster_ids.append(cluster_id)
+    cluster_centers = torch.stack(cluster_centers)
 
 def disabled_train(self, mode=True):
     """Overwrite model.train with this function to make sure train/eval mode
@@ -1032,56 +1067,8 @@ class LatentDiffusion(DDPM):
             self.i = 0
 
         if DEBUG:
-            from torchvision import transforms
-            from PIL import Image
-            transform = transforms.ToTensor()
             device = c[hkey].device
-            print("Loading cluster centers...")
-            # Define cluster directories
-            if False:
-                cluster_paths = {
-                    'terminal': "desktop_transition_clusters/cluster_01_size_1499_desktop_terminal",
-                    'firefox': "desktop_transition_clusters/cluster_03_size_1275_desktop_firefox",
-                'root': "desktop_transition_clusters/cluster_04_size_799_desktop_root",
-                'trash': "desktop_transition_clusters/cluster_05_size_738_desktop_trash",
-                'desktop': "desktop_transition_clusters/cluster_00_size_24373_desktop_desktop"
-                }
-            
-                # Load cluster centers
-                cluster_centers = {}
-                for name, dir in cluster_paths.items():
-                    center_path = os.path.join(dir, "cluster_center.png")
-                    center = cv2.imread(center_path)
-                    center = cv2.cvtColor(center, cv2.COLOR_BGR2RGB)
-                    cluster_centers[name] = center
-            else:
-                cluster_dir = "filtered_transition_clusters"
-                cluster_paths = sorted(Path(cluster_dir).glob("cluster_*_size_*"))
-                cluster_centers = []
-                cluster_ids = []
-                for cluster_path in cluster_paths:
-                    if "noise" in str(cluster_path):
-                        continue
-                        
-                    # Extract cluster ID using regex (e.g., "cluster_5_size_100" -> 5)
-                    match = re.search(r'cluster_(\d+)_size_', str(cluster_path.name))
-                    if not match:
-                        continue
-                    cluster_id = int(match.group(1))
-                    
-                    # Find center images
-                    center_files = list(cluster_path.glob("cluster_center_*.png"))
-                    if not center_files:
-                        continue
-                        
-                    # Load and concatenate center images
-                    prev_img = transform(Image.open([f for f in center_files if 'prev' in str(f)][0])).view(-1)
-                    curr_img = transform(Image.open([f for f in center_files if 'curr' in str(f)][0])).view(-1)
-                    center = torch.cat([prev_img, curr_img], dim=0).to(device)
-                    
-                    cluster_centers.append(center)
-                    cluster_ids.append(cluster_id)
-                cluster_centers = torch.stack(cluster_centers)
+            cluster_centers = cluster_centers.to(device)
             
             print(f"Loaded {len(cluster_centers)} cluster centers")
             #data_mean = -0.54
@@ -1135,7 +1122,7 @@ class LatentDiffusion(DDPM):
                         conditioning=c_i,
                         batch_size=1,
                         shape=[16, 48, 64],
-                        verbose=True
+                        verbose=False
                     )
                 
                 if 'norm_standard' in exp_name:
@@ -1337,6 +1324,55 @@ class LatentDiffusion(DDPM):
                 Image.fromarray(combined_img).save(f'{pair_dir}/comparison_{self.i}.png')
                 
                 # Save confusion matrix periodically
+                # compute accuracy, precision, recall, f1 score
+                precision = self.confusion_matrix.diagonal() / np.clip(self.confusion_matrix.sum(axis=1), 1e-5, None)
+                precision_mean = precision.mean()
+                recall = self.confusion_matrix.diagonal() / np.clip(self.confusion_matrix.sum(axis=0), 1e-5, None)
+                recall_mean = recall.mean()
+                f1_score = 2 * precision * recall / np.clip(precision + recall, 1e-5, None)
+                f1_score_mean = f1_score.mean()
+                accuracy = self.confusion_matrix.diagonal().sum() / self.confusion_matrix.sum()
+                setting = exp_name
+                print (f'setting: {setting}')
+                print (f'precision breakdown: {precision}')
+                print (f'recall breakdown: {recall}')
+                print (f'f1_score breakdown: {f1_score}')
+                print (f'precision: {precision_mean}, recall: {recall_mean}, f1_score: {f1_score_mean}, accuracy: {accuracy}')
+                print ('='*100)
+                # write to a file and compare with previous results
+                if os.path.exists('all_psearch_results.json'):
+                    try:
+                        with open('all_psearch_results.json', 'r') as f:
+                            all_results = json.load(f)
+                    except:
+                        all_results = {}
+                else:
+                    all_results = {}
+                all_results[setting] = {
+                    'precision_mean': precision_mean,
+                    'recall_mean': recall_mean,
+                    'f1_score_mean': f1_score_mean,
+                    'precision_breakdown': precision.tolist(),
+                    'recall_breakdown': recall.tolist(),
+                    'f1_score_breakdown': f1_score.tolist(),
+                    'accuracy': accuracy
+                }
+                with open('all_psearch_results.json', 'w') as f:
+                    json.dump(all_results, f)
+                # compare with previous results and sort by accuracy
+                all_results_sorted = sorted(all_results.items(), key=lambda x: x[1]['accuracy'], reverse=True)
+                
+                # Display sorted results in a more readable format
+                print("\n=== RESULTS RANKED BY ACCURACY ===")
+                print(f"{'Rank':<5}{'Setting':<40}{'Accuracy':<10}{'F1 Score':<10}{'Precision':<10}{'Recall':<10}")
+                print("-" * 85)
+                for i, (setting_name, metrics) in enumerate(all_results_sorted):
+                    print(f"{i+1:<5}{setting_name:<40}: accuracy: {metrics['accuracy']:.4f}, f1_score: {metrics['f1_score_mean']:.4f}, precision: {metrics['precision_mean']:.4f}, recall: {metrics['recall_mean']:.4f}")
+                    print(f"precision breakdown: {metrics['precision_breakdown']}")
+                    print(f"recall breakdown: {metrics['recall_breakdown']}")
+                    print(f"f1_score breakdown: {metrics['f1_score_breakdown']}")
+                print("=" * 85)
+
                 if True or self.i % 10 == 0:
                     plt.figure(figsize=(10,8))
                     sns.heatmap(self.confusion_matrix, 

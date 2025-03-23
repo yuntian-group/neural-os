@@ -39,40 +39,6 @@ __conditioning_keys__ = {'concat': 'c_concat',
                          'crossattn': 'c_crossattn',
                          'adm': 'y'}
 
-DEBUG = True
-if DEBUG:
-    from torchvision import transforms
-    from PIL import Image
-    transform = transforms.ToTensor()
-    print("Loading cluster centers...")
-    # Define cluster directories
-    cluster_dir = "filtered_transition_clusters"
-    cluster_paths = sorted(Path(cluster_dir).glob("cluster_*_size_*"))
-    cluster_centers = []
-    cluster_ids = []
-    for cluster_path in cluster_paths:
-        if "noise" in str(cluster_path):
-            continue
-            
-        # Extract cluster ID using regex (e.g., "cluster_5_size_100" -> 5)
-        match = re.search(r'cluster_(\d+)_size_', str(cluster_path.name))
-        if not match:
-            continue
-        cluster_id = int(match.group(1))
-        
-        # Find center images
-        center_files = list(cluster_path.glob("cluster_center_*.png"))
-        if not center_files:
-            continue
-            
-        # Load and concatenate center images
-        prev_img = transform(Image.open([f for f in center_files if 'prev' in str(f)][0])).view(-1)
-        curr_img = transform(Image.open([f for f in center_files if 'curr' in str(f)][0])).view(-1)
-        center = torch.cat([prev_img, curr_img], dim=0)
-        
-        cluster_centers.append(center)
-        cluster_ids.append(cluster_id)
-    cluster_centers = torch.stack(cluster_centers)
 
 def disabled_train(self, mode=True):
     """Overwrite model.train with this function to make sure train/eval mode
@@ -385,7 +351,14 @@ class DDPM(pl.LightningModule):
         return loss, loss_dict
 
     def training_step(self, batch, batch_idx):
-        loss, loss_dict = self.shared_step(batch)
+        DEBUG = True
+        self.DEBUG = DEBUG
+        if DEBUG:
+            print ('no grad at all')
+            with torch.no_grad():
+                loss, loss_dict = self.shared_step(batch)
+        else:
+            loss, loss_dict = self.shared_step(batch)
 
         self.log_dict(loss_dict, prog_bar=True,
                       logger=True, on_step=True, on_epoch=True)
@@ -523,6 +496,43 @@ class LatentDiffusion(DDPM):
         self.temporal_encoder = None
         if temporal_encoder_config is not None:
             self.temporal_encoder = instantiate_from_config(temporal_encoder_config)
+        DEBUG = True
+        if DEBUG:
+            from torchvision import transforms
+            from PIL import Image
+            transform = transforms.ToTensor()
+            print("Loading cluster centers...")
+            # Define cluster directories
+            cluster_dir = "filtered_transition_clusters"
+            cluster_paths = sorted(Path(cluster_dir).glob("cluster_*_size_*"))
+            cluster_centers = []
+            cluster_ids = []
+            for cluster_path in cluster_paths:
+                if "noise" in str(cluster_path):
+                    continue
+                    
+                # Extract cluster ID using regex (e.g., "cluster_5_size_100" -> 5)
+                match = re.search(r'cluster_(\d+)_size_', str(cluster_path.name))
+                if not match:
+                    continue
+                cluster_id = int(match.group(1))
+                
+                # Find center images
+                center_files = list(cluster_path.glob("cluster_center_*.png"))
+                if not center_files:
+                    continue
+                    
+                # Load and concatenate center images
+                prev_img = transform(Image.open([f for f in center_files if 'prev' in str(f)][0])).view(-1)
+                curr_img = transform(Image.open([f for f in center_files if 'curr' in str(f)][0])).view(-1)
+                center = torch.cat([prev_img, curr_img], dim=0)
+                
+                cluster_centers.append(center)
+                cluster_ids.append(cluster_id)
+            cluster_centers = torch.stack(cluster_centers)
+            print (cluster_centers)
+            self.cluster_centers = cluster_centers
+            self.cluster_ids = cluster_ids
 
     def make_cond_schedule(self, ):
         self.cond_ids = torch.full(size=(self.num_timesteps,), fill_value=self.num_timesteps - 1, dtype=torch.long)
@@ -1068,7 +1078,9 @@ class LatentDiffusion(DDPM):
 
         if DEBUG:
             device = c[hkey].device
-            cluster_centers = cluster_centers.to(device)
+            self.cluster_centers = self.cluster_centers.to(device)
+            cluster_centers = self.cluster_centers
+            cluster_ids = self.cluster_ids
             
             print(f"Loaded {len(cluster_centers)} cluster centers")
             #data_mean = -0.54
@@ -1397,7 +1409,7 @@ class LatentDiffusion(DDPM):
                 self.i += 1
                 #if self.i >= 497:
                 #    sys.exit(1)
-                if self.i >= 60:
+                if self.i >= 150:
                     sys.exit(1)
             #import pdb; pdb.set_trace()
 

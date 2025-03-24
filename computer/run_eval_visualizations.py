@@ -44,9 +44,9 @@ ckpt_dir = 'saved_bsz64_acc1_lr8e5_512_leftclick_histpos_512_384_cont2_ddd_diffi
 # 34. a_hs1024_oc4_nl20_ar2_4_8_cm1_2_3_5_mc192: 4.84 FPS, 206.49 ms latency
 # 41. a_hs4096_oc32_nl48_ar2_4_8_cm1_2_3_5_mc320: 4.50 FPS, 222.29 ms latency
 #for setting in ['a_hs4096_oc32_nl48_ar_cm1_2_mc320', 'a_hs4096_oc32_nl48_ar_cm1_2_mc384', 'a_hs4096_oc32_nl48_ar2_cm1_2_mc320', 'a_hs4096_oc32_nl48_ar_cm1_2_3_mc320', 'a_hs4096_oc32_nl48_ar2_cm1_2_3_mc320', 'a_hs4096_oc32_nl48_ar4_cm1_2_3_mc320', 'a_hs1024_oc4_nl20_ar2_4_8_cm1_2_3_5_mc192', 'a_hs4096_oc32_nl48_ar2_4_8_cm1_2_3_5_mc320']:
-#for DEBUG_S in [8, 4, 16]:
+#for DDIM_S in [8, 4, 16]:
 for setting in ['a_hs4096_oc32_nl48_ar_cm1_2_mc320', 'a_hs4096_oc32_nl48_ar_cm1_2_mc384', 'a_hs4096_oc32_nl48_ar2_cm1_2_mc320', 'a_hs4096_oc32_nl48_ar_cm1_2_3_mc320', 'a_hs4096_oc32_nl48_ar2_cm1_2_3_mc320', 'a_hs4096_oc32_nl48_ar4_cm1_2_3_mc320', 'a_hs4096_oc32_nl48_ar2_4_8_cm1_2_3_5_mc320', 'a_hs4096_oc32_nl48_ar_cm1_2_mc448']:
-    for DEBUG_S in [4, 16]:
+    for DDIM_S in [4, 8, 16]:
     #for setting in ['a_hs4096_oc32_nl48_ar2_cm1_2_mc320']:
     #for setting in ['a_hs1024_oc4_nl20_ar2_4_8_cm1_2_3_5_mc192']:#, 'a_hs4096_oc32_nl48_ar_cm1_2_mc384', 'a_hs4096_oc32_nl48_ar2_cm1_2_mc320', 'a_hs4096_oc32_nl48_ar_cm1_2_3_mc320', 'a_hs4096_oc32_nl48_ar2_cm1_2_3_mc320', 'a_hs4096_oc32_nl48_ar4_cm1_2_3_mc320', 'a_hs1024_oc4_nl20_ar2_4_8_cm1_2_3_5_mc192', 'a_hs4096_oc32_nl48_ar2_4_8_cm1_2_3_5_mc320']:
         #ckpt_dir = f'saved_standard_challenging_context{context_length}'
@@ -93,7 +93,7 @@ for setting in ['a_hs4096_oc32_nl48_ar_cm1_2_mc320', 'a_hs4096_oc32_nl48_ar_cm1_
             
             # Run for training set
             # Replace lines in ddpm.py for training set
-            ddpm_replacement = f'        exp_name = \'psearch_a_vis_norm_standard_context{setting}_ckpt{step}/train_{DEBUG_S}\'\n        DEBUG = True\n        DEBUG_S = {DEBUG_S}'
+            ddpm_replacement = f'        exp_name = \'psearch_a_vis_norm_standard_context{setting}_ckpt{step}/train_{DDIM_S}\'\n        DEBUG = True\n        DDIM_S = {DDIM_S}'
             
             with fileinput.FileInput('../latent_diffusion/ldm/models/diffusion/ddpm.py', inplace=True, backup='.bak') as file:
                 for line in file:
@@ -132,7 +132,7 @@ for setting in ['a_hs4096_oc32_nl48_ar_cm1_2_mc320', 'a_hs4096_oc32_nl48_ar_cm1_
             
             # Replace lines in ddpm.py for test set
             #ddpm_replacement = f'        exp_name = \'without_comp_norm_standard_ckpt{step}/test\'\n        DEBUG = True'
-            ddpm_replacement = f'        exp_name = \'psearch_a_vis_norm_standard_context{setting}_ckpt{step}/test_{DEBUG_S}\'\n        DEBUG = True\n        DEBUG_S = {DEBUG_S}'
+            ddpm_replacement = f'        exp_name = \'psearch_a_vis_norm_standard_context{setting}_ckpt{step}/test_{DDIM_S}\'\n        DEBUG = True\n        DDIM_S = {DDIM_S}'
             
             with fileinput.FileInput('../latent_diffusion/ldm/models/diffusion/ddpm.py', inplace=True, backup='.bak') as file:
                 for line in file:
@@ -141,12 +141,12 @@ for setting in ['a_hs4096_oc32_nl48_ar_cm1_2_mc320', 'a_hs4096_oc32_nl48_ar_cm1_
                     else:
                         print(line, end='')
             
-            #### Run with modified config (test set)
-            ###try:
-            ###    subprocess.run(f'CUDA_VISIBLE_DEVICES=1 python main.py --config {config_file}', shell=True)
-            ###except Exception as e:
-            ###    print(f"Error in test run: {e}")
-            ###    pass
+            # Run with modified config (test set)
+            try:
+                subprocess.run(f'CUDA_VISIBLE_DEVICES=1 python main.py --config {config_file}', shell=True)
+            except Exception as e:
+                print(f"Error in test run: {e}")
+                pass
             
             # Restore original files
             restore_files()

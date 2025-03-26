@@ -2,6 +2,21 @@ import re
 import matplotlib.pyplot as plt
 import numpy as np
 import math
+import os
+import datetime
+
+def elapsed_time_since_modified(file_path):
+    """Returns the elapsed time since the file was last modified."""
+    try:
+        modification_time = os.path.getctime(file_path)
+        current_time = datetime.datetime.now().timestamp()
+        #current_time = os.path.getmtime(file_path)
+        elapsed_seconds = current_time - modification_time
+        return elapsed_seconds #datetime.timedelta(seconds=elapsed_seconds)
+    except FileNotFoundError:
+        return None
+
+
 
 def extract_losses_from_log(log_file_path):
     with open(log_file_path, 'r') as file:
@@ -19,7 +34,7 @@ def smooth_losses(losses, window_size=100):
         window_size = max(1, len(losses) // 10)
     return np.convolve(losses, np.ones(window_size)/window_size, mode='valid')
 
-def plot_and_compare_losses(losses_dict, output_png='psearch_a_loss_curve_comparison.png'):
+def plot_and_compare_losses(losses_dict, output_png='psearch_b_loss_curve_comparison.png'):
     """
     Plot and compare multiple loss curves on a single graph.
     
@@ -44,23 +59,38 @@ def plot_and_compare_losses(losses_dict, output_png='psearch_a_loss_curve_compar
 
 if __name__ == "__main__":
     log_file_paths = [
-        ('a_hs4096_oc32_nl48_ar_cm1_2_mc320', 'log.a_hs4096_oc32_nl48_ar_cm1_2_mc320'),
+        #('a_hs4096_oc32_nl48_ar_cm1_2_mc320', 'log.a_hs4096_oc32_nl48_ar_cm1_2_mc320'),
         ('a_hs4096_oc32_nl48_ar_cm1_2_mc384', 'log.a_hs4096_oc32_nl48_ar_cm1_2_mc384'),
-        ('a_hs4096_oc32_nl48_ar2_cm1_2_mc320', 'log.a_hs4096_oc32_nl48_ar2_cm1_2_mc320'),
-        ('a_hs4096_oc32_nl48_ar_cm1_2_3_mc320', 'log.a_hs4096_oc32_nl48_ar_cm1_2_3_mc320'),
-        ('a_hs4096_oc32_nl48_ar2_cm1_2_3_mc320', 'log.a_hs4096_oc32_nl48_ar2_cm1_2_3_mc320'),
-        ('a_hs4096_oc32_nl48_ar4_cm1_2_3_mc320', 'log.a_hs4096_oc32_nl48_ar4_cm1_2_3_mc320'),
+        #('a_hs4096_oc32_nl48_ar2_cm1_2_mc320', 'log.a_hs4096_oc32_nl48_ar2_cm1_2_mc320'),
+        #('a_hs4096_oc32_nl48_ar_cm1_2_3_mc320', 'log.a_hs4096_oc32_nl48_ar_cm1_2_3_mc320'),
+        #('a_hs4096_oc32_nl48_ar2_cm1_2_3_mc320', 'log.a_hs4096_oc32_nl48_ar2_cm1_2_3_mc320'),
+        #('a_hs4096_oc32_nl48_ar4_cm1_2_3_mc320', 'log.a_hs4096_oc32_nl48_ar4_cm1_2_3_mc320'),
         ('a_hs1024_oc4_nl20_ar2_4_8_cm1_2_3_5_mc192', 'log.a_hs1024_oc4_nl20_ar2_4_8_cm1_2_3_5_mc192'),
-        ('a_hs4096_oc32_nl48_ar2_4_8_cm1_2_3_5_mc320', 'log.a_hs4096_oc32_nl48_ar2_4_8_cm1_2_3_5_mc320'),
-        ('a_hs4096_oc32_nl48_ar_cm1_2_mc448', 'log.a_hs4096_oc32_nl48_ar_cm1_2_mc448'),
+        #('a_hs4096_oc32_nl48_ar2_4_8_cm1_2_3_5_mc320', 'log.a_hs4096_oc32_nl48_ar2_4_8_cm1_2_3_5_mc320'),
+        ('b_hs4096_oc32_nl48_ar2_cm1_2_mc384_lr8e5_b64', 'log.b_hs4096_oc32_nl48_ar2_cm1_2_mc384_lr8e5_b64'),
+        ('b_hs4096_oc32_nl48_ar2_cm1_2_mc384_lr4e5_b64', 'log.b_hs4096_oc32_nl48_ar2_cm1_2_mc384_lr4e5_b64'),
+        ('b_hs4096_oc32_nl48_ar2_cm1_2_mc384_lr1.6e4_b64', 'log.b_hs4096_oc32_nl48_ar2_cm1_2_mc384_lr1.6e4_b64'),
+        ('b_hs4096_oc32_nl48_ar2_cm1_2_mc384_lr8e5_b128', 'log.b_hs4096_oc32_nl48_ar2_cm1_2_mc384_lr8e5_b128'),
+        ('b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64', 'log.b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64'),
+        ('b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr4e5_b64', 'log.b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr4e5_b64'),
+        ('b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr1.6e4_b64', 'log.b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr1.6e4_b64'),
+        ('b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b100', 'log.b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b100'),
     ]
     
     losses_dict = {}
     for label, log_file_path in log_file_paths:
         losses = extract_losses_from_log(log_file_path)
         smoothed_losses = smooth_losses(losses, window_size=500)
-        losses_dict[label] = (losses[0:], smoothed_losses[0:])
-        #losses_dict[label] = (losses[6000:], smoothed_losses[6000:])
+        time_elapsed = elapsed_time_since_modified(log_file_path)
+        if 'b128' in label:
+            time_elapsed = 0.5
+        elif 'b100' in label:
+            time_elapsed = 64/100
+        else:
+            time_elapsed = 1
+        print (label, len(losses), len(losses) / time_elapsed, smoothed_losses[-1])
+        #losses_dict[label] = (losses[:10000], smoothed_losses[:10000])
+        losses_dict[label] = (losses[:], smoothed_losses[:])
     
     plot_and_compare_losses(losses_dict)
 

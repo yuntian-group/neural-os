@@ -67,14 +67,18 @@ if __name__ == "__main__":
         #('a_hs4096_oc32_nl48_ar4_cm1_2_3_mc320', 'log.a_hs4096_oc32_nl48_ar4_cm1_2_3_mc320'),
         ('a_hs1024_oc4_nl20_ar2_4_8_cm1_2_3_5_mc192', 'log.a_hs1024_oc4_nl20_ar2_4_8_cm1_2_3_5_mc192'),
         #('a_hs4096_oc32_nl48_ar2_4_8_cm1_2_3_5_mc320', 'log.a_hs4096_oc32_nl48_ar2_4_8_cm1_2_3_5_mc320'),
-        ('b_hs4096_oc32_nl48_ar2_cm1_2_mc384_lr8e5_b64', 'log.b_hs4096_oc32_nl48_ar2_cm1_2_mc384_lr8e5_b64'),
-        ('b_hs4096_oc32_nl48_ar2_cm1_2_mc384_lr4e5_b64', 'log.b_hs4096_oc32_nl48_ar2_cm1_2_mc384_lr4e5_b64'),
-        ('b_hs4096_oc32_nl48_ar2_cm1_2_mc384_lr1.6e4_b64', 'log.b_hs4096_oc32_nl48_ar2_cm1_2_mc384_lr1.6e4_b64'),
-        ('b_hs4096_oc32_nl48_ar2_cm1_2_mc384_lr8e5_b128', 'log.b_hs4096_oc32_nl48_ar2_cm1_2_mc384_lr8e5_b128'),
-        ('b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64', 'log.b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64'),
-        ('b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr4e5_b64', 'log.b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr4e5_b64'),
-        ('b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr1.6e4_b64', 'log.b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr1.6e4_b64'),
-        ('b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b100', 'log.b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b100'),
+        #('b_hs4096_oc32_nl48_ar2_cm1_2_mc384_lr8e5_b64', 'log.b_hs4096_oc32_nl48_ar2_cm1_2_mc384_lr8e5_b64'),
+        #('b_hs4096_oc32_nl48_ar2_cm1_2_mc384_lr4e5_b64', 'log.b_hs4096_oc32_nl48_ar2_cm1_2_mc384_lr4e5_b64'),
+        #('b_hs4096_oc32_nl48_ar2_cm1_2_mc384_lr1.6e4_b64', 'log.b_hs4096_oc32_nl48_ar2_cm1_2_mc384_lr1.6e4_b64'),
+        #('b_hs4096_oc32_nl48_ar2_cm1_2_mc384_lr8e5_b128', 'log.b_hs4096_oc32_nl48_ar2_cm1_2_mc384_lr8e5_b128'),
+        #('b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64', 'log.b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64'),
+        #('b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr4e5_b64', 'log.b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr4e5_b64'),
+        #('b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr1.6e4_b64', 'log.b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr1.6e4_b64'),
+        #('b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b100', 'log.b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b100'),
+        ('b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu1', 'log.b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu1'),
+        ('b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu2', 'log.b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu2'),
+        ('b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu4', 'log.b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu4'),
+        ('b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8', 'log.b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8'),
     ]
     
     losses_dict = {}
@@ -90,7 +94,7 @@ if __name__ == "__main__":
             time_elapsed = 1
         print (label, len(losses), len(losses) / time_elapsed, smoothed_losses[-1])
         #losses_dict[label] = (losses[:10000], smoothed_losses[:10000])
-        losses_dict[label] = (losses[:], smoothed_losses[:])
+        losses_dict[label] = (losses[:40000], smoothed_losses[:40000])
     
     plot_and_compare_losses(losses_dict)
 

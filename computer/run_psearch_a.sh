@@ -43,3 +43,7 @@ CUDA_VISIBLE_DEVICES=7 stdbuf -oL -eL python main.py --config configs/psearch_a_
 CUDA_VISIBLE_DEVICES=0 stdbuf -oL -eL python main.py --config configs/psearch_a_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu1.yaml > log.b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu1 2>&1 &
 CUDA_VISIBLE_DEVICES=1,2 stdbuf -oL -eL python main.py --config configs/psearch_a_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu2.yaml > log.b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu2 2>&1 &
 CUDA_VISIBLE_DEVICES=3,4,5,6 stdbuf -oL -eL python main.py --config configs/psearch_a_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu4.yaml > log.b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu4 2>&1 &
+
+
+
+stdbuf -oL -eL python main.py --config configs/psearch_a_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8.yaml > log.b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8 2>&1 &

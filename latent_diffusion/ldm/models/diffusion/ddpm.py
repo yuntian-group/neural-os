@@ -347,13 +347,18 @@ class DDPM(pl.LightningModule):
         return x
 
     def shared_step(self, batch):
-        print(f"[shared_step] step={self.global_step}")
+        #print(f"[shared_step] step={self.global_step}")
         x = self.get_input(batch, self.first_stage_key)
         loss, loss_dict = self(x)
         return loss, loss_dict
 
     def training_step(self, batch, batch_idx):
-        print(f"[training_step] step={self.global_step}")
+        if hasattr(self, 'model'):
+            self.model.train()
+        if hasattr(self, 'temporal_encoder') and self.temporal_encoder is not None:
+            self.temporal_encoder.train()
+                                                    
+        #print(f"[training_step] step={self.global_step}")
         DEBUG = True
         DEBUG = False
         self.DEBUG = DEBUG

@@ -31,7 +31,7 @@ def parse_args():
     parser.add_argument(
         "--num_records",
         type=int,
-        default=24000,
+        default=40000,
         help="Number of record folders to sample"
     )
     parser.add_argument(

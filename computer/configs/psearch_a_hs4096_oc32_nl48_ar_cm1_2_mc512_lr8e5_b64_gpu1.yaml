@@ -99,7 +99,7 @@ lightning:
     max_epochs: 6400
     limit_val_batches: 0
     accelerator: gpu
-    gpus: 1
+    devices: 1
     accumulate_grad_batches: 1
     gradient_clip_val: 1
     checkpoint_callback: True 

@@ -11,14 +11,14 @@ import torch
 import random
 import torch.nn as nn
 import numpy as np
-import pytorch_lightning as pl
+import lightning as pl
 from torch.optim.lr_scheduler import LambdaLR
 from einops import rearrange, repeat
 from contextlib import contextmanager
 from functools import partial
 from tqdm import tqdm
 from torchvision.utils import make_grid
-from pytorch_lightning.utilities.distributed import rank_zero_only
+#from pytorch_lightning.utilities.distributed import rank_zero_only
 import re
 import cv2
 import matplotlib.pyplot as plt
@@ -346,11 +346,13 @@ class DDPM(pl.LightningModule):
         return x
 
     def shared_step(self, batch):
+        print(f"[shared_step] step={self.global_step}")
         x = self.get_input(batch, self.first_stage_key)
         loss, loss_dict = self(x)
         return loss, loss_dict
 
     def training_step(self, batch, batch_idx):
+        print(f"[training_step] step={self.global_step}")
         DEBUG = True
         DEBUG = False
         self.DEBUG = DEBUG
@@ -362,12 +364,13 @@ class DDPM(pl.LightningModule):
             loss, loss_dict = self.shared_step(batch)
 
         self.log_dict(loss_dict, prog_bar=True,
-                      logger=True, on_step=True, on_epoch=True)
+                      logger=True, on_step=True, on_epoch=True, sync_dist=True)
 
-        self.log("global_step", self.global_step,
-                 prog_bar=True, logger=True, on_step=True, on_epoch=False)
+        #self.log("global_step", self.global_step,
+        #         prog_bar=False, logger=True, on_step=True, on_epoch=False, sync_dist=True)
 
         if self.use_scheduler:
+            assert False
             lr = self.optimizers().param_groups[0]['lr']
             self.log('lr_abs', lr, prog_bar=True, logger=True, on_step=True, on_epoch=False)
 
@@ -540,22 +543,22 @@ class LatentDiffusion(DDPM):
         ids = torch.round(torch.linspace(0, self.num_timesteps - 1, self.num_timesteps_cond)).long()
         self.cond_ids[:self.num_timesteps_cond] = ids
 
-    @rank_zero_only
-    @torch.no_grad()
-    def on_train_batch_start(self, batch, batch_idx): #, dataloader_idx):
-        # only for very first batch
-        if self.scale_by_std and self.current_epoch == 0 and self.global_step == 0 and batch_idx == 0 and not self.restarted_from_ckpt:
-            assert self.scale_factor == 1., 'rather not use custom rescaling and std-rescaling simultaneously'
-            # set rescale weight to 1./std of encodings
-            print("### USING STD-RESCALING ###")
-            x = super().get_input(batch, self.first_stage_key)
-            x = x.to(self.device)
-            encoder_posterior = self.encode_first_stage(x)
-            z = self.get_first_stage_encoding(encoder_posterior).detach()
-            del self.scale_factor
-            self.register_buffer('scale_factor', 1. / z.flatten().std())
-            print(f"setting self.scale_factor to {self.scale_factor}")
-            print("### USING STD-RESCALING ###")
+    ###@rank_zero_only
+    ###@torch.no_grad()
+    ###def on_train_batch_start(self, batch, batch_idx): #, dataloader_idx):
+    ###    # only for very first batch
+    ###    if self.scale_by_std and self.current_epoch == 0 and self.global_step == 0 and batch_idx == 0 and not self.restarted_from_ckpt:
+    ###        assert self.scale_factor == 1., 'rather not use custom rescaling and std-rescaling simultaneously'
+    ###        # set rescale weight to 1./std of encodings
+    ###        print("### USING STD-RESCALING ###")
+    ###        x = super().get_input(batch, self.first_stage_key)
+    ###        x = x.to(self.device)
+    ###        encoder_posterior = self.encode_first_stage(x)
+    ###        z = self.get_first_stage_encoding(encoder_posterior).detach()
+    ###        del self.scale_factor
+    ###        self.register_buffer('scale_factor', 1. / z.flatten().std())
+    ###        print(f"setting self.scale_factor to {self.scale_factor}")
+    ###        print("### USING STD-RESCALING ###")
 
     def register_schedule(self,
                           given_betas=None, beta_schedule="linear", timesteps=1000,

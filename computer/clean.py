@@ -97,12 +97,12 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--base_dir",
-        default=".",
+        default="./train_dataset_encoded/",
         help="Base directory to search for folders (default: current directory)"
     )
     parser.add_argument(
         "--substring",
-        default="saved_standard_challenging_context",
+        default="saved_",
         help="Substring to search for in folder names (default: 'saved_standard_challenging_context')"
     )
     args = parser.parse_args()

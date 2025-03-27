@@ -33,7 +33,7 @@ def train_model(model: LatentDiffusion, data: DataModule, save_path: str, config
     )
 
     # Create Trainer with the checkpoint callback
-    trainer: Trainer = Trainer.from_argparse_args(trainer_opt, callbacks=[checkpoint_callback])
+    trainer: Trainer = Trainer(**vars(trainer_opt), callbacks=[checkpoint_callback])
 
     trainer.fit(model, data)
    

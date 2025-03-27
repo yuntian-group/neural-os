@@ -58,7 +58,13 @@ def train_model(model: VQModel, data: DataModule, save_path: str, config: OmegaC
 
     print(trainer_opt)
 
-    trainer: Trainer = Trainer(**vars(trainer_opt), callbacks=[checkpoint_callback])
+    # Remove checkpoint_callback from trainer_opt if it exists
+    # to avoid "unexpected keyword argument" error
+    trainer_kwargs = vars(trainer_opt)
+    if 'checkpoint_callback' in trainer_kwargs:
+        del trainer_kwargs['checkpoint_callback']
+
+    trainer: Trainer = Trainer(**trainer_kwargs, callbacks=[checkpoint_callback])
     trainer.save_dir = save_path
 
     print("\u2705 Fitting model...")

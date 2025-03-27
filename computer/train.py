@@ -23,7 +23,7 @@ def train_model(model: LatentDiffusion, data: DataModule, save_path: str, config
     # merge trainer cli with config
     trainer_config = lightning_config.get("trainer", OmegaConf.create())
     trainer_opt = argparse.Namespace(**trainer_config)
-
+    
     # Create ModelCheckpoint callback
     checkpoint_callback = ModelCheckpoint(
         every_n_train_steps=2000, # orig 1000
@@ -32,8 +32,12 @@ def train_model(model: LatentDiffusion, data: DataModule, save_path: str, config
         filename='model-{step:06d}'  # Checkpoint filename format
     )
 
+    # Remove checkpoint_callback from trainer_opt if it exists
+    # to avoid "unexpected keyword argument" error
+    trainer_kwargs = vars(trainer_opt)
+    
     # Create Trainer with the checkpoint callback
-    trainer: Trainer = Trainer(**vars(trainer_opt), callbacks=[checkpoint_callback])
+    trainer: Trainer = Trainer(**trainer_kwargs, callbacks=[checkpoint_callback])
 
     trainer.fit(model, data)
    

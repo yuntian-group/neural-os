@@ -154,8 +154,8 @@ class VQModel(pl.LightningModule):
         aeloss, log_dict_ae = self.loss(qloss, x, xrec, 0, self.global_step,
                                             last_layer=self.get_last_layer(), cond=None, split="train",
                                             )
-        self.log("aeloss", aeloss, prog_bar=True, logger=True, on_step=True, on_epoch=True)
-        self.log_dict(log_dict_ae, prog_bar=False, logger=True, on_step=True, on_epoch=True)
+        self.log("aeloss", aeloss, prog_bar=True, logger=True, on_step=True, on_epoch=True, sync_dist=True)
+        self.log_dict(log_dict_ae, prog_bar=False, logger=True, on_step=True, on_epoch=True, sync_dist=True)
 
         opt_ae.zero_grad()  # Zero gradients for the autoencoder optimizer
         self.manual_backward(aeloss)  # Backpropagate the autoencoder loss
@@ -171,31 +171,15 @@ class VQModel(pl.LightningModule):
         # train the discriminator
         discloss, log_dict_disc = self.loss(qloss, x, xrec, 1, self.global_step,
                                         last_layer=self.get_last_layer(), split="train")
-        self.log("discloss", discloss, prog_bar=True, logger=True, on_step=True, on_epoch=True)
-        self.log_dict(log_dict_disc, prog_bar=False, logger=True, on_step=True, on_epoch=True)
-
+        self.log("discloss", discloss, prog_bar=True, logger=True, on_step=True, on_epoch=True, sync_dist=True)
+        self.log_dict(log_dict_disc, prog_bar=False, logger=True, on_step=True, on_epoch=True, sync_dist=True)
+        
         opt_disc.zero_grad()  # Zero gradients for the discriminator optimizer
         self.manual_backward(discloss)  # Backpropagate the discriminator loss
         torch.nn.utils.clip_grad_norm_(self.loss.discriminator.parameters(), 1) #gradient clipping of 1
         opt_disc.step()  # Step the discriminator optimizer
         
         return {'aeloss': aeloss, 'discloss': discloss}
-
-        # if optimizer_idx == 0:
-        #     # autoencode
-        #     aeloss, log_dict_ae = self.loss(qloss, x, xrec, optimizer_idx, self.global_step,
-        #                                     last_layer=self.get_last_layer(), split="train",
-        #                                     predicted_indices=ind)
-
-        #     self.log_dict(log_dict_ae, prog_bar=False, logger=True, on_step=True, on_epoch=True)
-        #     return aeloss
-
-        # if optimizer_idx == 1:
-        #     # discriminator
-        #     discloss, log_dict_disc = self.loss(qloss, x, xrec, optimizer_idx, self.global_step,
-        #                                     last_layer=self.get_last_layer(), split="train")
-        #     self.log_dict(log_dict_disc, prog_bar=False, logger=True, on_step=True, on_epoch=True)
-        #     return discloss
 
     def validation_step(self, batch, batch_idx):
         log_dict = self._validation_step(batch, batch_idx)
@@ -224,10 +208,17 @@ class VQModel(pl.LightningModule):
                    prog_bar=True, logger=True, on_step=False, on_epoch=True, sync_dist=True)
         self.log(f"val{suffix}/aeloss", aeloss,
                    prog_bar=True, logger=True, on_step=False, on_epoch=True, sync_dist=True)
-        if version.parse(pl.__version__) >= version.parse('1.4.0'):
-            del log_dict_ae[f"val{suffix}/rec_loss"]
-        self.log_dict(log_dict_ae)
-        self.log_dict(log_dict_disc)
+        # Update version check for lightning
+        try:
+            import pkg_resources
+            version = pkg_resources.parse_version
+            import lightning.pytorch as lightning_pkg
+            if version(lightning_pkg.__version__) >= version('1.4.0'):
+                del log_dict_ae[f"val{suffix}/rec_loss"]
+        except (ImportError, AttributeError):
+            pass  # Skip version check if it fails
+        self.log_dict(log_dict_ae, sync_dist=True)
+        self.log_dict(log_dict_disc, sync_dist=True)
         return self.log_dict
 
     def configure_optimizers(self):
@@ -407,10 +398,10 @@ class AutoencoderKL(pl.LightningModule):
             # train encoder+decoder+logvar
             aeloss, log_dict_ae = self.loss(inputs, reconstructions, posterior, optimizer_idx, self.global_step,
                                             last_layer=self.get_last_layer(), split="train")
-            self.log("aeloss", aeloss, prog_bar=True, logger=True, on_step=True, on_epoch=True)
+            self.log("aeloss", aeloss, prog_bar=True, logger=True, on_step=True, on_epoch=True, sync_dist=True)
             #self.log("global_step_str", str(int(self.global_step)), prog_bar=True, logger=True, on_step=True, on_epoch=False)
             
-            self.log_dict(log_dict_ae, prog_bar=False, logger=True, on_step=True, on_epoch=False)
+            self.log_dict(log_dict_ae, prog_bar=False, logger=True, on_step=True, on_epoch=False, sync_dist=True)
             
             
             return aeloss
@@ -420,8 +411,8 @@ class AutoencoderKL(pl.LightningModule):
             discloss, log_dict_disc = self.loss(inputs, reconstructions, posterior, optimizer_idx, self.global_step,
                                                 last_layer=self.get_last_layer(), split="train")
 
-            self.log("discloss", discloss, prog_bar=True, logger=True, on_step=True, on_epoch=True)
-            self.log_dict(log_dict_disc, prog_bar=False, logger=True, on_step=True, on_epoch=False)
+            self.log("discloss", discloss, prog_bar=True, logger=True, on_step=True, on_epoch=True, sync_dist=True)
+            self.log_dict(log_dict_disc, prog_bar=False, logger=True, on_step=True, on_epoch=False, sync_dist=True)
             return discloss
 
     def validation_step(self, batch, batch_idx):
@@ -433,9 +424,9 @@ class AutoencoderKL(pl.LightningModule):
         discloss, log_dict_disc = self.loss(inputs, reconstructions, posterior, 1, self.global_step,
                                             last_layer=self.get_last_layer(), split="val")
 
-        self.log("val/rec_loss", log_dict_ae["val/rec_loss"])
-        self.log_dict(log_dict_ae)
-        self.log_dict(log_dict_disc)
+        self.log("val/rec_loss", log_dict_ae["val/rec_loss"], sync_dist=True)
+        self.log_dict(log_dict_ae, sync_dist=True)
+        self.log_dict(log_dict_disc, sync_dist=True)
         return self.log_dict
 
     def configure_optimizers(self):

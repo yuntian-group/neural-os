@@ -7,7 +7,7 @@ import torch
 from typing import List
 from latent_diffusion.ldm.modules.encoders.modules import BERTTokenizer
 import ast
-import pytorch_lightning as pl
+import lightning.pytorch as pl
 from einops import rearrange
 from omegaconf import OmegaConf
 from latent_diffusion.ldm.util import instantiate_from_config

@@ -6,9 +6,9 @@ from PIL import Image
 import numpy as np
 from typing import List
 import argparse, os
-from pytorch_lightning.trainer import Trainer
+from lightning.pytorch import Trainer
 from torch.utils.data import DataLoader
-from pytorch_lightning.callbacks import ModelCheckpoint
+from lightning.pytorch.callbacks import ModelCheckpoint
 
 def train_model(model: LatentDiffusion, data: DataModule, save_path: str, config) -> LatentDiffusion:
     """

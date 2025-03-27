@@ -19,6 +19,7 @@ from functools import partial
 from tqdm import tqdm
 from torchvision.utils import make_grid
 #from pytorch_lightning.utilities.distributed import rank_zero_only
+from lightning.pytorch.utilities import rank_zero_only
 import re
 import cv2
 import matplotlib.pyplot as plt
@@ -372,7 +373,7 @@ class DDPM(pl.LightningModule):
         if self.use_scheduler:
             assert False
             lr = self.optimizers().param_groups[0]['lr']
-            self.log('lr_abs', lr, prog_bar=True, logger=True, on_step=True, on_epoch=False)
+            self.log('lr_abs', lr, prog_bar=True, logger=True, on_step=True, on_epoch=False, sync_dist=True)
 
         return loss
 
@@ -382,8 +383,8 @@ class DDPM(pl.LightningModule):
         with self.ema_scope():
             _, loss_dict_ema = self.shared_step(batch)
             loss_dict_ema = {key + '_ema': loss_dict_ema[key] for key in loss_dict_ema}
-        self.log_dict(loss_dict_no_ema, prog_bar=False, logger=True, on_step=False, on_epoch=True)
-        self.log_dict(loss_dict_ema, prog_bar=False, logger=True, on_step=False, on_epoch=True)
+        self.log_dict(loss_dict_no_ema, prog_bar=False, logger=True, on_step=False, on_epoch=True, sync_dist=True)
+        self.log_dict(loss_dict_ema, prog_bar=False, logger=True, on_step=False, on_epoch=True, sync_dist=True)
 
     def on_train_batch_end(self, *args, **kwargs):
         if self.use_ema:

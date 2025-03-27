@@ -5,8 +5,8 @@ from latent_diffusion.ldm.models.diffusion.ddpm import LatentDiffusion, disabled
 from omegaconf import OmegaConf
 from typing import List
 import argparse, os
-from pytorch_lightning.trainer import Trainer
-from pytorch_lightning.callbacks import ModelCheckpoint
+from lightning.pytorch import Trainer
+from lightning.pytorch.callbacks import ModelCheckpoint
 import torch
 
 #from computer.util import LoggingCallback

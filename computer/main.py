@@ -35,6 +35,7 @@ if __name__ == "__main__":
     #from_autoencoder = True
     #from_autoencoder = False
     from_autoencoder = True
+    #from_autoencoder = False
     if 'eval' in args.config:
         from_autoencoder = False
     if not from_autoencoder:

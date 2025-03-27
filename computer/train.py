@@ -38,7 +38,11 @@ def train_model(model: LatentDiffusion, data: DataModule, save_path: str, config
     
     # Create Trainer with the checkpoint callback
     trainer: Trainer = Trainer(**trainer_kwargs, callbacks=[checkpoint_callback])
-
+    model.train()
+    model.model_ema.eval()
+    model.first_stage_model.eval()
+    #model.temporal_encoder.train()
+    #import pdb; pdb.set_trace()
     trainer.fit(model, data)
    
     if 'eval' not in save_path:

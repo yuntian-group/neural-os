@@ -353,11 +353,11 @@ class DDPM(pl.LightningModule):
         return loss, loss_dict
 
     def training_step(self, batch, batch_idx):
-        import pdb; pdb.set_trace()
-        if hasattr(self, 'model'):
-            self.model.train()
-        if hasattr(self, 'temporal_encoder') and self.temporal_encoder is not None:
-            self.temporal_encoder.train()
+        #import pdb; pdb.set_trace()
+        #if hasattr(self, 'model'):
+        #    self.model.train()
+        #if hasattr(self, 'temporal_encoder') and self.temporal_encoder is not None:
+        #    self.temporal_encoder.train()
                                                     
         #print(f"[training_step] step={self.global_step}")
         DEBUG = True
@@ -578,8 +578,12 @@ class LatentDiffusion(DDPM):
 
     def instantiate_first_stage(self, config):
         model = instantiate_from_config(config)
-        self.first_stage_model = model.eval()
-        self.first_stage_model.train = disabled_train
+        self.first_stage_model = model
+        self.first_stage_model.eval()
+        for p in self.first_stage_model.parameters():
+            p.requires_grad = False
+        #self.first_stage_model = model.eval()
+        #self.first_stage_model.train = disabled_train
         for param in self.first_stage_model.parameters():
             param.requires_grad = False
 
@@ -595,7 +599,7 @@ class LatentDiffusion(DDPM):
             else:
                 model = instantiate_from_config(config)
                 self.cond_stage_model = model.eval()
-                self.cond_stage_model.train = disabled_train
+                #self.cond_stage_model.train = disabled_train
                 for param in self.cond_stage_model.parameters():
                     param.requires_grad = False
         else:

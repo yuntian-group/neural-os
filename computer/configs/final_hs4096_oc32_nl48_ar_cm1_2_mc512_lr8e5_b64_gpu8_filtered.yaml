@@ -91,11 +91,11 @@ data:
 
 lightning:
   trainer:
-    benchmark: False
+    benchmark: True
     max_epochs: 64000
     limit_val_batches: 0
     accelerator: gpu
-    devices: 8
+    devices: 1
     strategy: ddp_find_unused_parameters_false
     accumulate_grad_batches: 1
     gradient_clip_val: 1

@@ -353,6 +353,7 @@ class DDPM(pl.LightningModule):
         return loss, loss_dict
 
     def training_step(self, batch, batch_idx):
+        import pdb; pdb.set_trace()
         if hasattr(self, 'model'):
             self.model.train()
         if hasattr(self, 'temporal_encoder') and self.temporal_encoder is not None:
@@ -549,22 +550,22 @@ class LatentDiffusion(DDPM):
         ids = torch.round(torch.linspace(0, self.num_timesteps - 1, self.num_timesteps_cond)).long()
         self.cond_ids[:self.num_timesteps_cond] = ids
 
-    ###@rank_zero_only
-    ###@torch.no_grad()
-    ###def on_train_batch_start(self, batch, batch_idx): #, dataloader_idx):
-    ###    # only for very first batch
-    ###    if self.scale_by_std and self.current_epoch == 0 and self.global_step == 0 and batch_idx == 0 and not self.restarted_from_ckpt:
-    ###        assert self.scale_factor == 1., 'rather not use custom rescaling and std-rescaling simultaneously'
-    ###        # set rescale weight to 1./std of encodings
-    ###        print("### USING STD-RESCALING ###")
-    ###        x = super().get_input(batch, self.first_stage_key)
-    ###        x = x.to(self.device)
-    ###        encoder_posterior = self.encode_first_stage(x)
-    ###        z = self.get_first_stage_encoding(encoder_posterior).detach()
-    ###        del self.scale_factor
-    ###        self.register_buffer('scale_factor', 1. / z.flatten().std())
-    ###        print(f"setting self.scale_factor to {self.scale_factor}")
-    ###        print("### USING STD-RESCALING ###")
+    @rank_zero_only
+    @torch.no_grad()
+    def on_train_batch_start(self, batch, batch_idx): #, dataloader_idx):
+        # only for very first batch
+        if self.scale_by_std and self.current_epoch == 0 and self.global_step == 0 and batch_idx == 0 and not self.restarted_from_ckpt:
+            assert self.scale_factor == 1., 'rather not use custom rescaling and std-rescaling simultaneously'
+            # set rescale weight to 1./std of encodings
+            print("### USING STD-RESCALING ###")
+            x = super().get_input(batch, self.first_stage_key)
+            x = x.to(self.device)
+            encoder_posterior = self.encode_first_stage(x)
+            z = self.get_first_stage_encoding(encoder_posterior).detach()
+            del self.scale_factor
+            self.register_buffer('scale_factor', 1. / z.flatten().std())
+            print(f"setting self.scale_factor to {self.scale_factor}")
+            print("### USING STD-RESCALING ###")
 
     def register_schedule(self,
                           given_betas=None, beta_schedule="linear", timesteps=1000,
@@ -2194,7 +2195,7 @@ class LatentDiffusion(DDPM):
         return x
 
 
-class DiffusionWrapper(pl.LightningModule):
+class DiffusionWrapper(nn.Module):
     def __init__(self, diff_model_config, conditioning_key):
         super().__init__()
         self.diffusion_model = instantiate_from_config(diff_model_config)

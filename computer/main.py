@@ -7,7 +7,7 @@ from latent_diffusion.ldm.util import instantiate_from_config
 import torch
 import os
 import argparse
-torch.set_float32_matmul_precision('high')
+torch.set_float32_matmul_precision('highest')
 
 #save_path = 'test_15_no_deltas_1000_paths'
 

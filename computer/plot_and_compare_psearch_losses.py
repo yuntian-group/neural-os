@@ -23,7 +23,7 @@ def extract_losses_from_log(log_file_path):
         log_content = file.read()
 
     # Extract losses using regex (e.g., loss=1.88e+03)
-    loss_pattern = re.compile(r'loss=([\d\.eE+-]+)')
+    loss_pattern = re.compile(r'loss_step=([\d\.eE+-]+)')
     losses = [math.log(float(loss)) for loss in loss_pattern.findall(log_content)]
     print (len(losses))
     
@@ -45,8 +45,8 @@ def plot_and_compare_losses(losses_dict, output_png='psearch_b_loss_curve_compar
     
     for label, (losses, smoothed_losses) in losses_dict.items():
         #plt.plot(range(len(losses)), losses, alpha=0.3, label=f'{label} Raw Loss')
-        #plt.plot(range(len(smoothed_losses)), smoothed_losses, linewidth=2, label=f'{label} Smoothed Loss')
-        plt.plot(range(len(smoothed_losses)), losses, linewidth=2, label=f'{label} Smoothed Loss')
+        plt.plot(range(len(smoothed_losses)), smoothed_losses, linewidth=2, label=f'{label} Smoothed Loss')
+        #plt.plot(range(len(losses)), losses, linewidth=2, label=f'{label} Smoothed Loss')
     
     plt.xlabel('Step')
     plt.ylabel('Loss')
@@ -80,7 +80,8 @@ if __name__ == "__main__":
         ('b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu2', 'log.b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu2'),
         ('b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu4', 'log.b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu4'),
         ('b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8', 'log.b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8'),
-        ('final', 'log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered'),
+        ('final0', 'log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered'),
+        ('final', 'log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.cont'),
     ]
     
     losses_dict = {}
@@ -95,8 +96,8 @@ if __name__ == "__main__":
         else:
             time_elapsed = 1
         print (label, len(losses), len(losses) / time_elapsed, smoothed_losses[-1])
-        losses_dict[label] = (losses[:5000], smoothed_losses[:5000])
-        #losses_dict[label] = (losses[:40000], smoothed_losses[:40000])
+        #losses_dict[label] = (losses[:5000], smoothed_losses[:5000])
+        losses_dict[label] = (losses[:80000], smoothed_losses[:80000])
     
     plot_and_compare_losses(losses_dict)
 

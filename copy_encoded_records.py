@@ -28,7 +28,7 @@ def parse_args():
     parser.add_argument(
         "--output_dir",
         type=str,
-        default="to_transfer",
+        default="computer/train_dataset_encoded/to_transfer",
         help="Directory to copy record folders to"
     )
     parser.add_argument(
@@ -100,7 +100,8 @@ def main():
     args = parse_args()
     
     # Get unique record numbers from CSV files
-    csv_files = [args.train_csv, args.test_csv]
+    #csv_files = [args.train_csv, args.test_csv]
+    csv_files = [args.test_csv]
     record_nums = get_record_numbers(csv_files)
     
     print(f"Found {len(record_nums)} unique record numbers")

@@ -45,8 +45,10 @@ ckpt_dir = 'saved_bsz64_acc1_lr8e5_512_leftclick_histpos_512_384_cont2_ddd_diffi
 # 41. a_hs4096_oc32_nl48_ar2_4_8_cm1_2_3_5_mc320: 4.50 FPS, 222.29 ms latency
 #for setting in ['a_hs4096_oc32_nl48_ar_cm1_2_mc320', 'a_hs4096_oc32_nl48_ar_cm1_2_mc384', 'a_hs4096_oc32_nl48_ar2_cm1_2_mc320', 'a_hs4096_oc32_nl48_ar_cm1_2_3_mc320', 'a_hs4096_oc32_nl48_ar2_cm1_2_3_mc320', 'a_hs4096_oc32_nl48_ar4_cm1_2_3_mc320', 'a_hs1024_oc4_nl20_ar2_4_8_cm1_2_3_5_mc192', 'a_hs4096_oc32_nl48_ar2_4_8_cm1_2_3_5_mc320']:
 #for DDIM_S in [8, 4, 16]:
-for setting in ['a_hs4096_oc32_nl48_ar_cm1_2_mc320', 'a_hs4096_oc32_nl48_ar_cm1_2_mc384', 'a_hs4096_oc32_nl48_ar2_cm1_2_mc320', 'a_hs4096_oc32_nl48_ar_cm1_2_3_mc320', 'a_hs4096_oc32_nl48_ar2_cm1_2_3_mc320', 'a_hs4096_oc32_nl48_ar4_cm1_2_3_mc320', 'a_hs4096_oc32_nl48_ar2_4_8_cm1_2_3_5_mc320', 'a_hs4096_oc32_nl48_ar_cm1_2_mc448']:
-    for DDIM_S in [4, 8, 16]:
+#for setting in ['a_hs4096_oc32_nl48_ar_cm1_2_mc320', 'a_hs4096_oc32_nl48_ar_cm1_2_mc384', 'a_hs4096_oc32_nl48_ar2_cm1_2_mc320', 'a_hs4096_oc32_nl48_ar_cm1_2_3_mc320', 'a_hs4096_oc32_nl48_ar2_cm1_2_3_mc320', 'a_hs4096_oc32_nl48_ar4_cm1_2_3_mc320', 'a_hs4096_oc32_nl48_ar2_4_8_cm1_2_3_5_mc320', 'a_hs4096_oc32_nl48_ar_cm1_2_mc448']:
+for setting in ['final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered']:
+    #for DDIM_S in [4, 8, 16]:
+    for DDIM_S in [8]:
     #for setting in ['a_hs4096_oc32_nl48_ar2_cm1_2_mc320']:
     #for setting in ['a_hs1024_oc4_nl20_ar2_4_8_cm1_2_3_5_mc192']:#, 'a_hs4096_oc32_nl48_ar_cm1_2_mc384', 'a_hs4096_oc32_nl48_ar2_cm1_2_mc320', 'a_hs4096_oc32_nl48_ar_cm1_2_3_mc320', 'a_hs4096_oc32_nl48_ar2_cm1_2_3_mc320', 'a_hs4096_oc32_nl48_ar4_cm1_2_3_mc320', 'a_hs1024_oc4_nl20_ar2_4_8_cm1_2_3_5_mc192', 'a_hs4096_oc32_nl48_ar2_4_8_cm1_2_3_5_mc320']:
         #ckpt_dir = f'saved_standard_challenging_context{context_length}'
@@ -56,7 +58,7 @@ for setting in ['a_hs4096_oc32_nl48_ar_cm1_2_mc320', 'a_hs4096_oc32_nl48_ar_cm1_
         #ckpt_dir = f'saved_standard_challenging_context32_nocond_fixnorm_all_scheduled_sampling_0.2_feedz_comb0.1_rnn/'
         #ckpt_dir = f'saved_standard_challenging_context32_nocond_fixnorm_all_scheduled_sampling_0.2_feedz_comb0.1_rnn_fixrnn_enablegrad_all_keyevent_cont/'
         #ckpt_dir = f'saved_standard_challenging_context32_nocond_fixnorm_all_scheduled_sampling_0.2_feedz_comb0.1_rnn_fixrnn_enablegrad_all_keyevent_cont_clusters/'
-        ckpt_dir = f'saved_standard_challenging_context32_nocond_fixnorm_all_scheduled_sampling_0.2_feedz_comb0.1_rnn_fixrnn_enablegrad_all_keyevent_{setting}/'
+        ckpt_dir = f'/root/computer/computer/train_dataset_encoded/saved_final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered_cont/'
         print ('='*10)
         print (f'processing setting {setting}')
         # Get all checkpoint files and sort them
@@ -75,6 +77,7 @@ for setting in ['a_hs4096_oc32_nl48_ar_cm1_2_mc320', 'a_hs4096_oc32_nl48_ar_cm1_
         #config_file = f'configs/standard_challenging_context32_nocond_all.eval.yaml'
         #config_file = f'configs/standard_challenging_context32_nocond_all_rnn.eval.yaml'
         config_file = f'configs/psearch_{setting}.eval.yaml'
+        config_file = f'configs/final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered_cont.eval.yaml'
         #config_file = f'configs/standard_challenging_context32_nocond_fixnorm_all_scheduled_sampling_0.2_feedz_comb0.1_rnn_fixrnn_enablegrad_all_keyevent_{setting}.eval.yaml'
         
         for step, ckpt in tqdm(ckpts, desc="Processing checkpoints"):
@@ -112,11 +115,11 @@ for setting in ['a_hs4096_oc32_nl48_ar_cm1_2_mc320', 'a_hs4096_oc32_nl48_ar_cm1_
                     else:
                         print(line, end='')
             
-            try:
-                subprocess.run(f'CUDA_VISIBLE_DEVICES=1 python main.py --config {config_file}', shell=True)
-            except Exception as e:
-                print(f"Error in training run: {e}")
-                pass
+            #try:
+            #    subprocess.run(f'CUDA_VISIBLE_DEVICES=7 python main.py --config {config_file}', shell=True)
+            #except Exception as e:
+            #    print(f"Error in training run: {e}")
+            #    pass
             
             if os.path.exists('../latent_diffusion/ldm/models/diffusion/ddpm.py.bak'):
                 os.replace('../latent_diffusion/ldm/models/diffusion/ddpm.py.bak', '../latent_diffusion/ldm/models/diffusion/ddpm.py')
@@ -143,7 +146,7 @@ for setting in ['a_hs4096_oc32_nl48_ar_cm1_2_mc320', 'a_hs4096_oc32_nl48_ar_cm1_
             
             # Run with modified config (test set)
             try:
-                subprocess.run(f'CUDA_VISIBLE_DEVICES=1 python main.py --config {config_file}', shell=True)
+                subprocess.run(f'CUDA_VISIBLE_DEVICES=7 python main.py --config {config_file}', shell=True)
             except Exception as e:
                 print(f"Error in test run: {e}")
                 pass

@@ -360,8 +360,8 @@ class DDPM(pl.LightningModule):
         #    self.temporal_encoder.train()
                                                     
         #print(f"[training_step] step={self.global_step}")
-        DEBUG = True
         DEBUG = False
+        DEBUG = True
         self.DEBUG = DEBUG
         if DEBUG:
             print ('no grad at all')
@@ -898,10 +898,10 @@ class LatentDiffusion(DDPM):
                 #    inputs_to_rnn.append(torch.cat([image_part, position_map_part, leftclick_map_part], dim=1))
                 #inputs_to_rnn = torch.stack(inputs_to_rnn, dim=1)
                 #import pdb; pdb.set_trace()
-                with torch.enable_grad():
-                    output_from_rnn = self.temporal_encoder(inputs_to_rnn)
-                ###output_from_rnn = self.temporal_encoder(inputs_to_rnn)
-                ###print ('warning: no grad')
+                ###with torch.enable_grad():
+                ###    output_from_rnn = self.temporal_encoder(inputs_to_rnn)
+                output_from_rnn = self.temporal_encoder(inputs_to_rnn)
+                print ('warning: no grad')
                 
                 #output_from_rnn = self.temporal_encoder(inputs_to_rnn)
                 #import pdb; pdb.set_trace()
@@ -1425,7 +1425,7 @@ class LatentDiffusion(DDPM):
                 self.i += 1
                 #if self.i >= 497:
                 #    sys.exit(1)
-                if self.i >= 150:
+                if self.i >= 731:
                     sys.exit(1)
             #import pdb; pdb.set_trace()
 

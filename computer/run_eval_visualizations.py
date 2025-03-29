@@ -116,7 +116,7 @@ for setting in ['final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered']
                         print(line, end='')
             
             #try:
-            #    subprocess.run(f'CUDA_VISIBLE_DEVICES=7 python main.py --config {config_file}', shell=True)
+            #    subprocess.run(f'CUDA_VISIBLE_DEVICES=0 python main.py --config {config_file}', shell=True)
             #except Exception as e:
             #    print(f"Error in training run: {e}")
             #    pass
@@ -146,7 +146,7 @@ for setting in ['final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered']
             
             # Run with modified config (test set)
             try:
-                subprocess.run(f'CUDA_VISIBLE_DEVICES=7 python main.py --config {config_file}', shell=True)
+                subprocess.run(f'CUDA_VISIBLE_DEVICES=0 python main.py --config {config_file}', shell=True)
             except Exception as e:
                 print(f"Error in test run: {e}")
                 pass

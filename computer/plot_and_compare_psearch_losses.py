@@ -30,9 +30,12 @@ def extract_losses_from_log(log_file_path):
     return losses
 
 def smooth_losses(losses, window_size=100):
-    if len(losses) < window_size:
-        window_size = max(1, len(losses) // 10)
-    return np.convolve(losses, np.ones(window_size)/window_size, mode='valid')
+    import pandas as pd
+    series = pd.Series(losses)
+    return series.rolling(window=window_size, min_periods=1, center=True).mean().to_numpy()
+    #if len(losses) < window_size:
+    #    window_size = max(1, len(losses) // 10)
+    #return np.convolve(losses, np.ones(window_size)/window_size, mode='valid')
 
 def plot_and_compare_losses(losses_dict, output_png='psearch_b_loss_curve_comparison.png'):
     """
@@ -76,12 +79,14 @@ if __name__ == "__main__":
         #('b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr4e5_b64', 'log.b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr4e5_b64'),
         #('b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr1.6e4_b64', 'log.b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr1.6e4_b64'),
         #('b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b100', 'log.b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b100'),
-        ('b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu1', 'log.b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu1'),
-        ('b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu2', 'log.b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu2'),
-        ('b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu4', 'log.b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu4'),
-        ('b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8', 'log.b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8'),
+        #('b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu1', 'log.b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu1'),
+        #('b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu2', 'log.b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu2'),
+        #('b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu4', 'log.b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu4'),
+        #('b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8', 'log.b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8'),
         ('final0', 'log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered'),
-        ('final', 'log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.cont'),
+        #('final', 'log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.cont'),
+        ('final1', 'log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg'),
+        ('final2', 'log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.lr4e5.bsz50'),
     ]
     
     losses_dict = {}
@@ -96,8 +101,8 @@ if __name__ == "__main__":
         else:
             time_elapsed = 1
         print (label, len(losses), len(losses) / time_elapsed, smoothed_losses[-1])
-        #losses_dict[label] = (losses[:5000], smoothed_losses[:5000])
-        losses_dict[label] = (losses[:80000], smoothed_losses[:80000])
+        losses_dict[label] = (losses[:6000], smoothed_losses[:6000])
+        #losses_dict[label] = (losses[:80000], smoothed_losses[:80000])
     
     plot_and_compare_losses(losses_dict)
 

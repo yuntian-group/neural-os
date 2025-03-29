@@ -41,7 +41,7 @@ if __name__ == "__main__":
     if not from_autoencoder:
         assert 'eval' in args.config
     #from_autoencoder = True # TODO: fix
-    from_autoencoder = False # TODO: fix
+    #from_autoencoder = False # TODO: fix
     if from_autoencoder:
         model = init_model(config)
         #model = load_first_stage_from_config(model, './autoencoder_saved_kl4_bsz8_acc8_lr4.5e6_load_acc1_model-603000.ckpt')

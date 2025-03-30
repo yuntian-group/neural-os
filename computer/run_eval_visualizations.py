@@ -58,7 +58,7 @@ for setting in ['final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered']
         #ckpt_dir = f'saved_standard_challenging_context32_nocond_fixnorm_all_scheduled_sampling_0.2_feedz_comb0.1_rnn/'
         #ckpt_dir = f'saved_standard_challenging_context32_nocond_fixnorm_all_scheduled_sampling_0.2_feedz_comb0.1_rnn_fixrnn_enablegrad_all_keyevent_cont/'
         #ckpt_dir = f'saved_standard_challenging_context32_nocond_fixnorm_all_scheduled_sampling_0.2_feedz_comb0.1_rnn_fixrnn_enablegrad_all_keyevent_cont_clusters/'
-        ckpt_dir = f'/root/computer/computer/train_dataset_encoded/saved_final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered_cont/'
+        ckpt_dir = f'/root/computer/computer/train_dataset_encoded/saved_final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered_largeimg_cont/'
         print ('='*10)
         print (f'processing setting {setting}')
         # Get all checkpoint files and sort them
@@ -116,7 +116,7 @@ for setting in ['final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered']
                         print(line, end='')
             
             #try:
-            #    subprocess.run(f'CUDA_VISIBLE_DEVICES=0 python main.py --config {config_file}', shell=True)
+            #    subprocess.run(f'CUDA_VISIBLE_DEVICES=7 python main.py --config {config_file}', shell=True)
             #except Exception as e:
             #    print(f"Error in training run: {e}")
             #    pass
@@ -146,7 +146,7 @@ for setting in ['final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered']
             
             # Run with modified config (test set)
             try:
-                subprocess.run(f'CUDA_VISIBLE_DEVICES=0 python main.py --config {config_file}', shell=True)
+                subprocess.run(f'CUDA_VISIBLE_DEVICES=7 python main.py --config {config_file}', shell=True)
             except Exception as e:
                 print(f"Error in test run: {e}")
                 pass

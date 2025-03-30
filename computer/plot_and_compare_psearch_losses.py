@@ -19,8 +19,17 @@ def elapsed_time_since_modified(file_path):
 
 
 def extract_losses_from_log(log_file_path):
+    log_content = ''
+    if '.cont2' in log_file_path:
+        with open(log_file_path.replace('.cont2', ''), 'r') as file:
+            log_content += file.read()
+        with open(log_file_path.replace('.cont2', '.cont'), 'r') as file:
+            log_content += file.read()
+    elif '.cont' in log_file_path:
+        with open(log_file_path.replace('.cont', ''), 'r') as file:
+            log_content += file.read()
     with open(log_file_path, 'r') as file:
-        log_content = file.read()
+        log_content += file.read()
 
     # Extract losses using regex (e.g., loss=1.88e+03)
     loss_pattern = re.compile(r'loss_step=([\d\.eE+-]+)')
@@ -69,7 +78,7 @@ if __name__ == "__main__":
         #('a_hs4096_oc32_nl48_ar_cm1_2_3_mc320', 'log.a_hs4096_oc32_nl48_ar_cm1_2_3_mc320'),
         #('a_hs4096_oc32_nl48_ar2_cm1_2_3_mc320', 'log.a_hs4096_oc32_nl48_ar2_cm1_2_3_mc320'),
         #('a_hs4096_oc32_nl48_ar4_cm1_2_3_mc320', 'log.a_hs4096_oc32_nl48_ar4_cm1_2_3_mc320'),
-        ('a_hs1024_oc4_nl20_ar2_4_8_cm1_2_3_5_mc192', 'log.a_hs1024_oc4_nl20_ar2_4_8_cm1_2_3_5_mc192'),
+        #('a_hs1024_oc4_nl20_ar2_4_8_cm1_2_3_5_mc192', 'log.a_hs1024_oc4_nl20_ar2_4_8_cm1_2_3_5_mc192'),
         #('a_hs4096_oc32_nl48_ar2_4_8_cm1_2_3_5_mc320', 'log.a_hs4096_oc32_nl48_ar2_4_8_cm1_2_3_5_mc320'),
         #('b_hs4096_oc32_nl48_ar2_cm1_2_mc384_lr8e5_b64', 'log.b_hs4096_oc32_nl48_ar2_cm1_2_mc384_lr8e5_b64'),
         #('b_hs4096_oc32_nl48_ar2_cm1_2_mc384_lr4e5_b64', 'log.b_hs4096_oc32_nl48_ar2_cm1_2_mc384_lr4e5_b64'),
@@ -83,11 +92,16 @@ if __name__ == "__main__":
         #('b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu2', 'log.b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu2'),
         #('b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu4', 'log.b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu4'),
         #('b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8', 'log.b_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8'),
-        ('final0', 'log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered'),
+        ('orig', 'log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.cont'),
         #('final', 'log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.cont'),
-        ('final1', 'log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg'),
-        ('final2', 'log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.lr4e5.bsz50'),
-        ('final20', 'log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.lr4e5'),
+        #('final1', 'log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg'),
+        #('final2', 'log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.lr4e5.bsz50'),
+        #('final20', 'log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.lr4e5'),
+        #('final3', 'log.final_hs4096_oc32_nl48_ar2_cm1_2_mc384_lr8e5_b64_gpu8_filtered.largeimg.lr4e5'),
+        ('largeimg', 'log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.lr4e5.cont2'),
+        #('1gpu', 'log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.lr4e5.gpu1'),
+        #('2gpu', 'log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.lr4e5.gpu2'),
+        #('4gpu', 'log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.lr4e5.gpu4'),
     ]
     
     losses_dict = {}
@@ -102,8 +116,9 @@ if __name__ == "__main__":
         else:
             time_elapsed = 1
         print (label, len(losses), len(losses) / time_elapsed, smoothed_losses[-1])
-        losses_dict[label] = (losses[:6000], smoothed_losses[:6000])
-        #losses_dict[label] = (losses[:80000], smoothed_losses[:80000])
+        #losses_dict[label] = (losses[:24000], smoothed_losses[:24000])
+        losses_dict[label] = (losses[:256000], smoothed_losses[:256000])
+        #losses_dict[label] = (losses[:6000], smoothed_losses[:6000])
     
     plot_and_compare_losses(losses_dict)
 

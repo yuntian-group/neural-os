@@ -109,9 +109,7 @@ class TemporalEncoder(nn.Module):
             nn.Linear(hidden_size*4, self.output_channels * output_height * output_width),
         )
     # TODO: maybe use a CNN to process the sequence
-    # TODO: maybe use aligned images and position maps
     # TODO: maybe use layernorm to preprocess the input
-    #(Pdb) p inputs[0]['image_features'].shape
 
     def forward(self, inputs):
         """

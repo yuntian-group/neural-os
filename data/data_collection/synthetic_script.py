@@ -186,7 +186,7 @@ def create_synthetic_dataset(n=1, max_workers=None, memory_per_worker='2g'):
         max_workers = min(max_by_memory, max_by_cpu)
         
         # For very large machines, maybe cap at 32 or adjust based on your needs
-        max_workers = min(max_workers, 64)  # Optional cap
+        max_workers = min(max_workers, 256)  # Optional cap
     
     print(f"System resources: {num_cpus} CPUs, {total_memory_gb:.1f}GB RAM")
     print(f"Using {max_workers} workers")
@@ -236,4 +236,5 @@ if __name__ == "__main__":
     # Run with parallel processing
     #create_synthetic_dataset(16000)
     #create_synthetic_dataset(24000)
-    create_synthetic_dataset(40000)
+    #create_synthetic_dataset(40000)
+    create_synthetic_dataset(200000)

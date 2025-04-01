@@ -58,7 +58,7 @@ for setting in ['final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered']
         #ckpt_dir = f'saved_standard_challenging_context32_nocond_fixnorm_all_scheduled_sampling_0.2_feedz_comb0.1_rnn/'
         #ckpt_dir = f'saved_standard_challenging_context32_nocond_fixnorm_all_scheduled_sampling_0.2_feedz_comb0.1_rnn_fixrnn_enablegrad_all_keyevent_cont/'
         #ckpt_dir = f'saved_standard_challenging_context32_nocond_fixnorm_all_scheduled_sampling_0.2_feedz_comb0.1_rnn_fixrnn_enablegrad_all_keyevent_cont_clusters/'
-        ckpt_dir = f'/root/computer/computer/train_dataset_encoded/saved_final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered_largeimg_cont3/'
+        ckpt_dir = f'/root/computer/computer/train_dataset_encoded/saved_final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered_largeimg_cont4/'
         print ('='*10)
         print (f'processing setting {setting}')
         # Get all checkpoint files and sort them
@@ -96,7 +96,7 @@ for setting in ['final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered']
             
             # Run for training set
             # Replace lines in ddpm.py for training set
-            ddpm_replacement = f'        exp_name = \'psearch_a_vis_norm_standard_context{setting}_ckpt{step}/train_{DDIM_S}\'\n        DEBUG = True\n        DDIM_S = {DDIM_S}'
+            ddpm_replacement = f'        exp_name = \'cont4psearch_a_vis_norm_standard_context{setting}_ckpt{step}/train_{DDIM_S}\'\n        DEBUG = True\n        DDIM_S = {DDIM_S}'
             
             with fileinput.FileInput('../latent_diffusion/ldm/models/diffusion/ddpm.py', inplace=True, backup='.bak') as file:
                 for line in file:
@@ -135,7 +135,7 @@ for setting in ['final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered']
             
             # Replace lines in ddpm.py for test set
             #ddpm_replacement = f'        exp_name = \'without_comp_norm_standard_ckpt{step}/test\'\n        DEBUG = True'
-            ddpm_replacement = f'        exp_name = \'psearch_a_vis_norm_standard_context{setting}_ckpt{step}/test_{DDIM_S}\'\n        DEBUG = True\n        DDIM_S = {DDIM_S}'
+            ddpm_replacement = f'        exp_name = \'cont4psearch_a_vis_norm_standard_context{setting}_ckpt{step}/test_{DDIM_S}\'\n        DEBUG = True\n        DDIM_S = {DDIM_S}'
             
             with fileinput.FileInput('../latent_diffusion/ldm/models/diffusion/ddpm.py', inplace=True, backup='.bak') as file:
                 for line in file:

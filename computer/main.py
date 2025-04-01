@@ -7,7 +7,8 @@ from latent_diffusion.ldm.util import instantiate_from_config
 import torch
 import os
 import argparse
-torch.set_float32_matmul_precision('highest')
+#torch.set_float32_matmul_precision('highest')
+torch.set_float32_matmul_precision('high')
 
 #save_path = 'test_15_no_deltas_1000_paths'
 
@@ -41,7 +42,7 @@ if __name__ == "__main__":
     if not from_autoencoder:
         assert 'eval' in args.config
     #from_autoencoder = True # TODO: fix
-    #from_autoencoder = False # TODO: fix
+    from_autoencoder = False # TODO: fix
     if from_autoencoder:
         model = init_model(config)
         #model = load_first_stage_from_config(model, './autoencoder_saved_kl4_bsz8_acc8_lr4.5e6_load_acc1_model-603000.ckpt')
@@ -63,7 +64,8 @@ if __name__ == "__main__":
         #model = load_model_from_config(config, 'saved_bsz64_acc1_lr8e5_512_leftclick_histpos_512_384_cont2_ddd_difficult_only_withlstmencoder_without/model-step=740000.ckpt')
         #model = load_model_from_config(config, 'saved_bsz64_acc1_lr8e5_512_leftclick_histpos_512_384_cont2_ddd_difficult_only_withlstmencoder_8192_1layer/model-step=740000.ckpt')
         #model = load_model_from_config(config, 'saved_bsz64_acc1_lr8e5_512_leftclick_histpos_512_384_cont2_ddd_difficult_only_withlstmencoder_8192_1layer_trim/model-step=720000.ckpt')
-        #model = load_model_from_config(config, '/root/computer/computer/train_dataset_encoded/saved_final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered_largeimg_cont/model-step=010000.ckpt')
+        #model = load_model_from_config(config, '/root/computer/computer/train_dataset_encoded/saved_final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered_largeimg_cont3/model-step=046000.ckpt')
+        model = load_model_from_config(config, '/root/computer/computer/train_dataset_encoded/saved_final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered_cont/model-step=048000.ckpt')
         #### REPLACEMENT_LINE
         #model = load_model_from_config(config, 'saved_bsz64_acc1_lr8e5_512_leftclick_histpos_512_384_cont2_ddd_difficult_only_withlstmencoder_without_standard_filtered/model-step=010000.ckpt')
         pass

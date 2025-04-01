@@ -20,7 +20,19 @@ def elapsed_time_since_modified(file_path):
 
 def extract_losses_from_log(log_file_path):
     log_content = ''
-    if '.cont2' in log_file_path:
+    if '.loadbest' in log_file_path:
+        with open('log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered', 'r') as file:
+            log_content += file.read()
+        with open('log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.cont', 'r') as file:
+            log_content += file.read()
+    elif '.cont3' in log_file_path:
+        with open(log_file_path.replace('.cont3', ''), 'r') as file:
+            log_content += file.read()
+        with open(log_file_path.replace('.cont3', '.cont'), 'r') as file:
+            log_content += file.read()
+        with open(log_file_path.replace('.cont3', '.cont2'), 'r') as file:
+            log_content += file.read()
+    elif '.cont2' in log_file_path:
         with open(log_file_path.replace('.cont2', ''), 'r') as file:
             log_content += file.read()
         with open(log_file_path.replace('.cont2', '.cont'), 'r') as file:
@@ -98,7 +110,8 @@ if __name__ == "__main__":
         #('final2', 'log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.lr4e5.bsz50'),
         #('final20', 'log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.lr4e5'),
         #('final3', 'log.final_hs4096_oc32_nl48_ar2_cm1_2_mc384_lr8e5_b64_gpu8_filtered.largeimg.lr4e5'),
-        ('largeimg', 'log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.lr4e5.cont2'),
+        ('largeimg', 'log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.lr4e5.cont3'),
+        ('largeimg_cont', 'log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.loadbest'),
         #('1gpu', 'log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.lr4e5.gpu1'),
         #('2gpu', 'log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.lr4e5.gpu2'),
         #('4gpu', 'log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.lr4e5.gpu4'),
@@ -117,7 +130,8 @@ if __name__ == "__main__":
             time_elapsed = 1
         print (label, len(losses), len(losses) / time_elapsed, smoothed_losses[-1])
         #losses_dict[label] = (losses[:24000], smoothed_losses[:24000])
-        losses_dict[label] = (losses[:256000], smoothed_losses[:256000])
+        #losses_dict[label] = (losses[:256000], smoothed_losses[:256000])
+        losses_dict[label] = (losses[:], smoothed_losses[:])
         #losses_dict[label] = (losses[:6000], smoothed_losses[:6000])
     
     plot_and_compare_losses(losses_dict)

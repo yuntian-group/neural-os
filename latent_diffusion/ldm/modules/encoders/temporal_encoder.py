@@ -65,7 +65,7 @@ class TemporalEncoder(nn.Module):
         self.initial_state_unknown_c_upper = nn.Parameter(torch.randn(1, 1, hidden_size))
         assert hidden_size % 8 == 0, "hidden_size must be divisible by 8"
 
-        self.image_position_embeddings = nn.Parameter(torch.randn(1, self.output_height*self.output_width, self.input_channels))
+        self.image_position_embeddings = nn.Parameter(torch.randn(1, self.output_height*self.output_width, self.input_channels*8*8))
         self.image_feature_projection = nn.Linear(self.input_channels, self.input_channels*8*8)
         self.lstm_projection_pre = nn.Linear(hidden_size, self.input_channels*8*8)
         self.lstm_projection_post = nn.Linear(self.input_channels*8*8, hidden_size)
@@ -74,18 +74,17 @@ class TemporalEncoder(nn.Module):
         self.embedding_is_leftclick = nn.Embedding(2, hidden_size)
         self.embedding_is_rightclick = nn.Embedding(2, hidden_size)
         self.embedding_key_events = nn.Embedding(len(self.itos)*2, hidden_size)
-        #self.input_projection = nn.Sequential(
-        #    nn.Linear(hidden_size*4, hidden_size*4),
-        #    nn.ReLU(),
-        #)
+        self.input_projection = nn.Sequential(
+            nn.Linear(hidden_size*4, hidden_size*4),
+            nn.ReLU(),
+        )
         self.initial_feedback_padding = nn.Parameter(torch.randn(1, hidden_size))
         self.initial_feedback_unknown = nn.Parameter(torch.randn(1, hidden_size))
         self.multi_head_attention = nn.MultiheadAttention(self.input_channels*8*8, num_heads=8, batch_first=True)
         
         # LSTM to process the sequence
         self.lstm_lower = nn.LSTM(
-            #input_size=hidden_size*4,  # Flattened input size
-            input_size=hidden_size,  # Flattened input size
+            input_size=hidden_size*4,  # Flattened input size
             hidden_size=hidden_size,
             num_layers=num_layers,
             dropout=dropout if num_layers > 1 else 0,
@@ -165,9 +164,9 @@ class TemporalEncoder(nn.Module):
             embedding_key_events = embedding_key_events.sum(dim=1) # bsz, hidden_size
 
             embedding_all = embedding_is_leftclick + embedding_is_rightclick + embedding_key_events
-            #embedding_input = torch.cat([embedding_x, embedding_y, embedding_all, feedback], dim=-1) # bsz, hidden_size*4
-            embedding_input = embedding_x + embedding_y + embedding_all + feedback
-            #embedding_input = self.input_projection(embedding_input) # bsz, hidden_size*4
+            embedding_input = torch.cat([embedding_x, embedding_y, embedding_all, feedback], dim=-1) # bsz, hidden_size*4
+            #embedding_input = embedding_x + embedding_y + embedding_all + feedback
+            embedding_input = self.input_projection(embedding_input) # bsz, hidden_size*4
             embedding_input = embedding_input.unsqueeze(1) # bsz, 1, hidden_size*4
 
             
@@ -175,8 +174,10 @@ class TemporalEncoder(nn.Module):
             image_features = inputs_t['image_features'] # bsz, num_channels, height, width
             assert image_features.shape[1] == self.input_channels, f"image_features.shape[1] = {image_features.shape[-1]} != self.input_channels = {self.input_channels}"
             image_features = torch.einsum('bchw->bhwc', image_features).reshape(batch_size, -1, self.input_channels)
-            image_features_with_position = image_features + self.image_position_embeddings
+            #image_features_with_position = image_features + self.image_position_embeddings
+            image_features_with_position = image_features
             image_features_with_position = self.image_feature_projection(image_features_with_position)
+            image_features_with_position = image_features_with_position + self.image_position_embeddings
             # apply multi-headed attention to attend lstm_out_lower to image_features_with_position
             context, attention_weights = self.multi_head_attention(self.lstm_projection_pre(lstm_out_lower), image_features_with_position, image_features_with_position, need_weights=False, average_attn_weights=False)
             context = self.lstm_projection_post(context) + lstm_out_lower
@@ -290,9 +291,9 @@ class TemporalEncoder(nn.Module):
         embedding_key_events = embedding_key_events.sum(dim=1) # bsz, hidden_size
 
         embedding_all = embedding_is_leftclick + embedding_is_rightclick + embedding_key_events
-        #embedding_input = torch.cat([embedding_x, embedding_y, embedding_all, feedback], dim=-1) # bsz, hidden_size*4
-        embedding_input = embedding_x + embedding_y + embedding_all + feedback
-        #embedding_input = self.input_projection(embedding_input) # bsz, hidden_size*4
+        embedding_input = torch.cat([embedding_x, embedding_y, embedding_all, feedback], dim=-1) # bsz, hidden_size*4
+        #embedding_input = embedding_x + embedding_y + embedding_all + feedback
+        embedding_input = self.input_projection(embedding_input) # bsz, hidden_size*4
         embedding_input = embedding_input.unsqueeze(1) # bsz, 1, hidden_size*4
 
         
@@ -300,8 +301,10 @@ class TemporalEncoder(nn.Module):
         image_features = inputs_t['image_features'] # bsz, num_channels, height, width
         assert image_features.shape[1] == self.input_channels, f"image_features.shape[1] = {image_features.shape[-1]} != self.input_channels = {self.input_channels}"
         image_features = torch.einsum('bchw->bhwc', image_features).reshape(batch_size, -1, self.input_channels)
-        image_features_with_position = image_features + self.image_position_embeddings
+        #image_features_with_position = image_features + self.image_position_embeddings
+        image_features_with_position = image_features
         image_features_with_position = self.image_feature_projection(image_features_with_position)
+        image_features_with_position = image_features_with_position + self.image_position_embeddings
         # apply multi-headed attention to attend lstm_out_lower to image_features_with_position
         context, attention_weights = self.multi_head_attention(self.lstm_projection_pre(lstm_out_lower), image_features_with_position, image_features_with_position, need_weights=False, average_attn_weights=False)
         context = self.lstm_projection_post(context) + lstm_out_lower

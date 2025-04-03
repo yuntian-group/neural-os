@@ -15,14 +15,9 @@ import os
 import argparse
 from math import exp, floor
 import ast
+import re
+import pickle
 
-
-def extract_numbers(path):
-    """Extract record and image numbers from path"""
-    match = re.search(r'record_(\d+)/image_(\d+)', path)
-    if match:
-        return int(match.group(1)), int(match.group(2))
-    return None
 
 #Creates the padding image for your model as a starting point for the generation process.
 def create_padding_img(width, height):
@@ -40,7 +35,6 @@ def compute_distance(current_frame, prev_frame):
     mse = np.mean((current_norm - prev_norm) ** 2)
     return mse
 
-    
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Converts a group of videos and their respective actions into one training dataset.")

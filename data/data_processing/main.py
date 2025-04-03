@@ -5,17 +5,9 @@ from tqdm import tqdm
 import multiprocessing
 from functools import partial
 import cv2
-
-import cv2
 import numpy as np
-import pandas as pd
 from moviepy.editor import VideoFileClip
-from PIL import Image
-import os
-import argparse
-from math import exp, floor
 import ast
-import re
 import pickle
 
 
@@ -39,7 +31,7 @@ def compute_distance(current_frame, prev_frame):
 def parse_args():
     parser = argparse.ArgumentParser(description="Converts a group of videos and their respective actions into one training dataset.")
     
-    parser.add_argument("--save_dir", type=str, default='train_dataset',
+    parser.add_argument("--save_dir", type=str, default='../data_collection/raw_data/train_dataset',
                         help="directory to save the entire training set.")
 
     parser.add_argument("--video_dir", type=str, default='../data_collection/raw_data/raw_data/videos',
@@ -65,14 +57,13 @@ def parse_args():
             
     return args
 
-def process_video(i: int, args: argparse.Namespace, save_dir: str, video_files: list[str]) -> pd.DataFrame | None:
+def process_video(record_num: int, args: argparse.Namespace, save_dir: str, video_files: list[str]) -> pd.DataFrame | None:
     #import pdb; pdb.set_trace()
-    video_file = f'record_{i}.mp4'
+    video_file = f'record_{record_num}.mp4'
     if video_file not in video_files:
         return None
     video_path = os.path.join(args.video_dir, video_file)
-    actions_path = os.path.join(args.actions_dir, f'record_{i}.csv')
-    record_num = i
+    actions_path = os.path.join(args.actions_dir, f'record_{record_num}.csv')
     filter_videos = args.filter_videos
     seq_len = args.seq_len
     if not os.path.exists(video_path):
@@ -146,7 +137,7 @@ def process_video(i: int, args: argparse.Namespace, save_dir: str, video_files: 
             all_frames[keep_frame].save(f'{record_dir}/image_{keep_frame}.png')
             
             # Save the past seq_len frames
-            start_idx = max(0, keep_frame - seq_len + 1)
+            start_idx = max(0, keep_frame - seq_len)
             for seq_idx in range(start_idx, keep_frame):
                 all_frames[seq_idx].save(f'{record_dir}/image_{seq_idx}.png')
             
@@ -225,22 +216,18 @@ if __name__ == "__main__":
 
     try:
         # Create a multiprocessing pool
-        debug = True
-        if debug:
-            # sequential processing, 100 videos
-            results = [process_video_partial(i) for i in range(10)]
-        else:
-            with multiprocessing.Pool(num_workers) as pool:
-                # Process videos in parallel
-                results = list(tqdm(
-                    pool.imap(process_video_partial, range(n)), 
-                    total=n, 
-                    desc="Processing videos", 
-                    unit="video"
-                ))
+        with multiprocessing.Pool(num_workers) as pool:
+            # Process videos in parallel
+            results = list(tqdm(
+                pool.imap(process_video_partial, range(n)), 
+                total=n, 
+                desc="Processing videos", 
+                unit="video"
+            ))
 
         # Filter out None results and combine sequences
         all_seqs = [item for result in results if result is not None for item in result[0]]
+
         all_mapping_dict = {}
         for result in results:
             mapping_dict = result[1]
@@ -252,15 +239,6 @@ if __name__ == "__main__":
         all_seqs_df.to_csv(os.path.join(save_dir, 'train_dataset.target_frames.csv'), index=False)
         with open(os.path.join(save_dir, 'image_action_mapping_with_key_states.pkl'), 'wb') as f:
             pickle.dump(all_mapping_dict, f)
-        #if not all_seqs:
-        #    raise ValueError("No sequences were successfully processed")
-            
-        #all_seqs_df = pd.concat(all_seqs, ignore_index=True)
-        #all_seqs_df.to_csv(os.path.join(save_dir, 'train_dataset.csv'))
-        
-        # Clean up memory
-        #del results
-        #del all_seqs
         
     except Exception as e:
         print(f"Error during processing: {str(e)}")

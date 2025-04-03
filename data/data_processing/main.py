@@ -272,12 +272,12 @@ if __name__ == "__main__":
         else:
             with multiprocessing.Pool(num_workers) as pool:
                 # Process videos in parallel
-            results = list(tqdm(
-                pool.imap(process_video_partial, range(n)), 
-                total=n, 
-                desc="Processing videos", 
-                unit="video"
-            ))
+                results = list(tqdm(
+                    pool.imap(process_video_partial, range(n)), 
+                    total=n, 
+                    desc="Processing videos", 
+                    unit="video"
+                ))
 
         # Filter out None results and combine sequences
         all_seqs = [item for item in result[0] for result in results if target_data is not None]

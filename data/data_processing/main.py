@@ -64,7 +64,7 @@ def parse_args():
     return args
 
 def process_video(i: int, args: argparse.Namespace, save_dir: str, video_files: list[str]) -> pd.DataFrame | None:
-    import pdb; pdb.set_trace()
+    #import pdb; pdb.set_trace()
     video_file = f'record_{i}.mp4'
     if video_file not in video_files:
         return None
@@ -105,7 +105,9 @@ def process_video(i: int, args: argparse.Namespace, save_dir: str, video_files: 
             if filter_videos:
                 if prev_frame is None:
                     filtered = True
-                if compute_distance(current_frame, prev_frame) < 0.1:
+                distance = compute_distance(current_frame, prev_frame)
+                print (distance)
+                if distance < 0.1:
                     filtered = True
             for key_state, key in key_events:
                 if key_state == 'keydown':

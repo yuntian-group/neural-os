@@ -184,7 +184,7 @@ def process_video(i: int, args: argparse.Namespace, save_dir: str, video_files: 
             video_path=os.path.join(args.video_dir, video_file),
             save_dir=save_dir,
             actions_path=os.path.join(args.actions_dir, f'record_{i}.csv'),
-            video_num=i,
+            record_num=i,
             filter_videos=args.filter_videos,
             seq_len=args.seq_len
         )

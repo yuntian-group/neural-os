@@ -24,27 +24,6 @@ def extract_numbers(path):
         return int(match.group(1)), int(match.group(2))
     return None
 
-def format_action(x: int, y: int, left_click: bool, right_click: bool, key_events: str, is_padding: bool = False) -> str:
-    """
-    Format mouse action data into a standardized string format.
-    
-    Args:
-        x: X coordinate
-        y: Y coordinate
-        left_click: Left mouse button state
-        right_click: Right mouse button state
-        key_events: Key events
-        is_padding: Whether this is a padding action
-        
-    Returns:
-        Formatted action string
-    """
-    key_events = ast.literal_eval(key_events)
-    if is_padding:
-        x, y, left_click, right_click, key_events = 0, 0, False, False, []
-    formatted_action = (int(x), int(y), True if left_click else False, True if right_click else False, key_events)
-    return formatted_action
-
 #Creates the padding image for your model as a starting point for the generation process.
 def create_padding_img(width, height):
     """Creates a black image for padding with specified dimensions"""
@@ -86,11 +65,11 @@ def video_to_frames(video_path: str, actions_path: str, record_num: int, save_di
         down_keys = set([])
         for image_num in range(0, int(fps * duration)):
             action_row = mouse_data.iloc[image_num]
-            x = action_row['X']
-            y = action_row['Y']
-            left_click = action_row['Left Click']
-            right_click = action_row['Right Click']
-            key_events = action_row['Key Events']
+            x = int(action_row['X'])
+            y = int(action_row['Y'])
+            left_click = True if action_row['Left Click'] == 1 else False
+            right_click = True if action_row['Right Click'] == 1 else False
+            key_events = ast.literal_eval(action_row['Key Events'])
             
             current_frame = Image.fromarray(video.get_frame(image_num / fps))
             if filter_videos:
@@ -246,8 +225,8 @@ if __name__ == "__main__":
     print(f"Video dimensions: width: {width}, height: {height}")
 
     # Create a padding image with the same size
-    black_image = create_padding_img(width, height)
-    black_image.save(os.path.join(save_dir, 'padding.png'))
+    padding_image = create_padding_img(width, height)
+    padding_image.save(os.path.join(save_dir, 'padding.png'))
 
     all_seqs = []
 

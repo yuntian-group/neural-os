@@ -123,7 +123,8 @@ def process_video(i: int, args: argparse.Namespace, save_dir: str, video_files: 
             path = f'{record_dir}/image_{image_num}.png'
             os.makedirs(record_dir, exist_ok=True)
             current_frame.save(path)
-            mapping_dict[(record_num, image_num)] =  (x, y, left_click, right_click, list(down_keys))
+            mapping_dict[(record_num, image_num)] = (x, y, left_click, right_click, list(down_keys))
+            target_data.append((record_num, image_num))
 
     return (target_data, mapping_dict)
 

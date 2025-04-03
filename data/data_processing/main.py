@@ -40,9 +40,45 @@ def compute_distance(current_frame, prev_frame):
     mse = np.mean((current_norm - prev_norm) ** 2)
     return mse
 
-def video_to_frames(video_path: str, actions_path: str, record_num: int, save_dir: str = 'train_dataset', filter_videos: bool = False) -> pd.DataFrame:
-    # Add input validation
+    
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="Converts a group of videos and their respective actions into one training dataset.")
+    
+    parser.add_argument("--save_dir", type=str, default='train_dataset',
+                        help="directory to save the entire training set.")
+
+    parser.add_argument("--video_dir", type=str, default='../data_collection/raw_data/raw_data/videos',
+                        help="directory where the videos are saved.")
+    
+    parser.add_argument("--actions_dir", type=str, default='../data_collection/raw_data/raw_data/actions',
+                        help="directory where the actions are saved.")
+                            
+    parser.add_argument("--filter_videos", action='store_true',
+                        help="Whether to filter videos based on their dimensions.")
+    parser.set_defaults(filter_videos=False)
+    args = parser.parse_args()
+    print (args)
+    if args.filter_videos:
+        print ("Filtering videos based on their dimensions.")
+        args.save_dir = args.save_dir + "_filtered"
+    # Add directory validation
+    for dir_path in [args.video_dir, args.actions_dir]:
+        if not os.path.exists(dir_path):
+            raise ValueError(f"Directory does not exist: {dir_path}")
+            
+    return args
+
+def process_video(i: int, args: argparse.Namespace, save_dir: str, video_files: list[str]) -> pd.DataFrame | None:
     import pdb; pdb.set_trace()
+    video_file = f'record_{i}.mp4'
+    if video_file not in video_files:
+        return None
+    video_path = os.path.join(args.video_dir, video_file)
+    actions_path = os.path.join(args.actions_dir, f'record_{i}.csv')
+    record_num = i
+    filter_videos = args.filter_videos
+
     if not os.path.exists(video_path):
         raise FileNotFoundError(f"Video file not found: {video_path}")
     if not os.path.exists(actions_path):
@@ -92,85 +128,8 @@ def video_to_frames(video_path: str, actions_path: str, record_num: int, save_di
             os.makedirs(record_dir, exist_ok=True)
             current_frame.save(path)
             mapping_dict[(record_num, image_num)] =  (x, y, left_click, right_click, list(down_keys))
-            #actions.append(action)
-    #If padding, prepend the padding image and first action to the list.
-    
-    #image_paths_padding = [save_path + '/padding.png' for _ in range(seq_len - 1)]
-    #actions_padding = [format_action(0, 0, False, False, '[]', is_padding=True) for _ in range(seq_len - 1)]
-
-    #prepend the padding if needed.
-    #image_paths = image_paths_padding + image_paths
-    #actions = actions_padding + actions
-
-    #target_data = []
-    #for i in range(len(image_paths)):
-    #    record_num, image_num = extract_numbers(image_paths[i])
-    #    target_data.append((record_num, image_num))
-
 
     return (target_data, mapping_dict)
-
-def parse_args():
-    parser = argparse.ArgumentParser(description="Converts a group of videos and their respective actions into one training dataset.")
-    
-    parser.add_argument("--save_dir", type=str, default='train_dataset',
-                        help="directory to save the entire training set.")
-
-    parser.add_argument("--video_dir", type=str, default='../data_collection/raw_data/raw_data/videos',
-                        help="directory where the videos are saved.")
-    
-    parser.add_argument("--actions_dir", type=str, default='../data_collection/raw_data/raw_data/actions',
-                        help="directory where the actions are saved.")
-                            
-    parser.add_argument("--filter_videos", action='store_true',
-                        help="Whether to filter videos based on their dimensions.")
-    parser.set_defaults(filter_videos=False)
-    args = parser.parse_args()
-    print (args)
-    if args.filter_videos:
-        print ("Filtering videos based on their dimensions.")
-        args.save_dir = args.save_dir + "_filtered"
-    # Add directory validation
-    for dir_path in [args.video_dir, args.actions_dir]:
-        if not os.path.exists(dir_path):
-            raise ValueError(f"Directory does not exist: {dir_path}")
-            
-    return args
-
-def process_video(i: int, args: argparse.Namespace, save_dir: str, video_files: list[str]) -> pd.DataFrame | None:
-    """
-    Process a single video file and create sequences.
-    
-    Args:
-        i: Video index
-        args: Command line arguments
-        save_dir: Directory to save processed data
-        video_files: List of available video files
-        
-    Returns:
-        DataFrame containing sequences or None if video not found
-    """
-    import pdb; pdb.set_trace()
-    video_file = f'record_{i}.mp4'
-    if video_file not in video_files:
-        return None
-
-    try:
-        df = video_to_frames(
-            video_path=os.path.join(args.video_dir, video_file),
-            save_dir=save_dir,
-            actions_path=os.path.join(args.actions_dir, f'record_{i}.csv'),
-            record_num=i,
-            filter_videos=args.filter_videos,
-        )
-        
-        #seq_df = sequence_creator(df, save_dir, seq_len=args.seq_len)
-        #del df  # Clean up memory
-        return seq_df
-        
-    except Exception as e:
-        print(f"Error processing video {video_file}: {str(e)}")
-        raise e
 
 def get_video_dimensions(video_path: str) -> tuple[int, int]:
     """

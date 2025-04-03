@@ -102,12 +102,13 @@ def process_video(i: int, args: argparse.Namespace, save_dir: str, video_files: 
             key_events = ast.literal_eval(action_row['Key Events'])
             
             current_frame = Image.fromarray(video.get_frame(image_num / fps))
+            filtered = False
             if filter_videos:
                 if prev_frame is None:
                     filtered = True
                 distance = compute_distance(current_frame, prev_frame)
                 print (distance)
-                if distance < 0.1:
+                if distance < 0.001:
                     filtered = True
             for key_state, key in key_events:
                 if key_state == 'keydown':
@@ -119,6 +120,7 @@ def process_video(i: int, args: argparse.Namespace, save_dir: str, video_files: 
             prev_frame = current_frame
             if filtered:
                 continue
+            import pdb; pdb.set_trace()
             record_dir = f'{save_dir}/record_{record_num}'
             path = f'{record_dir}/image_{image_num}.png'
             os.makedirs(record_dir, exist_ok=True)

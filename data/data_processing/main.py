@@ -108,7 +108,7 @@ def process_video(i: int, args: argparse.Namespace, save_dir: str, video_files: 
                     filtered = True
                 distance = compute_distance(current_frame, prev_frame)
                 print (distance)
-                if distance < 0.001:
+                if distance < 0.1:
                     filtered = True
             for key_state, key in key_events:
                 if key_state == 'keydown':
@@ -203,7 +203,7 @@ if __name__ == "__main__":
         debug = True
         if debug:
             # sequential processing, 100 videos
-            results = [process_video_partial(i) for i in range(n)]
+            results = [process_video_partial(i) for i in range(10)]
         else:
             with multiprocessing.Pool(num_workers) as pool:
                 # Process videos in parallel

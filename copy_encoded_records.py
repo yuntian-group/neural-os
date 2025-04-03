@@ -16,7 +16,7 @@ def parse_args():
     parser.add_argument(
         "--test_csv",
         type=str,
-        default="data/data_processing/train_dataset/filtered_dataset.target_frames.clustered.test.csv",
+        default="data/data_processing/train_dataset/filtered_dataset.target_frames.clustered.train.head100.csv",
         help="Path to test CSV file"
     )
     parser.add_argument(
@@ -28,7 +28,7 @@ def parse_args():
     parser.add_argument(
         "--output_dir",
         type=str,
-        default="computer/train_dataset_encoded/to_transfer",
+        default="computer/train_dataset_encoded/to_transfer_train_head100",
         help="Directory to copy record folders to"
     )
     parser.add_argument(

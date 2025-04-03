@@ -197,7 +197,8 @@ if __name__ == "__main__":
         # Create a multiprocessing pool
         debug = True
         if debug:
-            results = [process_video_partial(0), process_video_partial(1), process_video_partial(2)]
+            # sequential processing, 100 videos
+            results = [process_video_partial(i) for i in range(n)]
         else:
             with multiprocessing.Pool(num_workers) as pool:
                 # Process videos in parallel

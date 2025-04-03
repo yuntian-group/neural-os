@@ -139,7 +139,9 @@ def process_video(record_num: int, args: argparse.Namespace, save_dir: str, vide
             # Save the past seq_len frames
             start_idx = max(0, keep_frame - seq_len)
             for seq_idx in range(start_idx, keep_frame):
-                all_frames[seq_idx].save(f'{record_dir}/image_{seq_idx}.png')
+                save_path = f'{record_dir}/image_{seq_idx}.png'
+                if not os.path.exists(save_path):
+                    all_frames[seq_idx].save(save_path)
             
             # Add the current frame to target data
             target_data.append((record_num, keep_frame))

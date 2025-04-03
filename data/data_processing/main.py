@@ -238,7 +238,7 @@ if __name__ == "__main__":
                   if f.startswith('record_') and f.endswith('.mp4')
                   and os.path.isfile(os.path.join(args.video_dir, f))]
 
-    video_files = video_files[:10]
+    #video_files = video_files[:10]
     
     if not video_files:
         raise ValueError(f"No valid video files found in {args.video_dir}")

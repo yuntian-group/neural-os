@@ -63,6 +63,7 @@ def compute_distance(current_frame, prev_frame):
 
 def video_to_frames(video_path: str, actions_path: str, record_num: int, save_dir: str = 'train_dataset', filter_videos: bool = False) -> pd.DataFrame:
     # Add input validation
+    import pdb; pdb.set_trace()
     if not os.path.exists(video_path):
         raise FileNotFoundError(f"Video file not found: {video_path}")
     if not os.path.exists(actions_path):
@@ -181,7 +182,7 @@ def process_video(i: int, args: argparse.Namespace, save_dir: str, video_files: 
     try:
         df = video_to_frames(
             video_path=os.path.join(args.video_dir, video_file),
-            save_path=save_dir,
+            save_dir=save_dir,
             actions_path=os.path.join(args.actions_dir, f'record_{i}.csv'),
             video_num=i,
             filter_videos=args.filter_videos,

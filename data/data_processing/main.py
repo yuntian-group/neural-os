@@ -215,7 +215,7 @@ if __name__ == "__main__":
                 ))
 
         # Filter out None results and combine sequences
-        all_seqs = [item for item in result[0] for result in results if target_data is not None]
+        all_seqs = [item for result in results if result is not None for item in result[0]]
         all_mapping_dict = {}
         for result in results:
             mapping_dict = result[1]

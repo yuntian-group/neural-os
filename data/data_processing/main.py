@@ -142,10 +142,7 @@ def parse_args():
     
     parser.add_argument("--actions_dir", type=str, default='../data_collection/raw_data/raw_data/actions',
                         help="directory where the actions are saved.")
-    
-    parser.add_argument("--seq_len", type=int, default=2,
-                        help="This number -1 is the number of frames conditioned on.")
-                        
+                            
     parser.add_argument("--filter_videos", action='store_true',
                         help="Whether to filter videos based on their dimensions.")
     parser.set_defaults(filter_videos=False)
@@ -186,7 +183,6 @@ def process_video(i: int, args: argparse.Namespace, save_dir: str, video_files: 
             actions_path=os.path.join(args.actions_dir, f'record_{i}.csv'),
             record_num=i,
             filter_videos=args.filter_videos,
-            seq_len=args.seq_len
         )
         
         #seq_df = sequence_creator(df, save_dir, seq_len=args.seq_len)

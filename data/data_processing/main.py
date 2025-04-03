@@ -50,6 +50,8 @@ def parse_args():
                             
     parser.add_argument("--filter_videos", action='store_true',
                         help="Whether to filter videos based on their dimensions.")
+    parser.add_argument("--seq_len", type=int, default=32,
+                        help="The length of the sequence to process.")
     parser.set_defaults(filter_videos=False)
     args = parser.parse_args()
     print (args)
@@ -72,7 +74,7 @@ def process_video(i: int, args: argparse.Namespace, save_dir: str, video_files: 
     actions_path = os.path.join(args.actions_dir, f'record_{i}.csv')
     record_num = i
     filter_videos = args.filter_videos
-
+    seq_len = args.seq_len
     if not os.path.exists(video_path):
         raise FileNotFoundError(f"Video file not found: {video_path}")
     if not os.path.exists(actions_path):
@@ -91,8 +93,12 @@ def process_video(i: int, args: argparse.Namespace, save_dir: str, video_files: 
             print(f"Warning: Expected FPS of 15, got {fps}")
             assert False
 
+        # First pass: identify frames to keep
+        frames_to_keep = []
+        all_frames = []
         prev_frame = None
         down_keys = set([])
+        
         for image_num in range(0, int(fps * duration)):
             action_row = mouse_data.iloc[image_num]
             x = int(action_row['X'])
@@ -102,14 +108,9 @@ def process_video(i: int, args: argparse.Namespace, save_dir: str, video_files: 
             key_events = ast.literal_eval(action_row['Key Events'])
             
             current_frame = Image.fromarray(video.get_frame(image_num / fps))
-            filtered = False
-            if filter_videos:
-                if prev_frame is None:
-                    filtered = True
-                distance = compute_distance(current_frame, prev_frame)
-                print (distance)
-                if distance < 0.1:
-                    filtered = True
+            all_frames.append(current_frame)
+            
+            # Track key states
             for key_state, key in key_events:
                 if key_state == 'keydown':
                     down_keys.add(key)
@@ -117,16 +118,40 @@ def process_video(i: int, args: argparse.Namespace, save_dir: str, video_files: 
                     down_keys.remove(key)
                 else:
                     raise ValueError(f"Unknown key state: {key_state}")
-            prev_frame = current_frame
-            if filtered:
-                continue
-            import pdb; pdb.set_trace()
-            record_dir = f'{save_dir}/record_{record_num}'
-            path = f'{record_dir}/image_{image_num}.png'
-            os.makedirs(record_dir, exist_ok=True)
-            current_frame.save(path)
+            
+            # Store mapping regardless of filtering
             mapping_dict[(record_num, image_num)] = (x, y, left_click, right_click, list(down_keys))
-            target_data.append((record_num, image_num))
+            
+            filtered = False
+            if filter_videos:
+                if prev_frame is None:
+                    filtered = True
+                else:
+                    distance = compute_distance(current_frame, prev_frame)
+                    if distance < 0.1:
+                        filtered = True
+            
+            prev_frame = current_frame
+            
+            if not filtered:
+                frames_to_keep.append(image_num)
+        
+        # Second pass: save frames and their sequences
+        for keep_frame in frames_to_keep:
+            # Save the current frame that we want to keep
+            record_dir = f'{save_dir}/record_{record_num}'
+            os.makedirs(record_dir, exist_ok=True)
+            
+            # Save this frame
+            all_frames[keep_frame].save(f'{record_dir}/image_{keep_frame}.png')
+            
+            # Save the past seq_len frames
+            start_idx = max(0, keep_frame - seq_len + 1)
+            for seq_idx in range(start_idx, keep_frame):
+                all_frames[seq_idx].save(f'{record_dir}/image_{seq_idx}.png')
+            
+            # Add the current frame to target data
+            target_data.append((record_num, keep_frame))
 
     return (target_data, mapping_dict)
 

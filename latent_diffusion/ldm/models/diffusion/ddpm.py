@@ -802,7 +802,7 @@ class LatentDiffusion(DDPM):
             x = x / 127.5 - 1.0
             x = rearrange(x, 'b h w c -> b c h w')
             encoder_posterior = self.first_stage_model.encode(x)
-            z = encoder_posterior.sample().decode()
+            z = encoder_posterior.sample()
             # normalize
             z = (z - per_channel_mean.view(1, -1, 1, 1)) / per_channel_std.view(1, -1, 1, 1)
             batch['image_processed'] = z

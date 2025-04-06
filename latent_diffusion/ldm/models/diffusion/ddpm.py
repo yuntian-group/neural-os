@@ -791,7 +791,7 @@ class LatentDiffusion(DDPM):
         
         assert k == 'image', "Only image conditioning is supported for now"
         
-        import pdb; pdb.set_trace()
+        #import pdb; pdb.set_trace()
 
         if 'image_processed' in batch:
             print ('gere debug')
@@ -803,12 +803,13 @@ class LatentDiffusion(DDPM):
             x = rearrange(x, 'b h w c -> b c h w')
             encoder_posterior = self.first_stage_model.encode(x)
             z = encoder_posterior.sample()
-            x_reconstructed = self.first_stage_model.decode(z)
-            x_reconstructed = rearrange(x_reconstructed, 'b c h w -> b h w c')
-            x_reconstructed = (x_reconstructed + 1.0) * 127.5
-            # save the image
-            from PIL import Image
-            for i in range(z.shape[0]):
+            if False:
+                x_reconstructed = self.first_stage_model.decode(z)
+                x_reconstructed = rearrange(x_reconstructed, 'b c h w -> b h w c')
+                x_reconstructed = (x_reconstructed + 1.0) * 127.5
+                # save the image
+                from PIL import Image
+                for i in range(z.shape[0]):
                 Image.fromarray(x_reconstructed[i].cpu().numpy().astype(np.uint8)).save(f'reconstructed_gere_debug_image_{i}.png')
             # normalize
             z = (z - per_channel_mean.view(1, -1, 1, 1)) / per_channel_std.view(1, -1, 1, 1)

@@ -805,6 +805,7 @@ class LatentDiffusion(DDPM):
             z = encoder_posterior.sample()
             x_reconstructed = self.first_stage_model.decode(z)
             x_reconstructed = rearrange(x_reconstructed, 'b c h w -> b h w c')
+            x_reconstructed = (x_reconstructed + 1.0) * 127.5
             # save the image
             from PIL import Image
             for i in range(z.shape[0]):

@@ -810,7 +810,7 @@ class LatentDiffusion(DDPM):
                 # save the image
                 from PIL import Image
                 for i in range(z.shape[0]):
-                Image.fromarray(x_reconstructed[i].cpu().numpy().astype(np.uint8)).save(f'reconstructed_gere_debug_image_{i}.png')
+                    Image.fromarray(x_reconstructed[i].cpu().numpy().astype(np.uint8)).save(f'reconstructed_gere_debug_image_{i}.png')
             # normalize
             z = (z - per_channel_mean.view(1, -1, 1, 1)) / per_channel_std.view(1, -1, 1, 1)
             batch['image_processed'] = z

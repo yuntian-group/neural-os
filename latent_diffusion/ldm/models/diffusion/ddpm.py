@@ -806,6 +806,7 @@ class LatentDiffusion(DDPM):
             x_reconstructed = self.first_stage_model.decode(z)
             x_reconstructed = rearrange(x_reconstructed, 'b c h w -> b h w c')
             # save the image
+            from PIL import Image
             for i in range(z.shape[0]):
                 Image.fromarray(x_reconstructed[i].cpu().numpy().astype(np.uint8)).save(f'reconstructed_gere_debug_image_{i}.png')
             # normalize

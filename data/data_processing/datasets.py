@@ -327,8 +327,8 @@ class ActionsData(Dataset):
 
     def __len__(self):
         if self.debug_mode:
-            assert False
-            return 10000000
+            #assert False
+            return self._length
         else:
             return self._length
 
@@ -411,6 +411,14 @@ class ActionsData(Dataset):
             example["c_concat_processed"] = self.normalize_features(torch.stack([
                 self.load_processed_image(path) for path in image_paths
             ]))
+            if self.debug_mode:
+                print ('gere', example["image_processed"].shape)
+                # draw cursor on a blank image
+                white_image = np.ones((48*8, 64*8, 3)) * 255
+                example["image"] = draw_cursor(white_image, x, y, left_click, right_click)
+                # save the image
+                Image.fromarray(example["image"].astype(np.uint8)).save(f'gere_debug_image_{i}.png')
+                sys.exit(1)
         example['is_padding'] = torch.BoolTensor([frame_num < 0 for frame_num in frame_numbers])
         
         # Rest of action processing remains the same

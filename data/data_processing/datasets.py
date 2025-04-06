@@ -417,8 +417,8 @@ class ActionsData(Dataset):
                 white_image = np.ones((48*8, 64*8, 3)) * 255
                 example["image"] = draw_cursor(white_image, x, y, left_click, right_click)
                 # save the image
-                Image.fromarray(example["image"].astype(np.uint8)).save(f'gere_debug_image_{i}.png')
-                sys.exit(1)
+                #Image.fromarray(example["image"].astype(np.uint8)).save(f'gere_debug_image_{i}.png')
+                #sys.exit(1)
         example['is_padding'] = torch.BoolTensor([frame_num < 0 for frame_num in frame_numbers])
         
         # Rest of action processing remains the same

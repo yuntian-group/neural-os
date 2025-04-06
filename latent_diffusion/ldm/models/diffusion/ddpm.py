@@ -789,10 +789,18 @@ class LatentDiffusion(DDPM):
 
         
         assert k == 'image', "Only image conditioning is supported for now"
+        
         #import pdb; pdb.set_trace()
 
         if 'image_processed' in batch:
-            z = batch['image_processed']
+            print ('gere debug')
+            x = batch['image']
+            x = x.to(self.device)
+            encoder_posterior = self.first_stage_model.encode(x)
+            z = encoder_posterior.sample().decode()
+            import pdb; pdb.set_trace()
+            batch['image_processed'] = z
+            #z = batch['image_processed']
             assert bs is None, "Batch size must be None when using processed images"
             z = z.to(self.device)
         else:

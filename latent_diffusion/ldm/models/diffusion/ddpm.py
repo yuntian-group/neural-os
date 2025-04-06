@@ -794,8 +794,9 @@ class LatentDiffusion(DDPM):
 
         if 'image_processed' in batch:
             print ('gere debug')
-            x = batch['image']
+            x = batch['image'].float()
             x = x.to(self.device)
+            x = rearrange(x, 'b h w c -> b c h w')
             encoder_posterior = self.first_stage_model.encode(x)
             z = encoder_posterior.sample().decode()
             import pdb; pdb.set_trace()

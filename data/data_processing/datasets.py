@@ -412,7 +412,7 @@ class ActionsData(Dataset):
                 self.load_processed_image(path) for path in image_paths
             ]))
             if self.debug_mode:
-                print ('gere', example["image_processed"].shape)
+                #print ('gere', example["image_processed"].shape)
                 # draw cursor on a blank image
                 white_image = np.ones((48*8, 64*8, 3)) * 255
                 example["image"] = draw_cursor(white_image, x, y, left_click, right_click)

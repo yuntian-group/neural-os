@@ -790,7 +790,7 @@ class LatentDiffusion(DDPM):
         
         assert k == 'image', "Only image conditioning is supported for now"
         
-        #import pdb; pdb.set_trace()
+        import pdb; pdb.set_trace()
 
         if 'image_processed' in batch:
             print ('gere debug')

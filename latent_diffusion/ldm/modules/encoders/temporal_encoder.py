@@ -74,17 +74,17 @@ class TemporalEncoder(nn.Module):
         self.embedding_is_leftclick = nn.Embedding(2, hidden_size)
         self.embedding_is_rightclick = nn.Embedding(2, hidden_size)
         self.embedding_key_events = nn.Embedding(len(self.itos)*2, hidden_size)
-        self.input_projection = nn.Sequential(
-            nn.Linear(hidden_size*4, hidden_size*4),
-            nn.ReLU(),
-        )
+        #self.input_projection = nn.Sequential(
+        #    nn.Linear(hidden_size*4, hidden_size*4),
+        #    nn.LeakyReLU(),
+        #)
         self.initial_feedback_padding = nn.Parameter(torch.randn(1, hidden_size))
         self.initial_feedback_unknown = nn.Parameter(torch.randn(1, hidden_size))
         self.multi_head_attention = nn.MultiheadAttention(self.input_channels*8*8, num_heads=8, batch_first=True)
         
         # LSTM to process the sequence
         self.lstm_lower = nn.LSTM(
-            input_size=hidden_size*4,  # Flattened input size
+            input_size=hidden_size,  # Flattened input size
             hidden_size=hidden_size,
             num_layers=num_layers,
             dropout=dropout if num_layers > 1 else 0,
@@ -104,7 +104,7 @@ class TemporalEncoder(nn.Module):
         # Project LSTM output to desired spatial feature map
         self.projection = nn.Sequential(
             nn.Linear(hidden_size, hidden_size*4),
-            nn.ReLU(),
+            nn.LeakyReLU(),
             nn.Linear(hidden_size*4, self.output_channels * output_height * output_width),
         )
     # TODO: maybe use a CNN to process the sequence
@@ -165,8 +165,8 @@ class TemporalEncoder(nn.Module):
 
             embedding_all = embedding_is_leftclick + embedding_is_rightclick + embedding_key_events
             embedding_input = torch.cat([embedding_x, embedding_y, embedding_all, feedback], dim=-1) # bsz, hidden_size*4
-            #embedding_input = embedding_x + embedding_y + embedding_all + feedback
-            embedding_input = self.input_projection(embedding_input) # bsz, hidden_size*4
+            embedding_input = embedding_x + embedding_y + embedding_all + feedback
+            #embedding_input = self.input_projection(embedding_input) # bsz, hidden_size*4
             embedding_input = embedding_input.unsqueeze(1) # bsz, 1, hidden_size*4
 
             
@@ -291,9 +291,9 @@ class TemporalEncoder(nn.Module):
         embedding_key_events = embedding_key_events.sum(dim=1) # bsz, hidden_size
 
         embedding_all = embedding_is_leftclick + embedding_is_rightclick + embedding_key_events
-        embedding_input = torch.cat([embedding_x, embedding_y, embedding_all, feedback], dim=-1) # bsz, hidden_size*4
-        #embedding_input = embedding_x + embedding_y + embedding_all + feedback
-        embedding_input = self.input_projection(embedding_input) # bsz, hidden_size*4
+        #embedding_input = torch.cat([embedding_x, embedding_y, embedding_all, feedback], dim=-1) # bsz, hidden_size*4
+        embedding_input = embedding_x + embedding_y + embedding_all + feedback
+        #embedding_input = self.input_projection(embedding_input) # bsz, hidden_size*4
         embedding_input = embedding_input.unsqueeze(1) # bsz, 1, hidden_size*4
 
         

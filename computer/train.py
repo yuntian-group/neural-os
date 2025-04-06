@@ -41,7 +41,7 @@ def train_model(model: LatentDiffusion, data: DataModule, save_path: str, config
     model.train()
     model.model_ema.eval()
     model.first_stage_model.eval()
-    #model.temporal_encoder.train()
+    model.temporal_encoder.train()
     #import pdb; pdb.set_trace()
     trainer.fit(model, data)
    

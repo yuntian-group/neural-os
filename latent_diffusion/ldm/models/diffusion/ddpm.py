@@ -795,12 +795,16 @@ class LatentDiffusion(DDPM):
 
         if 'image_processed' in batch:
             print ('gere debug')
+            per_channel_mean = self.trainer.datamodule.datasets['train'].per_channel_mean.to(self.device)
+            per_channel_std = self.trainer.datamodule.datasets['train'].per_channel_std.to(self.device)
             x = batch['image'].float()
             x = x.to(self.device)
+            x = x / 127.5 - 1.0
             x = rearrange(x, 'b h w c -> b c h w')
             encoder_posterior = self.first_stage_model.encode(x)
             z = encoder_posterior.sample().decode()
-            import pdb; pdb.set_trace()
+            # normalize
+            z = (z - per_channel_mean.view(1, -1, 1, 1)) / per_channel_std.view(1, -1, 1, 1)
             batch['image_processed'] = z
             #z = batch['image_processed']
             assert bs is None, "Batch size must be None when using processed images"

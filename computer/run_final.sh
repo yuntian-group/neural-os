@@ -55,4 +55,65 @@ stdbuf -oL -eL python main.py --config configs/final_hs4096_oc32_nl48_ar_cm1_2_m
 
 stdbuf -oL -eL python main.py --config configs/final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered_largeimg_context8_all.yaml > log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.loadbest.context8.all.fixrelu.simplifyinput 2>&1 &
 
-stdbuf -oL -eL python main.py --config configs/final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered_largeimg_context8_all_debug.yaml > log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.loadbest.context8.all.fixrelu.simplifyinput.debug 2>&1 &
+stdbuf -oL -eL python main.py --config configs/final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered_largeimg_context8_all_debug.yaml > log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.loadbest.context8.all.fixrelu.simplifyinput.debug.rerun 2>&1 &
+stdbuf -oL -eL python main.py --config configs/final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered_largeimg_context8_all_debug_fullreinit.yaml > log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.loadbest.context8.all.fixrelu.simplifyinput.debug.fullreinit.fixed 2>&1 &
+
+
+
+
+CUDA_VISIBLE_DEVICES=0 stdbuf -oL -eL python main.py --config configs/final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered_largeimg_context8_all_debug_fullreinit.yaml > log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.loadbest.context8.all.fixrelu.simplifyinput.debug.fullreinit.fixed.cont 2>&1 &
+
+
+CUDA_VISIBLE_DEVICES=1 stdbuf -oL -eL python main.py --config configs/final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered_largeimg_context8_all_debug_fullreinit_addattn.yaml > log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.loadbest.context8.all.fixrelu.simplifyinput.debug.fullreinit.addattn.fixed 2>&1 &
+CUDA_VISIBLE_DEVICES=2 stdbuf -oL -eL python main.py --config configs/final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered_largeimg_context8_all_debug_fullreinit_reinitrnn.yaml > log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.loadbest.context8.all.fixrelu.simplifyinput.debug.fullreinit.reinitrnn.fixed 2>&1 &
+CUDA_VISIBLE_DEVICES=3 stdbuf -oL -eL python main.py --config configs/final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered_largeimg_context8_all_debug_fullreinit_reinitcnn.yaml > log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.loadbest.context8.all.fixrelu.simplifyinput.debug.fullreinit.reinitcnn.fixed 2>&1 &
+CUDA_VISIBLE_DEVICES=4 stdbuf -oL -eL python main.py --config configs/final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered_largeimg_context8_all_debug_fullreinit_reinitnone.yaml > log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.loadbest.context8.all.fixrelu.simplifyinput.debug.fullreinit.reinitnone.fixed.cont 2>&1 &
+
+CUDA_VISIBLE_DEVICES=5 stdbuf -oL -eL python main.py --config configs/final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered_largeimg_context8_all_debug_fullreinit_reinitnone_overfit.yaml > log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.loadbest.context8.all.fixrelu.simplifyinput.debug.fullreinit.reinitnone.fixed.overfit 2>&1 &
+
+CUDA_VISIBLE_DEVICES=6 stdbuf -oL -eL python main.py --config configs/final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered_largeimg_context8_all_debug_fullreinit_reinitnone_highprecision.yaml > log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.loadbest.context8.all.fixrelu.simplifyinput.debug.fullreinit.reinitnone.highprecision.fixed 2>&1 &
+
+
+CUDA_VISIBLE_DEVICES=1 stdbuf -oL -eL python main.py --config configs/final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered_largeimg_context8_all_debug_fullreinit_addattn.yaml > log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.loadbest.context8.all.fixrelu.simplifyinput.debug.fullreinit.addattn.fixed.cont 2>&1 &
+
+
+CUDA_VISIBLE_DEVICES=7 stdbuf -oL -eL python main.py --config configs/final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered_largeimg_context8_all_debug_fullreinit_reinitnone_cheat.yaml > log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.loadbest.context8.all.fixrelu.simplifyinput.debug.fullreinit.reinitnone_cheat.fixed.cont 2>&1 &
+
+
+CUDA_VISIBLE_DEVICES=6 stdbuf -oL -eL python main.py --config configs/final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered_largeimg_context8_all_debug_fullreinit_noimg.yaml > log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.loadbest.context8.all.fixrelu.simplifyinput.debug.fullreinit.fixed.noimg 2>&1 &
+
+
+CUDA_VISIBLE_DEVICES=3 stdbuf -oL -eL python main.py --config configs/final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered_largeimg_context8_all_debug_pretrain.yaml > log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.loadbest.context8.all.fixrelu.simplifyinput.debug.pretrain 2>&1 &
+CUDA_VISIBLE_DEVICES=5 stdbuf -oL -eL python main.py --config configs/final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered_largeimg_context8_all_debug_pretrain_posttrain.yaml > log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.loadbest.context8.all.fixrelu.simplifyinput.debug.pretrain.posttrain 2>&1 &
+
+
+CUDA_VISIBLE_DEVICES=1 stdbuf -oL -eL python main.py --config configs/final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered_largeimg_context8_all_debug_pretrain2.yaml > log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.loadbest.context8.all.fixrelu.simplifyinput.debug.pretrain2 2>&1 &
+CUDA_VISIBLE_DEVICES=7 stdbuf -oL -eL python main.py --config configs/final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered_largeimg_context8_all_debug_pretrain3.yaml > log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.loadbest.context8.all.fixrelu.simplifyinput.debug.pretrain3 2>&1 &
+CUDA_VISIBLE_DEVICES=2 stdbuf -oL -eL python main.py --config configs/final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered_largeimg_context8_all_debug_pretrain4.yaml > log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.loadbest.context8.all.fixrelu.simplifyinput.debug.pretrain4 2>&1 &
+CUDA_VISIBLE_DEVICES=4 stdbuf -oL -eL python main.py --config configs/final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered_largeimg_context8_all_debug_pretrain5.yaml > log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.loadbest.context8.all.fixrelu.simplifyinput.debug.pretrain5 2>&1 &
+
+
+CUDA_VISIBLE_DEVICES=6 stdbuf -oL -eL python main.py --config configs/final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered_largeimg_context8_all_debug_pretrain21.yaml > log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.loadbest.context8.all.fixrelu.simplifyinput.debug.pretrain21 2>&1 &
+CUDA_VISIBLE_DEVICES=3 stdbuf -oL -eL python main.py --config configs/final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered_largeimg_context8_all_debug_pretrain22.yaml > log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.loadbest.context8.all.fixrelu.simplifyinput.debug.pretrain22 2>&1 &
+
+CUDA_VISIBLE_DEVICES=0 stdbuf -oL -eL python main.py --config configs/final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered_largeimg_context8_all_debug_pretrain3_posttrain.yaml > log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.loadbest.context8.all.fixrelu.simplifyinput.debug.pretrain3.posttrain 2>&1 &
+CUDA_VISIBLE_DEVICES=4 stdbuf -oL -eL python main.py --config configs/final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered_largeimg_context8_all_debug_pretrainnone_posttrain.yaml > log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.loadbest.context8.all.fixrelu.simplifyinput.debug.pretrainnone.posttrain 2>&1 &
+
+
+stdbuf -oL -eL python main.py --config configs/final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered_largeimg_context8_all_debug_pretrain228.yaml > log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.loadbest.context8.all.fixrelu.simplifyinput.debug.pretrain228 2>&1 &
+stdbuf -oL -eL python main.py --config configs/final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered_largeimg_context8_all_debug_pretrain228.yaml > log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.loadbest.context8.all.fixrelu.simplifyinput.debug.pretrain228.lr6.4e4 2>&1 &
+
+
+stdbuf -oL -eL python main.py --config configs/final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered_largeimg_context8_all_debug_pretrain228.yaml > log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.loadbest.context8.all.fixrelu.simplifyinput.debug.pretrain2282.lr3e4 2>&1 &
+stdbuf -oL -eL python main.py --config configs/final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered_largeimg_context8_all_debug_pretrain228.yaml > log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.loadbest.context8.all.fixrelu.simplifyinput.debug.pretrain2282.lr6.4e4 2>&1 &
+
+stdbuf -oL -eL python main.py --config configs/final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered_largeimg_context8_all_debug_pretrain228.yaml > log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.loadbest.context8.all.fixrelu.simplifyinput.debug.pretrain2282.samesetting 2>&1 &
+stdbuf -oL -eL python main.py --config configs/final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered_largeimg_context8_all_debug_pretrain228.yaml > log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.loadbest.context8.all.fixrelu.simplifyinput.debug.pretrain2282.samesetting2 2>&1 &
+
+
+stdbuf -oL -eL python main.py --config configs/final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered_largeimg_context8_all_debug_pretrain228_nopretrain_posttrain.yaml > log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.loadbest.context8.all.fixrelu.simplifyinput.debug.pretrain2282.samesetting2_nopretrain_posttrain 2>&1 &
+
+
+stdbuf -oL -eL python main.py --config configs/final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered_largeimg_context8_all_debug_pretrain228_real_contdebug.yaml > log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.loadbest.context8.all.fixrelu.simplifyinput.debug.pretrain2282.samesetting2.real.contdebug 2>&1 &
+
+stdbuf -oL -eL python main.py --config configs/final_hs4096_oc32_nl48_ar_cm1_2_mc512_pretrain2_context8.yaml > log.final_hs4096_oc32_nl48_ar_cm1_2_mc512.pretrain2.context8 2>&1 &

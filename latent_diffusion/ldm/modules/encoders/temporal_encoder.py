@@ -3,8 +3,98 @@ import torch.nn as nn
 import torch.nn.functional as F
 import matplotlib.pyplot as plt
 import numpy as np
+import math
+
+def sinusoidal_init(num_positions, hidden_size):
+    print ('INIT')
+    """Generate sinusoidal embeddings similar to positional embeddings in Transformer."""
+    position = torch.arange(0, num_positions, dtype=torch.float).unsqueeze(1)
+    div_term = torch.exp(torch.arange(0, hidden_size, 2).float() *
+                         (-math.log(10000.0) / hidden_size))
+    embeddings = torch.zeros((num_positions, hidden_size))
+    embeddings[:, 0::2] = torch.sin(position * div_term)
+    embeddings[:, 1::2] = torch.cos(position * div_term)
+    return embeddings
+
+def sinusoidal_init_2d(height, width, hidden_size):
+    print ('INIT 2D')
+    """
+    Generate 2D sinusoidal positional embeddings.
+    Args:
+        height (int): Height of the spatial dimension.
+        width (int): Width of the spatial dimension.
+        hidden_size (int): Embedding dimension (must be divisible by 4).
+    Returns:
+        embeddings: (height * width, hidden_size)
+    """
+    if hidden_size % 4 != 0:
+        raise ValueError("hidden_size must be divisible by 4")
+
+    embeddings = torch.zeros((height, width, hidden_size))
+
+    half_dim = hidden_size // 2
+    div_term = torch.exp(torch.arange(0, half_dim, 2).float() *
+                         -(math.log(10000.0) / half_dim))
+
+    # Positional indices
+    y_pos = torch.arange(height).unsqueeze(1)
+    x_pos = torch.arange(width).unsqueeze(1)
+
+    # Y-dimension embeddings
+    embeddings[:, :, 0:half_dim:2] = torch.sin(y_pos * div_term).unsqueeze(1).repeat(1, width, 1)
+    embeddings[:, :, 1:half_dim:2] = torch.cos(y_pos * div_term).unsqueeze(1).repeat(1, width, 1)
+
+    # X-dimension embeddings
+    embeddings[:, :, half_dim::2] = torch.sin(x_pos * div_term).unsqueeze(0).repeat(height, 1, 1)
+    embeddings[:, :, half_dim+1::2] = torch.cos(x_pos * div_term).unsqueeze(0).repeat(height, 1, 1)
+
+    # Flatten embeddings
+    embeddings = embeddings.reshape(1, height * width, hidden_size)
+    return embeddings
+
 
 class TemporalEncoder(nn.Module):
+    def init_weights(self):
+        # Initialize LSTM layers
+        for lstm in [self.lstm_lower, self.lstm_upper]:
+            for name, param in lstm.named_parameters():
+                if 'weight_ih' in name:
+                    nn.init.xavier_uniform_(param.data)
+                elif 'weight_hh' in name:
+                    nn.init.orthogonal_(param.data)
+                elif 'bias' in name:
+                    param.data.fill_(0)
+                #param.data.uniform_(-0.05, 0.05)
+                #param.data.uniform_(-0.15, 0.15)
+    
+        # Initialize projection layers
+        for layer in self.projection:
+            if isinstance(layer, nn.Linear):
+                nn.init.xavier_uniform_(layer.weight)
+                nn.init.zeros_(layer.bias)
+        #for layer in [self.lstm_projection_pre, self.lstm_projection_post, self.image_feature_projection]:
+        for layer in [self.lstm_projection_pre, self.lstm_projection_post, self.image_feature_projection]:
+            nn.init.xavier_uniform_(layer.weight)
+            nn.init.zeros_(layer.bias)
+        self.embedding_x.weight.data = sinusoidal_init(self.output_width*8, self.hidden_size)
+        self.embedding_y.weight.data = sinusoidal_init(self.output_height*8, self.hidden_size)
+        self.image_position_embeddings.data = sinusoidal_init_2d(self.output_height, self.output_width, self.input_channels*8*8)
+        
+        for param in [
+            self.initial_state_padding_h_lower,
+            self.initial_state_unknown_h_lower,
+            self.initial_state_padding_h_upper,
+            self.initial_state_unknown_h_upper,
+            self.initial_state_padding_c_lower,
+            self.initial_state_unknown_c_lower,
+            self.initial_state_padding_c_upper,
+            self.initial_state_unknown_c_upper,
+            self.initial_feedback_padding,
+            self.initial_feedback_unknown,
+        ]:
+            nn.init.zeros_(param)
+
+
     def __init__(
         self,
         input_channels: int,
@@ -48,10 +138,6 @@ class TemporalEncoder(nn.Module):
         self.hidden_size = hidden_size
         self.num_layers = num_layers
         self.output_channels = output_channels
-        #self.TRIM_BEGINNING = 1
-        #self.TRIM_BEGINNING = 1
-        #if self.TRIM_BEGINNING == 1:
-        #    self.output_channels = output_channels + 2
         self.output_height = output_height
         self.output_width = output_width
 
@@ -74,6 +160,7 @@ class TemporalEncoder(nn.Module):
         self.embedding_is_leftclick = nn.Embedding(2, hidden_size)
         self.embedding_is_rightclick = nn.Embedding(2, hidden_size)
         self.embedding_key_events = nn.Embedding(len(self.itos)*2, hidden_size)
+        #print ('dfsdfsfgsgdsd')
         #self.input_projection = nn.Sequential(
         #    nn.Linear(hidden_size*4, hidden_size*4),
         #    nn.LeakyReLU(),
@@ -84,7 +171,7 @@ class TemporalEncoder(nn.Module):
         
         # LSTM to process the sequence
         self.lstm_lower = nn.LSTM(
-            input_size=hidden_size,  # Flattened input size
+            input_size=hidden_size*4,  # Flattened input size
             hidden_size=hidden_size,
             num_layers=num_layers,
             dropout=dropout if num_layers > 1 else 0,
@@ -107,6 +194,7 @@ class TemporalEncoder(nn.Module):
             nn.LeakyReLU(),
             nn.Linear(hidden_size*4, self.output_channels * output_height * output_width),
         )
+        self.init_weights()
     # TODO: maybe use a CNN to process the sequence
     # TODO: maybe use layernorm to preprocess the input
 
@@ -138,7 +226,12 @@ class TemporalEncoder(nn.Module):
         feedback = self.initial_feedback_unknown.repeat(batch_size, 1) # bsz, hidden_size
         sequence_length = len(inputs)
         #import pdb; pdb.set_trace()
+        offset = torch.arange(len(self.itos), device=self.embedding_x.weight.data.device) * 2
+        embedding_key_events_baseline = self.embedding_key_events(offset.unsqueeze(0)) # bsz, num_keys, hidden_size
+        embedding_key_events_baseline = embedding_key_events_baseline.sum(dim=1) # bsz, hidden_size
         for t in range(sequence_length):
+            #if t == sequence_length - 1:
+            #    import pdb; pdb.set_trace()
             inputs_t = inputs[t]
             is_padding = inputs_t['is_padding']
             x = inputs_t['x'].squeeze(-1)
@@ -152,6 +245,7 @@ class TemporalEncoder(nn.Module):
                 hidden_states_c_lower = torch.where(is_padding.view(1, batch_size, 1), self.initial_state_padding_c_lower, hidden_states_c_lower) # 1, bsz, hidden_size
                 hidden_states_c_upper = torch.where(is_padding.view(1, batch_size, 1), self.initial_state_padding_c_upper, hidden_states_c_upper) # 1, bsz, hidden_size
                 feedback = torch.where(is_padding.unsqueeze(-1), self.initial_feedback_padding, feedback) # bsz, hidden_size
+            #print ('nounk')
             
             embedding_x = self.embedding_x(x) # bsz, hidden_size    
             embedding_y = self.embedding_y(y) # bsz, hidden_size
@@ -159,13 +253,16 @@ class TemporalEncoder(nn.Module):
             embedding_is_rightclick = self.embedding_is_rightclick(is_rightclick) # bsz, hidden_size
 
             # compute embedding for key events
-            offset = torch.arange(len(self.itos), device=embedding_x.device) * 2
             embedding_key_events = self.embedding_key_events(key_events + offset.unsqueeze(0)) # bsz, num_keys, hidden_size
             embedding_key_events = embedding_key_events.sum(dim=1) # bsz, hidden_size
+            #import pdb; pdb.set_trace()
+            embedding_key_events = embedding_key_events - embedding_key_events_baseline
 
             embedding_all = embedding_is_leftclick + embedding_is_rightclick + embedding_key_events
+            #embedding_input = embedding_x + embedding_y + embedding_all*0 + feedback*0
+            #print ('only x y')
+            #embedding_input = embedding_x + embedding_y + embedding_all + feedback
             embedding_input = torch.cat([embedding_x, embedding_y, embedding_all, feedback], dim=-1) # bsz, hidden_size*4
-            embedding_input = embedding_x + embedding_y + embedding_all + feedback
             #embedding_input = self.input_projection(embedding_input) # bsz, hidden_size*4
             embedding_input = embedding_input.unsqueeze(1) # bsz, 1, hidden_size*4
 
@@ -180,6 +277,9 @@ class TemporalEncoder(nn.Module):
             image_features_with_position = image_features_with_position + self.image_position_embeddings
             # apply multi-headed attention to attend lstm_out_lower to image_features_with_position
             context, attention_weights = self.multi_head_attention(self.lstm_projection_pre(lstm_out_lower), image_features_with_position, image_features_with_position, need_weights=False, average_attn_weights=False)
+            #context, attention_weights = self.multi_head_attention(lstm_out_lower[..., :image_features_with_position.shape[-1]], image_features_with_position, image_features_with_position, need_weights=False, average_attn_weights=False)
+            #print ('NO CONTEXT')
+            #context = 0*self.lstm_projection_post(context) + lstm_out_lower
             context = self.lstm_projection_post(context) + lstm_out_lower
 
             # visualize attention weights and also x and y positions in the same image, but only for the first element in the batch
@@ -222,6 +322,9 @@ class TemporalEncoder(nn.Module):
         
         # Reshape to spatial feature map: [B, output_channels*output_height*output_width] -> [B, output_channels, output_height, output_width]
         output = output.reshape(batch_size, self.output_channels, self.output_height, self.output_width)
+        #print ('cheating')
+        #output[:, 0, :, :] = 0
+        #output[torch.arange(batch_size), 0, (y//8).long(), (x//8).long()] = 1
         
         return output
 
@@ -289,10 +392,13 @@ class TemporalEncoder(nn.Module):
         offset = torch.arange(len(self.itos), device=embedding_x.device) * 2
         embedding_key_events = self.embedding_key_events(key_events + offset.unsqueeze(0)) # bsz, num_keys, hidden_size
         embedding_key_events = embedding_key_events.sum(dim=1) # bsz, hidden_size
+        embedding_key_events_baseline = self.embedding_key_events(offset.unsqueeze(0)) # bsz, num_keys, hidden_size
+        embedding_key_events_baseline = embedding_key_events_baseline.sum(dim=1) # bsz, hidden_size
+        embedding_key_events = embedding_key_events - embedding_key_events_baseline
 
         embedding_all = embedding_is_leftclick + embedding_is_rightclick + embedding_key_events
-        #embedding_input = torch.cat([embedding_x, embedding_y, embedding_all, feedback], dim=-1) # bsz, hidden_size*4
-        embedding_input = embedding_x + embedding_y + embedding_all + feedback
+        embedding_input = torch.cat([embedding_x, embedding_y, embedding_all, feedback], dim=-1) # bsz, hidden_size*4
+        #embedding_input = embedding_x + embedding_y + embedding_all + feedback
         #embedding_input = self.input_projection(embedding_input) # bsz, hidden_size*4
         embedding_input = embedding_input.unsqueeze(1) # bsz, 1, hidden_size*4
 

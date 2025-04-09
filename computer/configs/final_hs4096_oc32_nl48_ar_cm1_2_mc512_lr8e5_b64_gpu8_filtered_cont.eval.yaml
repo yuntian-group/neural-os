@@ -4,6 +4,7 @@ model:
   base_learning_rate: 8.0e-05
   target: latent_diffusion.ldm.models.diffusion.ddpm.LatentDiffusion
   params:
+    pretrain: false
     linear_start: 0.0015
     linear_end: 0.0195
     num_timesteps_cond: 1
@@ -85,6 +86,7 @@ data:
     train:
       target: data.data_processing.datasets.ActionsData
       params:
+        debug_mode: false
         data_csv_path: ../data/data_processing/train_dataset/filtered_dataset.target_frames.clustered.train_shuffled.shuffled.csv
         normalization: standard
         context_length: 32

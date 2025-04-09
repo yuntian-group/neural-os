@@ -415,6 +415,7 @@ class ActionsData(Dataset):
                 #print ('gere', example["image_processed"].shape)
                 # draw cursor on a blank image
                 white_image = np.ones((48*8, 64*8, 3)) * 255
+                x, y, left_click, right_click, key_events = self.mapping_dict.get((record_num, target_frame))
                 example["image"] = draw_cursor(white_image, x, y, left_click, right_click)
                 # save the image
                 #Image.fromarray(example["image"].astype(np.uint8)).save(f'gere_debug_image_{i}.png')

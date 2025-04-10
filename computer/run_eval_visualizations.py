@@ -137,7 +137,7 @@ for setting in ['pretrainreal_context32']:
                 for line in file:
                     if 'data_csv_path' in line:
                         #print('        data_csv_path: desktop_sequences_filtered_with_desktop_1.5k_last100.csv')
-                        print('        data_csv_path:\n       - train_dataset_encoded/filtered_dataset.target_frames.clustered.test.csv')
+                        print('        data_csv_paths:\n          - train_dataset_encoded/filtered_dataset.target_frames.clustered.test.csv')
                         #print('        data_csv_path: ../data/data_processing/train_dataset/filtered_dataset.target_frames.clustered.train.head100.csv')
                         #print('        data_csv_path: ../data/data_processing/train_dataset/filtered_dataset.target_frames.clustered.train.head100.debug.csv')
                     else:

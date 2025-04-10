@@ -47,7 +47,8 @@ ckpt_dir = 'saved_bsz64_acc1_lr8e5_512_leftclick_histpos_512_384_cont2_ddd_diffi
 #for DDIM_S in [8, 4, 16]:
 #for setting in ['a_hs4096_oc32_nl48_ar_cm1_2_mc320', 'a_hs4096_oc32_nl48_ar_cm1_2_mc384', 'a_hs4096_oc32_nl48_ar2_cm1_2_mc320', 'a_hs4096_oc32_nl48_ar_cm1_2_3_mc320', 'a_hs4096_oc32_nl48_ar2_cm1_2_3_mc320', 'a_hs4096_oc32_nl48_ar4_cm1_2_3_mc320', 'a_hs4096_oc32_nl48_ar2_4_8_cm1_2_3_5_mc320', 'a_hs4096_oc32_nl48_ar_cm1_2_mc448']:
 #for setting in ['final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered']:
-for setting in ['pretrain2282_lr6.4e4_samesetting2_real']:#, 'reinitnone_cheat_cont', 'pretrain', 'pretrain_posttrain', 'reinitnone_cont', 'reinitnone_cheat_cont']:#, 'reinitnone', 'reinitrnn', 'reinitcnn', 'addattn_cont']:
+#for setting in ['pretrain2_context8_finetunerealpart1', 'pretrain2_context8_finetunerealpart2', 'pretrain2_context8_finetunerealpart1synpart2', 'pretrain2_context8_pretrainrealpart1synpart2']:#, 'reinitnone_cheat_cont', 'pretrain', 'pretrain_posttrain', 'reinitnone_cont', 'reinitnone_cheat_cont']:#, 'reinitnone', 'reinitrnn', 'reinitcnn', 'addattn_cont']:
+for setting in ['pretrain2_context8_posttrain_finetunerealpart1', 'pretrain2_context8_posttrain_orig']:
     #for DDIM_S in [4, 8, 16]:
     for DDIM_S in [999,]:
     #for setting in ['a_hs4096_oc32_nl48_ar2_cm1_2_mc320']:
@@ -63,6 +64,7 @@ for setting in ['pretrain2282_lr6.4e4_samesetting2_real']:#, 'reinitnone_cheat_c
         #ckpt_dir = f'/root/computer/computer/train_dataset_encoded/saved_final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered_largeimg_cont4_lr8e5_b50_context8_b80_all_fixrelu_simplifyinput_debug_fullreinit_{setting}/'
         ckpt_dir = f'/root/computer/computer/train_dataset_encoded/saved_final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered_largeimg_cont4_lr8e5_b50_context8_b80_all_fixrelu_simplifyinput_debug_{setting}/'
         ckpt_dir = f'/root/computer/computer/train_dataset_encoded/saved_final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered_largeimg_cont4_lr8e5_b50_context8_b80_all_fixrelu_simplifyinput_debug_{setting}/'
+        ckpt_dir = f'/root/computer/computer/train_dataset_encoded/saved_final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_{setting}/'
         print ('='*10)
         print (f'processing setting {setting}')
         # Get all checkpoint files and sort them
@@ -102,7 +104,7 @@ for setting in ['pretrain2282_lr6.4e4_samesetting2_real']:#, 'reinitnone_cheat_c
             
             # Run for training set
             # Replace lines in ddpm.py for training set
-            ddpm_replacement = f'        exp_name = \'cont95psearch_a_vis_norm_standard_context{setting}_ckpt{step}/train_{DDIM_S}\'\n        DEBUG = True\n        DDIM_S = {DDIM_S}'
+            ddpm_replacement = f'        exp_name = \'cont115psearch_a_vis_norm_standard_context{setting}_ckpt{step}/train_{DDIM_S}\'\n        DEBUG = True\n        DDIM_S = {DDIM_S}'
             
             with fileinput.FileInput('../latent_diffusion/ldm/models/diffusion/ddpm.py', inplace=True, backup='.bak') as file:
                 for line in file:
@@ -143,7 +145,7 @@ for setting in ['pretrain2282_lr6.4e4_samesetting2_real']:#, 'reinitnone_cheat_c
             
             # Replace lines in ddpm.py for test set
             #ddpm_replacement = f'        exp_name = \'without_comp_norm_standard_ckpt{step}/test\'\n        DEBUG = True'
-            ddpm_replacement = f'        exp_name = \'cont95psearch_a_vis_norm_standard_context{setting}_ckpt{step}/test_{DDIM_S}\'\n        DEBUG = True\n        DDIM_S = {DDIM_S}'
+            ddpm_replacement = f'        exp_name = \'cont115psearch_a_vis_norm_standard_context{setting}_ckpt{step}/test_{DDIM_S}\'\n        DEBUG = True\n        DDIM_S = {DDIM_S}'
             
             with fileinput.FileInput('../latent_diffusion/ldm/models/diffusion/ddpm.py', inplace=True, backup='.bak') as file:
                 for line in file:
@@ -154,7 +156,7 @@ for setting in ['pretrain2282_lr6.4e4_samesetting2_real']:#, 'reinitnone_cheat_c
             
             # Run with modified config (test set)
             try:
-                subprocess.run(f'CUDA_VISIBLE_DEVICES=1 python main.py --config {config_file}', shell=True)
+                subprocess.run(f'CUDA_VISIBLE_DEVICES=0 python main.py --config {config_file}', shell=True)
             except Exception as e:
                 print(f"Error in test run: {e}")
                 pass

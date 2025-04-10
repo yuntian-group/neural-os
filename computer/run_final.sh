@@ -117,3 +117,27 @@ stdbuf -oL -eL python main.py --config configs/final_hs4096_oc32_nl48_ar_cm1_2_m
 stdbuf -oL -eL python main.py --config configs/final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered_largeimg_context8_all_debug_pretrain228_real_contdebug.yaml > log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.loadbest.context8.all.fixrelu.simplifyinput.debug.pretrain2282.samesetting2.real.contdebug 2>&1 &
 
 stdbuf -oL -eL python main.py --config configs/final_hs4096_oc32_nl48_ar_cm1_2_mc512_pretrain2_context8.yaml > log.final_hs4096_oc32_nl48_ar_cm1_2_mc512.pretrain2.context8 2>&1 &
+
+
+
+1. finetune part 1 on real self.pretrain but not self.pretrain2, not self.pretrain3, real
+CUDA_VISIBLE_DEVICES=0,1 stdbuf -oL -eL python main.py --config configs/final_hs4096_oc32_nl48_ar_cm1_2_mc512_pretrain2_context8_finetunerealpart1.yaml > log.final_hs4096_oc32_nl48_ar_cm1_2_mc512.pretrain2.context8.finetunerealpart1 2>&1 &
+
+
+2. finetune part 2 but on real: self.pretrain2
+CUDA_VISIBLE_DEVICES=2,3 stdbuf -oL -eL python main.py --config configs/final_hs4096_oc32_nl48_ar_cm1_2_mc512_pretrain2_context8_finetunerealpart2.yaml > log.final_hs4096_oc32_nl48_ar_cm1_2_mc512.pretrain2.context8.finetunerealpart2 2>&1 &
+
+self.pretrain, not self.pretrain2,  self.pretrain3
+3. finetune part 1 on real, but also part 2 on synt
+CUDA_VISIBLE_DEVICES=4,5 stdbuf -oL -eL python main.py --config configs/final_hs4096_oc32_nl48_ar_cm1_2_mc512_pretrain2_context8_finetunerealpart1synpart2.yaml > log.final_hs4096_oc32_nl48_ar_cm1_2_mc512.pretrain2.context8.finetunerealpart1synpart2 2>&1 &
+
+4. pretrain part 1 and part 2
+CUDA_VISIBLE_DEVICES=6,7 stdbuf -oL -eL python main.py --config configs/final_hs4096_oc32_nl48_ar_cm1_2_mc512_pretrain2_context8_pretrainrealpart1synpart2.yaml > log.final_hs4096_oc32_nl48_ar_cm1_2_mc512.pretrain2.context8.pretrainrealpart1synpart2 2>&1 &
+
+
+
+CUDA_VISIBLE_DEVICES=2,3 stdbuf -oL -eL python main.py --config configs/final_hs4096_oc32_nl48_ar_cm1_2_mc512_pretrain2_context8_posttrain_orig.yaml > log.final_hs4096_oc32_nl48_ar_cm1_2_mc512.pretrain2.context8.posttrain_orig 2>&1 &
+CUDA_VISIBLE_DEVICES=0,1 stdbuf -oL -eL python main.py --config configs/final_hs4096_oc32_nl48_ar_cm1_2_mc512_pretrain2_context8_posttrain_finetunerealpart1.yaml > log.final_hs4096_oc32_nl48_ar_cm1_2_mc512.pretrain2.context8.posttrain_finetunerealpart1 2>&1 &
+
+
+stdbuf -oL -eL python main.py --config configs/final_hs4096_oc32_nl48_ar_cm1_2_mc512_pretrain1_context32.yaml > log.final_hs4096_oc32_nl48_ar_cm1_2_mc512.pretrain1.context32 2>&1 &

@@ -190,7 +190,7 @@ class TemporalEncoder(nn.Module):
         
         # Project LSTM output to desired spatial feature map
         self.projection = nn.Sequential(
-            nn.Linear(hidden_size, hidden_size*4),
+            nn.Linear(hidden_size*2, hidden_size*4),
             nn.LeakyReLU(),
             nn.Linear(hidden_size*4, self.output_channels * output_height * output_width),
         )
@@ -315,7 +315,7 @@ class TemporalEncoder(nn.Module):
             lstm_out_upper, (hidden_states_h_upper, hidden_states_c_upper) = self.lstm_upper(context, (hidden_states_h_upper, hidden_states_c_upper))
             feedback = lstm_out_upper.squeeze(1)
         
-        hidden_last = lstm_out_upper
+        hidden_last = torch.cat([lstm_out_upper, lstm_out_lower], dim=-1)
         
         # Project to desired output shape
         output = self.projection(hidden_last)

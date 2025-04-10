@@ -485,6 +485,7 @@ class LatentDiffusion(DDPM):
     def __init__(self,
                  pretrain,
                  pretrain2,
+                 pretrain3,
                  first_stage_config,
                  cond_stage_config,
                  temporal_encoder_config=None,  # New parameter
@@ -501,6 +502,7 @@ class LatentDiffusion(DDPM):
                  *args, **kwargs):
         self.pretrain = pretrain
         self.pretrain2 = pretrain2
+        self.pretrain3 = pretrain3
         self.num_timesteps_cond = default(num_timesteps_cond, 1)
         self.scheduler_sampling_rate = scheduler_sampling_rate
         self.scale_by_std = scale_by_std
@@ -831,7 +833,7 @@ class LatentDiffusion(DDPM):
         #import pdb; pdb.set_trace()
 
         if 'image_processed' in batch:
-            if self.trainer.datamodule.datasets['train'].debug_mode:
+            if self.trainer.datamodule.datasets['train'].debug_mode or self.pretrain3:
                 print ('gere debug')
                 per_channel_mean = self.trainer.datamodule.datasets['train'].per_channel_mean.to(self.device)
                 per_channel_std = self.trainer.datamodule.datasets['train'].per_channel_std.to(self.device)
@@ -851,6 +853,9 @@ class LatentDiffusion(DDPM):
                         Image.fromarray(x_reconstructed[i].cpu().numpy().astype(np.uint8)).save(f'reconstructed_gere_debug_image_{i}.png')
                 # normalize
                 z = (z - per_channel_mean.view(1, -1, 1, 1)) / per_channel_std.view(1, -1, 1, 1)
+                if self.pretrain3:
+                    print ('both')
+                    z = torch.cat((batch['image_processed'], z), dim=1)
                 batch['image_processed'] = z
             else:
                 z = batch['image_processed']
@@ -1203,19 +1208,21 @@ class LatentDiffusion(DDPM):
                 ddpm = False
                 if DDIM_S > 90:
                     ddpm = True
-                #if ddpm:
-                #    sample_i = self.p_sample_loop(cond=c_i, shape=[1, 16, 48, 64], return_intermediates=False, verbose=True)
-                #else:
-                #    print ('ddim', DDIM_S)
-                #    sampler = DDIMSampler(self)
-                #    sample_i , _ = sampler.sample(
-                #        S=DDIM_S,
-                #        conditioning=c_i,
-                #        batch_size=1,
-                #        shape=[16, 48, 64],
-                #        verbose=False
-                #    )
-                sample_i = c['c_concat'][i:i+1][:,:16]
+                if ddpm:
+                    sample_i = self.p_sample_loop(cond=c_i, shape=[1, 16, 48, 64], return_intermediates=False, verbose=True)
+                else:
+                    print ('ddim', DDIM_S)
+                    sampler = DDIMSampler(self)
+                    sample_i , _ = sampler.sample(
+                        S=DDIM_S,
+                        conditioning=c_i,
+                        batch_size=1,
+                        shape=[16, 48, 64],
+                        verbose=False
+                    )
+                #sample_i = c['c_concat'][i:i+1][:,:16]
+                #if 'finetunerealpart2' in exp_name:
+                #    sample_i = c['c_concat'][i:i+1][:,16:]
                 if 'norm_standard' in exp_name:
                     sample_i = sample_i * per_channel_std.view(1, -1, 1, 1) + per_channel_mean.view(1, -1, 1, 1)
                     #prev_frame_img = prev_frame_img * data_std + data_mean
@@ -1488,8 +1495,8 @@ class LatentDiffusion(DDPM):
                 self.i += 1
                 #if self.i >= 497:
                 #    sys.exit(1)
-                if self.i >= 731:
-                #if self.i >= 28:
+                #if self.i >= 731:
+                if self.i >= 28:
                     sys.exit(1)
             #import pdb; pdb.set_trace()
 
@@ -1670,11 +1677,16 @@ class LatentDiffusion(DDPM):
         x, c = self.get_input(batch, self.first_stage_key)
         #import pdb; pdb.set_trace()
         if self.pretrain:
-            if not self.pretrain2:
+            if self.pretrain3:
+                loss_step_part1 = F.mse_loss(x[:, :x.shape[1]//2], c['c_concat'][:, :x.shape[1]//2])
+                loss_step_part2 = F.mse_loss(x[:, -x.shape[1]//2:], c['c_concat'][:, -x.shape[1]//2:])
+                loss = (loss_step_part1 + loss_step_part2)/2, {'train/loss_part1': loss_step_part1.item(), 'train/loss_part2': loss_step_part2.item()}
+            elif not self.pretrain2:
                 loss_step = F.mse_loss(x, c['c_concat'][:, :x.shape[1]])
+                loss = loss_step, {'train/loss': loss_step.item()}
             else:
                 loss_step = F.mse_loss(x, c['c_concat'][:, -x.shape[1]:])
-            loss = loss_step, {'train/loss': loss_step.item()}
+                loss = loss_step, {'train/loss': loss_step.item()}
         else:
             loss = self(x, c)
         return loss

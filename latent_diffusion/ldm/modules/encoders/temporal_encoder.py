@@ -186,6 +186,10 @@ class TemporalEncoder(nn.Module):
             batch_first=True,
             bidirectional=False
         )
+
+        self.log_sigma = nn.Parameter(torch.tensor(math.log(1.0)))
+        print ('fixing sigma during pretraining')
+        self.log_sigma.requires_grad = False
         
         
         # Project LSTM output to desired spatial feature map
@@ -322,6 +326,12 @@ class TemporalEncoder(nn.Module):
         
         # Reshape to spatial feature map: [B, output_channels*output_height*output_width] -> [B, output_channels, output_height, output_width]
         output = output.reshape(batch_size, self.output_channels, self.output_height, self.output_width)
+        # concatenate output with Gaussian kernel of positions
+        device = output.device
+        y_grid = torch.arange(self.output_height, device=device).view(1, -1, 1)
+        x_grid = torch.arange(self.output_width, device=device).view(1, 1, -1)
+        kernel = torch.exp(-((x_grid - (x/8.0).view(-1, 1, 1))**2 + (y_grid - (y/8.0).view(-1, 1, 1))**2) / (2 * self.sigma**2))
+        output = torch.cat([output[:, :-1], kernel], dim=1)
         #print ('cheating')
         #output[:, 0, :, :] = 0
         #output[torch.arange(batch_size), 0, (y//8).long(), (x//8).long()] = 1

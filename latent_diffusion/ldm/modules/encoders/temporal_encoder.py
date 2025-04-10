@@ -330,8 +330,9 @@ class TemporalEncoder(nn.Module):
         device = output.device
         y_grid = torch.arange(self.output_height, device=device).view(1, -1, 1)
         x_grid = torch.arange(self.output_width, device=device).view(1, 1, -1)
-        kernel = torch.exp(-((x_grid - (x/8.0).view(-1, 1, 1))**2 + (y_grid - (y/8.0).view(-1, 1, 1))**2) / (2 * self.sigma**2))
-        import pdb; pdb.set_trace()
+        sigma = torch.exp(self.log_sigma)
+        #import pdb; pdb.set_trace()
+        kernel = torch.exp(-((x_grid - (x/8.0).view(-1, 1, 1))**2 + (y_grid - (y/8.0).view(-1, 1, 1))**2) / (2 * sigma**2)).unsqueeze(1)
         output = torch.cat([output[:, :-1], kernel], dim=1)
         #print ('cheating')
         #output[:, 0, :, :] = 0

@@ -392,7 +392,7 @@ class DDPM(pl.LightningModule):
                                                     
         #print(f"[training_step] step={self.global_step}")
         DEBUG = False
-        #DEBUG = True
+        DEBUG = True
         self.DEBUG = DEBUG
         if DEBUG:
             print ('no grad at all')
@@ -965,10 +965,10 @@ class LatentDiffusion(DDPM):
                 #    inputs_to_rnn.append(torch.cat([image_part, position_map_part, leftclick_map_part], dim=1))
                 #inputs_to_rnn = torch.stack(inputs_to_rnn, dim=1)
                 #import pdb; pdb.set_trace()
-                with torch.enable_grad():
-                    output_from_rnn = self.temporal_encoder(inputs_to_rnn)
-                #output_from_rnn = self.temporal_encoder(inputs_to_rnn)
-                #print ('warning: no grad')
+                #with torch.enable_grad():
+                #    output_from_rnn = self.temporal_encoder(inputs_to_rnn)
+                output_from_rnn = self.temporal_encoder(inputs_to_rnn)
+                print ('warning: no grad')
                 
                 #output_from_rnn = self.temporal_encoder(inputs_to_rnn)
                 #import pdb; pdb.set_trace()
@@ -1209,19 +1209,19 @@ class LatentDiffusion(DDPM):
                 ddpm = False
                 if DDIM_S > 90:
                     ddpm = True
-                if ddpm:
-                    sample_i = self.p_sample_loop(cond=c_i, shape=[1, 16, 48, 64], return_intermediates=False, verbose=True)
-                else:
-                    print ('ddim', DDIM_S)
-                    sampler = DDIMSampler(self)
-                    sample_i , _ = sampler.sample(
-                        S=DDIM_S,
-                        conditioning=c_i,
-                        batch_size=1,
-                        shape=[16, 48, 64],
-                        verbose=False
-                    )
-                #sample_i = c['c_concat'][i:i+1][:,:16]
+                #if ddpm:
+                #    sample_i = self.p_sample_loop(cond=c_i, shape=[1, 16, 48, 64], return_intermediates=False, verbose=True)
+                #else:
+                #    print ('ddim', DDIM_S)
+                #    sampler = DDIMSampler(self)
+                #    sample_i , _ = sampler.sample(
+                #        S=DDIM_S,
+                #        conditioning=c_i,
+                #        batch_size=1,
+                #        shape=[16, 48, 64],
+                #        verbose=False
+                #    )
+                sample_i = c['c_concat'][i:i+1][:,:16]
                 #if 'finetunerealpart2' in exp_name:
                 #    sample_i = c['c_concat'][i:i+1][:,16:]
                 if 'norm_standard' in exp_name:
@@ -1496,8 +1496,8 @@ class LatentDiffusion(DDPM):
                 self.i += 1
                 #if self.i >= 497:
                 #    sys.exit(1)
-                #if self.i >= 731:
-                if self.i >= 28:
+                if self.i >= 731:
+                #if self.i >= 28:
                     sys.exit(1)
             #import pdb; pdb.set_trace()
 

@@ -98,7 +98,7 @@ data:
       params:
         #data_csv_path: ../data/data_processing/train_dataset/filtered_dataset.target_frames.clustered.train.csv
         debug_mode: false
-        data_csv_path:
+        data_csv_paths:
           - train_dataset_encoded/train_dataset.target_frames.train.csv
           - train_dataset_encoded2/train_dataset.target_frames.train.csv
           - train_dataset_encoded3/train_dataset.target_frames.train.csv

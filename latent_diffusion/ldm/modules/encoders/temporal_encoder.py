@@ -331,6 +331,7 @@ class TemporalEncoder(nn.Module):
         y_grid = torch.arange(self.output_height, device=device).view(1, -1, 1)
         x_grid = torch.arange(self.output_width, device=device).view(1, 1, -1)
         kernel = torch.exp(-((x_grid - (x/8.0).view(-1, 1, 1))**2 + (y_grid - (y/8.0).view(-1, 1, 1))**2) / (2 * self.sigma**2))
+        import pdb; pdb.set_trace()
         output = torch.cat([output[:, :-1], kernel], dim=1)
         #print ('cheating')
         #output[:, 0, :, :] = 0

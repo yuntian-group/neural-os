@@ -380,6 +380,7 @@ class DDPM(pl.LightningModule):
         print(f'embedding_is_leftclick Gradient Norm: {embedding_is_leftclick_norm:.8f}')
         print(f'embedding_is_rightclick Gradient Norm: {embedding_is_rightclick_norm:.8f}')
         print(f'embedding_key_events Gradient Norm: {embedding_key_events_norm:.8f}')
+        print (f'current sigma: {self.temporal_encoder.log_sigma.exp().item():.8f}')
 
 
     def training_step(self, batch, batch_idx):

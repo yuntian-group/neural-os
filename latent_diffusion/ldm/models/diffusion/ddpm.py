@@ -1154,9 +1154,7 @@ class LatentDiffusion(DDPM):
         exp_name = 'without_comp_norm_standard'
         DDIM_S = 8
         DEBUG = False
-        exp_name = 'cont125psearch_a_vis_norm_standard_contextpretrainreal_context32_ckpt88000/test_999'
-        DEBUG = True
-        DDIM_S = 999
+        #### REPLACEMENT_LINE
         os.makedirs(exp_name, exist_ok=True)
         if not hasattr(self, 'i'):
             self.i = 0

@@ -143,4 +143,6 @@ CUDA_VISIBLE_DEVICES=0,1 stdbuf -oL -eL python main.py --config configs/final_hs
 stdbuf -oL -eL python main.py --config configs/final_hs4096_oc32_nl48_ar_cm1_2_mc512_pretrainreal_context32.yaml > log.final_hs4096_oc32_nl48_ar_cm1_2_mc512.pretrainreal.context32 2>&1 &
 
 
-stdbuf -oL -eL python main.py --config configs/final_hs4096_oc32_nl48_ar_cm1_2_mc512_pretrainreal_context32_cont_2Xdata_8Xb.yaml > log.final_hs4096_oc32_nl48_ar_cm1_2_mc512.pretrainreal.context32.2Xdata.8Xb 2>&1 &
+stdbuf -oL -eL python main.py --config configs/final_hs4096_oc32_nl48_ar_cm1_2_mc512_pretrainreal_context32_cont_2Xdata_4Xb.yaml > log.final_hs4096_oc32_nl48_ar_cm1_2_mc512.pretrainreal.context32.2Xdata.4Xb 2>&1 &
+
+stdbuf -oL -eL python main.py --config configs/final_hs4096_oc32_nl48_ar_cm1_2_mc512_pretrainreal_context32_cont_3Xdata_4Xb.yaml > log.final_hs4096_oc32_nl48_ar_cm1_2_mc512.pretrainreal.context32.3Xdata.4Xb 2>&1 &

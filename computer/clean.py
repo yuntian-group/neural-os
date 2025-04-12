@@ -97,7 +97,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--base_dir",
-        default="./train_dataset_encoded/",
+        default="./train_dataset_encoded2/",
         help="Base directory to search for folders (default: current directory)"
     )
     parser.add_argument(

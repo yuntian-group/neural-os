@@ -20,7 +20,40 @@ def elapsed_time_since_modified(file_path):
 
 def extract_losses_from_log(log_file_path):
     log_content = ''
-    if '.loadbest' in log_file_path:
+    if 'all.fixrelu.simplifyinput' in log_file_path:
+        with open(log_file_path.replace('.fixrelu.simplifyinput', ''), 'r') as file:
+            log_content += file.read()
+        with open(log_file_path.replace('.simplifyinput', ''), 'r') as file:
+            log_content += file.read()
+    elif 'all.fixrelu' in log_file_path:
+        with open(log_file_path.replace('.fixrelu', ''), 'r') as file:
+            log_content += file.read()
+    elif 'all' in log_file_path:
+        pass
+    elif '.loadbest.context8.contfreezernn' in log_file_path:
+        with open('log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered', 'r') as file:
+            log_content += file.read()
+        with open('log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.cont', 'r') as file:
+            log_content += file.read()
+        with open('log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.loadbest', 'r') as file:
+            log_content += file.read()
+        with open('log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.loadbest.freezernn.context8', 'r') as file:
+            log_content += file.read()
+    elif '.loadbest.freezernn.context8' in log_file_path:
+        with open('log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered', 'r') as file:
+            log_content += file.read()
+        with open('log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.cont', 'r') as file:
+            log_content += file.read()
+        with open('log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.loadbest', 'r') as file:
+            log_content += file.read()
+    elif '.loadbest.context8' in log_file_path:
+        with open('log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered', 'r') as file:
+            log_content += file.read()
+        with open('log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.cont', 'r') as file:
+            log_content += file.read()
+        with open('log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.loadbest', 'r') as file:
+            log_content += file.read()
+    elif '.loadbest' in log_file_path:
         with open('log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered', 'r') as file:
             log_content += file.read()
         with open('log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.cont', 'r') as file:
@@ -58,7 +91,7 @@ def smooth_losses(losses, window_size=100):
     #    window_size = max(1, len(losses) // 10)
     #return np.convolve(losses, np.ones(window_size)/window_size, mode='valid')
 
-def plot_and_compare_losses(losses_dict, output_png='psearch_b_loss_curve_comparison.png'):
+def plot_and_compare_losses(losses_dict, output_png='psearch_c_loss_curve_comparison.png'):
     """
     Plot and compare multiple loss curves on a single graph.
     
@@ -76,7 +109,7 @@ def plot_and_compare_losses(losses_dict, output_png='psearch_b_loss_curve_compar
     plt.ylabel('Loss')
     plt.title('Loss Curve Comparison')
     plt.grid(True)
-    plt.legend()
+    plt.legend(loc='upper right')
     plt.tight_layout()
     plt.savefig(output_png)
     print(f'Loss curve comparison saved as {output_png}')
@@ -110,8 +143,13 @@ if __name__ == "__main__":
         #('final2', 'log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.lr4e5.bsz50'),
         #('final20', 'log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.lr4e5'),
         #('final3', 'log.final_hs4096_oc32_nl48_ar2_cm1_2_mc384_lr8e5_b64_gpu8_filtered.largeimg.lr4e5'),
-        ('largeimg', 'log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.lr4e5.cont3'),
-        ('largeimg_cont', 'log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.loadbest'),
+        ('largeimg', 'log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.loadbest'),
+        ('all', 'log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.loadbest.context8.all.fixrelu.simplifyinput'),
+        #('prevall', 'log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.loadbest.context8.all'),
+        #('prev', 'log.standard_challenging_context32_nocond_fixnorm_all_scheduled_sampling_feedz_comb0.1_rnn_fixrnn_enablegrad_all_keyevent_cont_clusters_all_realall')
+        #('largeimg_cont', 'log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.loadbest.context8'),
+        #('largeimg_freeze', 'log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.loadbest.freezernn.context8'),
+        #('largeimg_freezecont', 'log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.loadbest.context8.contfreezernn'),
         #('1gpu', 'log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.lr4e5.gpu1'),
         #('2gpu', 'log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.lr4e5.gpu2'),
         #('4gpu', 'log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.lr4e5.gpu4'),

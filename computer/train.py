@@ -26,7 +26,7 @@ def train_model(model: LatentDiffusion, data: DataModule, save_path: str, config
     
     # Create ModelCheckpoint callback
     checkpoint_callback = ModelCheckpoint(
-        every_n_train_steps=2000, # orig 1000
+        every_n_train_steps=8000, # orig 1000
         save_top_k=-1,  # Save all checkpoints
         dirpath=save_path,  # Directory to save checkpoints
         filename='model-{step:06d}'  # Checkpoint filename format
@@ -41,7 +41,7 @@ def train_model(model: LatentDiffusion, data: DataModule, save_path: str, config
     model.train()
     model.model_ema.eval()
     model.first_stage_model.eval()
-    #model.temporal_encoder.train()
+    model.temporal_encoder.train()
     #import pdb; pdb.set_trace()
     trainer.fit(model, data)
    
@@ -51,4 +51,3 @@ def train_model(model: LatentDiffusion, data: DataModule, save_path: str, config
         print(f"Saved {save_path}/model_{save_path}.ckpt")
 
     return trainer.model
-    

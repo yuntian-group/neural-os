@@ -185,14 +185,14 @@ class ActionsData(Dataset):
     _shared_data = {}  # Class-level cache for dataframes
     
     def __init__(self,
-                 data_csv_path,
+                 data_csv_paths,
                  use_original_image=False,
                  debug_mode=False,
                  normalization='none',  # Options: 'none', 'minmax', 'standard'
                  context_length=7,  # New parameter for flexible context length
                  latent_stats_path='../latent_stats.json'  # Path to the JSON file with per-channel stats
                  ):
-        self.data_path = data_csv_path
+        self.data_paths = data_csv_paths
         self.debug_mode = debug_mode
         self._length = None  # Will be set in setup
         self.use_processed = False  # Will be set in setup
@@ -202,9 +202,17 @@ class ActionsData(Dataset):
         self.latent_stats_path = latent_stats_path
 
         # Load action mapping
+        self.mapping_dicts = []
+        self.base_dirs = []
+        for (i, data_csv_path) in enumerate(self.data_paths):
+            base_dir = os.path.dirname(data_csv_path)
+            mapping_dict_path = os.path.join(base_dir, f'image_action_mapping_with_key_states.pkl')
+            with open(mapping_dict_path, 'rb') as f:
+                self.mapping_dicts.append(pickle.load(f))
+            self.base_dirs.append(base_dir)
         
-        with open('../computer/image_action_mapping_with_key_states.pkl', 'rb') as f:
-            self.mapping_dict = pickle.load(f)
+        #with open('../computer/image_action_mapping_with_key_states.pkl', 'rb') as f:
+        #    self.mapping_dict = pickle.load(f)
         
         # Constants for normalization (based on your analysis)
         self.data_mean = -0.54
@@ -255,27 +263,38 @@ class ActionsData(Dataset):
         
     def setup(self):
         print ('setup called')
-        if self.data_path not in ActionsData._shared_data:
-            print(f"Loading data from {self.data_path}")
-            # Read target frames data
-            data = pd.read_csv(self.data_path)
-            ActionsData._shared_data[self.data_path] = {
-                'record_nums': data['record_num'].tolist(),
-                'image_nums': data['image_num'].tolist()
-            }
-            del data
+        for (i, data_path) in enumerate(self.data_paths):
+            if data_path not in ActionsData._shared_data:
+                print(f"Loading data from {data_path}")
+                # Read target frames data
+                data = pd.read_csv(data_path)
+                ActionsData._shared_data[data_path] = {
+                    'record_nums': data['record_num'].tolist(),
+                    'image_nums': data['image_num'].tolist()
+                }
+                del data
             
         # Get data from cache
-        cached_data = ActionsData._shared_data[self.data_path]
-        self.record_nums = cached_data['record_nums']
-        self.image_nums = cached_data['image_nums']
-        self._length = len(self.record_nums)
+        cached_datas = []
+        for (i, data_path) in enumerate(self.data_paths):
+            cached_data = ActionsData._shared_data[data_path]
+            cached_datas.append(cached_data)
+        self.record_nums_list = []
+        for (i, data_path) in enumerate(self.data_paths):
+            self.record_nums_list.append(cached_datas[i]['record_nums'])
+        self.image_nums_list = []
+        for (i, data_path) in enumerate(self.data_paths):
+            self.image_nums_list.append(cached_datas[i]['image_nums'])
+        self._lengths = []
+        for (i, data_path) in enumerate(self.data_paths):
+            self._lengths.append(len(self.record_nums_list[i]))
         
         # Check for processed data
-        first_record = self.record_nums[0]
-        first_frame = self.image_nums[0]
-        processed_path = f'train_dataset_encoded/record_{first_record}/image_{first_frame}.npy'
-        self.use_processed = os.path.exists(processed_path)
+        #first_record = self.record_nums[0]
+        #first_frame = self.image_nums[0]
+        #processed_path = f'train_dataset_encoded/record_{first_record}/image_{first_frame}.npy'
+        #self.use_processed = os.path.exists(processed_path)
+        self.use_processed = True
         if self.use_processed:
             print("Found processed data in train_dataset_encoded/")
             
@@ -328,13 +347,15 @@ class ActionsData(Dataset):
     def __len__(self):
         if self.debug_mode:
             assert False
-            return 10000000
-        else:
             return self._length
+        else:
+            return sum(self._lengths)
 
     def load_processed_image(self, image_path):
         """Load preprocessed latent from .npy file, reprocess if loading fails"""
-        processed_path = image_path.replace('train_dataset/', 'train_dataset_encoded/').replace('.png', '.npy')
+        #processed_path = image_path.replace('train_dataset/', 'train_dataset_encoded/').replace('.png', '.npy')
+        processed_path = image_path.replace('.png', '.npy')
+
         try:
             return torch.from_numpy(np.load(processed_path))
         except Exception as e:
@@ -371,11 +392,19 @@ class ActionsData(Dataset):
 
     def __getitem__(self, i):
         example = dict()
-        i = i % self._length
+        i = i % sum(self._lengths)
+        for (data_partition, length) in enumerate(self._lengths):
+            if i < length:
+                break
+            i -= length
+        record_nums = self.record_nums_list[data_partition]
+        image_nums = self.image_nums_list[data_partition]
+        mapping_dict = self.mapping_dicts[data_partition]
+        base_dir = self.base_dirs[data_partition]
         
         # Get target record and frame
-        record_num = self.record_nums[i]
-        target_frame = self.image_nums[i]
+        record_num = record_nums[i]
+        target_frame = image_nums[i]
         
         # Generate sequence of frame numbers
         frame_numbers = list(range(target_frame - self.context_length*2, target_frame))
@@ -387,30 +416,41 @@ class ActionsData(Dataset):
         for frame_num in frame_numbers:
             if frame_num < 0:
                 # Use padding for negative frame numbers
-                image_paths.append('train_dataset/padding.png')
+                image_paths.append(f'{base_dir}/padding.png')
                 x, y, left_click, right_click, key_events = 0, 0, False, False, []
                 #actions.append('N N N N N N : N N N N N')
             else:
                 # Use actual image and look up action
-                image_paths.append(f'train_dataset/record_{record_num}/image_{frame_num}.png')
-                assert (record_num, frame_num) in self.mapping_dict, f"No action found for record {record_num} and frame {frame_num}"
-                x, y, left_click, right_click, key_events = self.mapping_dict.get((record_num, frame_num))
+                image_paths.append(f'{base_dir}/record_{record_num}/image_{frame_num}.png')
+                assert (record_num, frame_num) in mapping_dict, f"No action found for record {record_num} and frame {frame_num}"
+                x, y, left_click, right_click, key_events = mapping_dict.get((record_num, frame_num))
                 #actions.append(self.mapping_dict.get((record_num, frame_num), 'N N N N N N : N N N N N'))
             actions.append((x, y, left_click, right_click, key_events))
         
         # Add target frame action
-        assert (record_num, target_frame) in self.mapping_dict, f"No action found for record {record_num} and frame {target_frame}"
-        actions.append(self.mapping_dict.get((record_num, target_frame)))
+        assert (record_num, target_frame) in mapping_dict, f"No action found for record {record_num} and frame {target_frame}"
+        actions.append(mapping_dict.get((record_num, target_frame)))
         #actions.append(self.mapping_dict.get((record_num, target_frame), 'N N N N N N : N N N N N'))
         assert len(actions) == self.context_length*2+1, f"Action sequence must be {self.context_length*2+1} actions long"
         
         if self.use_original_image:
+            assert False
             example['image'] = normalize_image(f'../data/data_processing/train_dataset/record_{record_num}/image_{target_frame}.png')
         else:
-            example["image_processed"] = self.normalize_features(self.load_processed_image(f'train_dataset/record_{record_num}/image_{target_frame}.png'))
+            example["image_processed"] = self.normalize_features(self.load_processed_image(f'{base_dir}/record_{record_num}/image_{target_frame}.png'))
             example["c_concat_processed"] = self.normalize_features(torch.stack([
                 self.load_processed_image(path) for path in image_paths
             ]))
+            if self.debug_mode:
+                assert False
+                #print ('gere', example["image_processed"].shape)
+                # draw cursor on a blank image
+                white_image = np.ones((48*8, 64*8, 3)) * 255
+                x, y, left_click, right_click, key_events = self.mapping_dict.get((record_num, target_frame))
+                example["image"] = draw_cursor(white_image, x, y, left_click, right_click)
+                # save the image
+                #Image.fromarray(example["image"].astype(np.uint8)).save(f'gere_debug_image_{i}.png')
+                #sys.exit(1)
         example['is_padding'] = torch.BoolTensor([frame_num < 0 for frame_num in frame_numbers])
         
         # Rest of action processing remains the same

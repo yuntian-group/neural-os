@@ -27,7 +27,8 @@ import seaborn as sns
 import pandas as pd
 from pathlib import Path
 import json
-
+from einops import rearrange
+import torch.nn.functional as F
 from latent_diffusion.ldm.util import log_txt_as_img, exists, default, ismap, isimage, mean_flat, count_params, instantiate_from_config
 from latent_diffusion.ldm.modules.ema import LitEma
 from latent_diffusion.ldm.modules.distributions.distributions import normal_kl, DiagonalGaussianDistribution
@@ -352,6 +353,37 @@ class DDPM(pl.LightningModule):
         loss, loss_dict = self(x)
         return loss, loss_dict
 
+    def on_after_backward(self):
+        if self.global_step % 500 == 0:
+            # Compute gradient norm for self.model
+            model_grad_norm = torch.nn.utils.clip_grad_norm_(
+                self.model.parameters(), max_norm=float('inf'), norm_type=2.0)
+            
+            # Compute gradient norm for self.temporal_encoder
+            temporal_encoder_grad_norm = torch.nn.utils.clip_grad_norm_(
+                self.temporal_encoder.parameters(), max_norm=float('inf'), norm_type=2.0)
+            # Compute gradient norm for self.temporal_encoder
+            embedding_x_grad_norm = torch.nn.utils.clip_grad_norm_(
+                self.temporal_encoder.embedding_x.parameters(), max_norm=float('inf'), norm_type=2.0)
+            embedding_y_grad_norm = torch.nn.utils.clip_grad_norm_(
+                self.temporal_encoder.embedding_y.parameters(), max_norm=float('inf'), norm_type=2.0)
+            embedding_is_leftclick_norm  = torch.nn.utils.clip_grad_norm_(
+                self.temporal_encoder.embedding_is_leftclick.parameters(), max_norm=float('inf'), norm_type=2.0)
+            embedding_is_rightclick_norm  = torch.nn.utils.clip_grad_norm_(
+                self.temporal_encoder.embedding_is_rightclick.parameters(), max_norm=float('inf'), norm_type=2.0)
+            embedding_key_events_norm = torch.nn.utils.clip_grad_norm_(
+                self.temporal_encoder.embedding_key_events.parameters(), max_norm=float('inf'), norm_type=2.0)
+            
+            print(f'Model Gradient Norm: {model_grad_norm:.8f}')
+            print(f'Temporal Encoder Gradient Norm: {temporal_encoder_grad_norm:.8f}')
+            print(f'X Gradient Norm: {embedding_x_grad_norm:.8f}')
+            print(f'Y Gradient Norm: {embedding_y_grad_norm:.8f}')
+            print(f'embedding_is_leftclick Gradient Norm: {embedding_is_leftclick_norm:.8f}')
+            print(f'embedding_is_rightclick Gradient Norm: {embedding_is_rightclick_norm:.8f}')
+            print(f'embedding_key_events Gradient Norm: {embedding_key_events_norm:.8f}')
+            print (f'current sigma: {self.temporal_encoder.log_sigma.exp().item():.8f}')
+
+
     def training_step(self, batch, batch_idx):
         #import pdb; pdb.set_trace()
         #if hasattr(self, 'model'):
@@ -362,6 +394,7 @@ class DDPM(pl.LightningModule):
         #print(f"[training_step] step={self.global_step}")
         DEBUG = False
         DEBUG = True
+        DEBUG = self.run_eval
         self.DEBUG = DEBUG
         if DEBUG:
             print ('no grad at all')
@@ -377,7 +410,7 @@ class DDPM(pl.LightningModule):
         #         prog_bar=False, logger=True, on_step=True, on_epoch=False, sync_dist=True)
 
         if self.use_scheduler:
-            assert False
+            #assert False
             lr = self.optimizers().param_groups[0]['lr']
             self.log('lr_abs', lr, prog_bar=True, logger=True, on_step=True, on_epoch=False, sync_dist=True)
 
@@ -393,7 +426,7 @@ class DDPM(pl.LightningModule):
         self.log_dict(loss_dict_ema, prog_bar=False, logger=True, on_step=False, on_epoch=True, sync_dist=True)
 
     def on_train_batch_end(self, *args, **kwargs):
-        if self.use_ema:
+        if self.use_ema and not self.pretrain:
             self.model_ema(self.model)
 
     def _get_rows_from_list(self, samples):
@@ -453,6 +486,11 @@ class DDPM(pl.LightningModule):
 class LatentDiffusion(DDPM):
     """main class"""
     def __init__(self,
+                 pretrain,
+                 freezernn,
+                 run_eval,
+                 pretrain2,
+                 pretrain3,
                  first_stage_config,
                  cond_stage_config,
                  temporal_encoder_config=None,  # New parameter
@@ -467,6 +505,11 @@ class LatentDiffusion(DDPM):
                  scale_by_std=False,
                  hybrid_key=None, #for csllm
                  *args, **kwargs):
+        self.pretrain = pretrain
+        self.run_eval = run_eval
+        self.freezernn = freezernn
+        self.pretrain2 = pretrain2
+        self.pretrain3 = pretrain3
         self.num_timesteps_cond = default(num_timesteps_cond, 1)
         self.scheduler_sampling_rate = scheduler_sampling_rate
         self.scale_by_std = scale_by_std
@@ -480,6 +523,10 @@ class LatentDiffusion(DDPM):
         ckpt_path = kwargs.pop("ckpt_path", None)
         ignore_keys = kwargs.pop("ignore_keys", [])
         super().__init__(conditioning_key=conditioning_key, *args, **kwargs)
+        if self.pretrain:
+            print ('PRETRAINING RNN')
+            for p in self.model.parameters():
+                p.requires_grad = False
         self.concat_mode = concat_mode
         self.cond_stage_trainable = cond_stage_trainable
         self.cond_stage_key = cond_stage_key
@@ -507,6 +554,10 @@ class LatentDiffusion(DDPM):
         self.temporal_encoder = None
         if temporal_encoder_config is not None:
             self.temporal_encoder = instantiate_from_config(temporal_encoder_config)
+        if self.freezernn:
+            print ('FREEZING RNN')
+            for p in self.temporal_encoder.parameters():
+                p.requires_grad = False
         DEBUG = True
         if DEBUG:
             from torchvision import transforms
@@ -789,10 +840,36 @@ class LatentDiffusion(DDPM):
 
         
         assert k == 'image', "Only image conditioning is supported for now"
+        
         #import pdb; pdb.set_trace()
 
         if 'image_processed' in batch:
-            z = batch['image_processed']
+            if self.trainer.datamodule.datasets['train'].debug_mode or self.pretrain3:
+                print ('gere debug')
+                per_channel_mean = self.trainer.datamodule.datasets['train'].per_channel_mean.to(self.device)
+                per_channel_std = self.trainer.datamodule.datasets['train'].per_channel_std.to(self.device)
+                x = batch['image'].float()
+                x = x.to(self.device)
+                x = x / 127.5 - 1.0
+                x = rearrange(x, 'b h w c -> b c h w')
+                encoder_posterior = self.first_stage_model.encode(x)
+                z = encoder_posterior.sample()
+                if False:
+                    x_reconstructed = self.first_stage_model.decode(z)
+                    x_reconstructed = rearrange(x_reconstructed, 'b c h w -> b h w c')
+                    x_reconstructed = (x_reconstructed + 1.0) * 127.5
+                    # save the image
+                    from PIL import Image
+                    for i in range(z.shape[0]):
+                        Image.fromarray(x_reconstructed[i].cpu().numpy().astype(np.uint8)).save(f'reconstructed_gere_debug_image_{i}.png')
+                # normalize
+                z = (z - per_channel_mean.view(1, -1, 1, 1)) / per_channel_std.view(1, -1, 1, 1)
+                if self.pretrain3:
+                    print ('both')
+                    z = torch.cat((batch['image_processed'], z), dim=1)
+                batch['image_processed'] = z
+            else:
+                z = batch['image_processed']
             assert bs is None, "Batch size must be None when using processed images"
             z = z.to(self.device)
         else:
@@ -898,10 +975,12 @@ class LatentDiffusion(DDPM):
                 #    inputs_to_rnn.append(torch.cat([image_part, position_map_part, leftclick_map_part], dim=1))
                 #inputs_to_rnn = torch.stack(inputs_to_rnn, dim=1)
                 #import pdb; pdb.set_trace()
-                ###with torch.enable_grad():
-                ###    output_from_rnn = self.temporal_encoder(inputs_to_rnn)
-                output_from_rnn = self.temporal_encoder(inputs_to_rnn)
-                print ('warning: no grad')
+                if self.freezernn or self.run_eval:
+                    output_from_rnn = self.temporal_encoder(inputs_to_rnn)
+                    print ('warning: no grad')
+                else:
+                    with torch.enable_grad():
+                        output_from_rnn = self.temporal_encoder(inputs_to_rnn)
                 
                 #output_from_rnn = self.temporal_encoder(inputs_to_rnn)
                 #import pdb; pdb.set_trace()
@@ -1140,19 +1219,23 @@ class LatentDiffusion(DDPM):
                 #c_i['c_crossattn'] = c['c_crossattn'][i:i+1]
                 #c_i = self.get_learned_conditioning(c_i)
                 ddpm = False
-                if ddpm:
-                    sample_i = self.p_sample_loop(cond=c_i, shape=[1, 16, 48, 64], return_intermediates=False, verbose=True)
-                else:
-                    print ('ddim', DDIM_S)
-                    sampler = DDIMSampler(self)
-                    sample_i , _ = sampler.sample(
-                        S=DDIM_S,
-                        conditioning=c_i,
-                        batch_size=1,
-                        shape=[16, 48, 64],
-                        verbose=False
-                    )
-                
+                if DDIM_S > 90:
+                    ddpm = True
+                #if ddpm:
+                #    sample_i = self.p_sample_loop(cond=c_i, shape=[1, 16, 48, 64], return_intermediates=False, verbose=True)
+                #else:
+                #    print ('ddim', DDIM_S)
+                #    sampler = DDIMSampler(self)
+                #    sample_i , _ = sampler.sample(
+                #        S=DDIM_S,
+                #        conditioning=c_i,
+                #        batch_size=1,
+                #        shape=[16, 48, 64],
+                #        verbose=False
+                #    )
+                sample_i = c['c_concat'][i:i+1][:,:16]
+                #if 'finetunerealpart2' in exp_name:
+                #    sample_i = c['c_concat'][i:i+1][:,16:]
                 if 'norm_standard' in exp_name:
                     sample_i = sample_i * per_channel_std.view(1, -1, 1, 1) + per_channel_mean.view(1, -1, 1, 1)
                     #prev_frame_img = prev_frame_img * data_std + data_mean
@@ -1426,6 +1509,7 @@ class LatentDiffusion(DDPM):
                 #if self.i >= 497:
                 #    sys.exit(1)
                 if self.i >= 731:
+                #if self.i >= 28:
                     sys.exit(1)
             #import pdb; pdb.set_trace()
 
@@ -1604,7 +1688,20 @@ class LatentDiffusion(DDPM):
 
     def shared_step(self, batch, **kwargs):
         x, c = self.get_input(batch, self.first_stage_key)
-        loss = self(x, c)
+        #import pdb; pdb.set_trace()
+        if self.pretrain:
+            if self.pretrain3:
+                loss_step_part1 = F.mse_loss(x[:, :x.shape[1]//2], c['c_concat'][:, :x.shape[1]//2])
+                loss_step_part2 = F.mse_loss(x[:, -x.shape[1]//2:], c['c_concat'][:, -x.shape[1]//2:])
+                loss = (loss_step_part1 + loss_step_part2)/2, {'train/loss_part1': loss_step_part1.item(), 'train/loss_part2': loss_step_part2.item()}
+            elif not self.pretrain2:
+                loss_step = F.mse_loss(x, c['c_concat'][:, :x.shape[1]])
+                loss = loss_step, {'train/loss': loss_step.item()}
+            else:
+                loss_step = F.mse_loss(x, c['c_concat'][:, -x.shape[1]:])
+                loss = loss_step, {'train/loss': loss_step.item()}
+        else:
+            loss = self(x, c)
         return loss
 
     def forward(self, x, c, *args, **kwargs):
@@ -2164,11 +2261,14 @@ class LatentDiffusion(DDPM):
     def configure_optimizers(self):
         lr = self.learning_rate
         params = list(self.model.parameters())
+        if self.pretrain:
+            print ('PRETRAINING RNN')
+            params = []
         #import pdb; pdb.set_trace()
         if self.cond_stage_trainable:
             print(f"{self.__class__.__name__}: Also optimizing conditioner params!")
             params = params + list(self.cond_stage_model.parameters())
-        if self.temporal_encoder is not None:
+        if (self.temporal_encoder is not None) and (not self.freezernn):
             print(f"{self.__class__.__name__}: Also optimizing temporal encoder params!")
             params = params + list(self.temporal_encoder.parameters())
         if self.learn_logvar:

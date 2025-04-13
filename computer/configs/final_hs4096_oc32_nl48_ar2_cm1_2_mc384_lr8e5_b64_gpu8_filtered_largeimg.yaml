@@ -1,14 +1,9 @@
-save_path: /root/computer/computer/train_dataset_encoded/saved_final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered_cont_eval
+save_path: /root/computer/computer/train_dataset_encoded/saved_final_hs4096_oc32_nl48_ar2_cm1_2_mc384_lr8e5_b64_gpu8_filtered_largeimg
 
 model:
-  base_learning_rate: 8.0e-05
+  base_learning_rate: 4e-05
   target: latent_diffusion.ldm.models.diffusion.ddpm.LatentDiffusion
   params:
-    pretrain: false
-    freezernn: True
-    run_eval: True
-    pretrain2: false
-    pretrain3: false
     linear_start: 0.0015
     linear_end: 0.0195
     num_timesteps_cond: 1
@@ -30,8 +25,9 @@ model:
         image_size: [64, 48]
         in_channels: 48
         out_channels: 16
-        model_channels: 512
-        attention_resolutions: []
+        model_channels: 384
+        attention_resolutions:
+        - 2
         num_res_blocks: 2
         channel_mult:
         - 1
@@ -79,8 +75,8 @@ model:
 data:
   target: data.data_processing.datasets.DataModule
   params:
-    batch_size: 1
-    num_workers: 1
+    batch_size: 32
+    num_workers: 4
     wrap: false
     shuffle: True
     drop_last: True
@@ -90,8 +86,7 @@ data:
     train:
       target: data.data_processing.datasets.ActionsData
       params:
-        debug_mode: false
-        data_csv_path: ../data/data_processing/train_dataset/filtered_dataset.target_frames.clustered.train_shuffled.shuffled.csv
+        data_csv_path: ../data/data_processing/train_dataset/filtered_dataset.target_frames.train.csv
         normalization: standard
         context_length: 32
 
@@ -101,6 +96,7 @@ lightning:
     max_epochs: 64000
     limit_val_batches: 0
     accelerator: gpu
-    devices: 1
-    accumulate_grad_batches: 999999999
+    devices: 8
+    strategy: ddp_find_unused_parameters_false
+    accumulate_grad_batches: 1
     gradient_clip_val: 1

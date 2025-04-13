@@ -4,11 +4,6 @@ model:
   base_learning_rate: 8.0e-05
   target: latent_diffusion.ldm.models.diffusion.ddpm.LatentDiffusion
   params:
-    pretrain: false
-    freezernn: True
-    run_eval: True
-    pretrain2: false
-    pretrain3: false
     linear_start: 0.0015
     linear_end: 0.0195
     num_timesteps_cond: 1
@@ -31,7 +26,8 @@ model:
         in_channels: 48
         out_channels: 16
         model_channels: 512
-        attention_resolutions: []
+        attention_resolutions:
+        - 2
         num_res_blocks: 2
         channel_mult:
         - 1
@@ -90,7 +86,7 @@ data:
     train:
       target: data.data_processing.datasets.ActionsData
       params:
-        debug_mode: false
+        debug_mode: True
         data_csv_path: ../data/data_processing/train_dataset/filtered_dataset.target_frames.clustered.train_shuffled.shuffled.csv
         normalization: standard
         context_length: 32

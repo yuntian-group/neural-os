@@ -83,19 +83,19 @@ def load_model_from_config(config, ckpt, verbose=True):
     """
 
     print(f"Loading model from {ckpt}")
-    pl_sd = torch.load(ckpt, map_location='cpu')
+    pl_sd = torch.load(ckpt, map_location='cpu', weights_only=False)
     sd = pl_sd["state_dict"]
     model = instantiate_from_config(config.model)
     model_state = model.state_dict()
     #import pdb; pdb.set_trace()
     sd = {
         k: v for k, v in sd.items()
-        if k in model_state and v.shape == model_state[k].shape
+        if k in model_state and v.shape == model_state[k].shape #and ('temporal_encoder' not in k)
     }
     print (len(sd), 'filtered state dict')
 
     try:
-        m, u = model.load_state_dict(sd, strict=False)
+        m, u = model.load_state_dict(sd, strict=True)
 
         if len(m) > 0 and verbose:
             print("missing keys:")

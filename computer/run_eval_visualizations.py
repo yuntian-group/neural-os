@@ -46,9 +46,12 @@ ckpt_dir = 'saved_bsz64_acc1_lr8e5_512_leftclick_histpos_512_384_cont2_ddd_diffi
 #for setting in ['a_hs4096_oc32_nl48_ar_cm1_2_mc320', 'a_hs4096_oc32_nl48_ar_cm1_2_mc384', 'a_hs4096_oc32_nl48_ar2_cm1_2_mc320', 'a_hs4096_oc32_nl48_ar_cm1_2_3_mc320', 'a_hs4096_oc32_nl48_ar2_cm1_2_3_mc320', 'a_hs4096_oc32_nl48_ar4_cm1_2_3_mc320', 'a_hs1024_oc4_nl20_ar2_4_8_cm1_2_3_5_mc192', 'a_hs4096_oc32_nl48_ar2_4_8_cm1_2_3_5_mc320']:
 #for DDIM_S in [8, 4, 16]:
 #for setting in ['a_hs4096_oc32_nl48_ar_cm1_2_mc320', 'a_hs4096_oc32_nl48_ar_cm1_2_mc384', 'a_hs4096_oc32_nl48_ar2_cm1_2_mc320', 'a_hs4096_oc32_nl48_ar_cm1_2_3_mc320', 'a_hs4096_oc32_nl48_ar2_cm1_2_3_mc320', 'a_hs4096_oc32_nl48_ar4_cm1_2_3_mc320', 'a_hs4096_oc32_nl48_ar2_4_8_cm1_2_3_5_mc320', 'a_hs4096_oc32_nl48_ar_cm1_2_mc448']:
-for setting in ['final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered']:
+#for setting in ['final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered']:
+#for setting in ['pretrain2_context8_finetunerealpart1', 'pretrain2_context8_finetunerealpart2', 'pretrain2_context8_finetunerealpart1synpart2', 'pretrain2_context8_pretrainrealpart1synpart2']:#, 'reinitnone_cheat_cont', 'pretrain', 'pretrain_posttrain', 'reinitnone_cont', 'reinitnone_cheat_cont']:#, 'reinitnone', 'reinitrnn', 'reinitcnn', 'addattn_cont']:
+#for setting in ['pretrainreal_context32_cont_4Xdata_4Xb']:
+for setting in ['pretrainreal_context32_cont_4Xdata_4Xb_cont']:
     #for DDIM_S in [4, 8, 16]:
-    for DDIM_S in [8]:
+    for DDIM_S in [999,]:
     #for setting in ['a_hs4096_oc32_nl48_ar2_cm1_2_mc320']:
     #for setting in ['a_hs1024_oc4_nl20_ar2_4_8_cm1_2_3_5_mc192']:#, 'a_hs4096_oc32_nl48_ar_cm1_2_mc384', 'a_hs4096_oc32_nl48_ar2_cm1_2_mc320', 'a_hs4096_oc32_nl48_ar_cm1_2_3_mc320', 'a_hs4096_oc32_nl48_ar2_cm1_2_3_mc320', 'a_hs4096_oc32_nl48_ar4_cm1_2_3_mc320', 'a_hs1024_oc4_nl20_ar2_4_8_cm1_2_3_5_mc192', 'a_hs4096_oc32_nl48_ar2_4_8_cm1_2_3_5_mc320']:
         #ckpt_dir = f'saved_standard_challenging_context{context_length}'
@@ -58,7 +61,11 @@ for setting in ['final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered']
         #ckpt_dir = f'saved_standard_challenging_context32_nocond_fixnorm_all_scheduled_sampling_0.2_feedz_comb0.1_rnn/'
         #ckpt_dir = f'saved_standard_challenging_context32_nocond_fixnorm_all_scheduled_sampling_0.2_feedz_comb0.1_rnn_fixrnn_enablegrad_all_keyevent_cont/'
         #ckpt_dir = f'saved_standard_challenging_context32_nocond_fixnorm_all_scheduled_sampling_0.2_feedz_comb0.1_rnn_fixrnn_enablegrad_all_keyevent_cont_clusters/'
-        ckpt_dir = f'/root/computer/computer/train_dataset_encoded/saved_final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered_largeimg_cont4/'
+        #ckpt_dir = f'/root/computer/computer/train_dataset_encoded/saved_final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered_largeimg_cont4/'
+        #ckpt_dir = f'/root/computer/computer/train_dataset_encoded/saved_final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered_largeimg_cont4_lr8e5_b50_context8_b80_all_fixrelu_simplifyinput_debug_fullreinit_{setting}/'
+        ckpt_dir = f'/root/computer/computer/train_dataset_encoded/saved_final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered_largeimg_cont4_lr8e5_b50_context8_b80_all_fixrelu_simplifyinput_debug_{setting}/'
+        ckpt_dir = f'/root/computer/computer/train_dataset_encoded/saved_final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered_largeimg_cont4_lr8e5_b50_context8_b80_all_fixrelu_simplifyinput_debug_{setting}/'
+        ckpt_dir = f'/root/computer/computer/train_dataset_encoded2/saved_final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_{setting}/'
         print ('='*10)
         print (f'processing setting {setting}')
         # Get all checkpoint files and sort them
@@ -78,6 +85,8 @@ for setting in ['final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered']
         #config_file = f'configs/standard_challenging_context32_nocond_all_rnn.eval.yaml'
         config_file = f'configs/psearch_{setting}.eval.yaml'
         config_file = f'configs/final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered_cont.eval.yaml'
+        if 'addattn' in setting:
+            config_file = f'configs/final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered_cont.addattn.eval.yaml'
         #config_file = f'configs/standard_challenging_context32_nocond_fixnorm_all_scheduled_sampling_0.2_feedz_comb0.1_rnn_fixrnn_enablegrad_all_keyevent_{setting}.eval.yaml'
         
         for step, ckpt in tqdm(ckpts, desc="Processing checkpoints"):
@@ -96,7 +105,7 @@ for setting in ['final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered']
             
             # Run for training set
             # Replace lines in ddpm.py for training set
-            ddpm_replacement = f'        exp_name = \'cont5psearch_a_vis_norm_standard_context{setting}_ckpt{step}/train_{DDIM_S}\'\n        DEBUG = True\n        DDIM_S = {DDIM_S}'
+            ddpm_replacement = f'        exp_name = \'cont146psearch_a_vis_norm_standard_context{setting}_ckpt{step}/train_{DDIM_S}\'\n        DEBUG = True\n        DDIM_S = {DDIM_S}'
             
             with fileinput.FileInput('../latent_diffusion/ldm/models/diffusion/ddpm.py', inplace=True, backup='.bak') as file:
                 for line in file:
@@ -129,14 +138,15 @@ for setting in ['final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered']
                 for line in file:
                     if 'data_csv_path' in line:
                         #print('        data_csv_path: desktop_sequences_filtered_with_desktop_1.5k_last100.csv')
-                        #print('        data_csv_path: ../data/data_processing/train_dataset/filtered_dataset.target_frames.clustered.test.csv')
-                        print('        data_csv_path: ../data/data_processing/train_dataset/filtered_dataset.target_frames.clustered.train.head100.csv')
+                        print('        data_csv_paths:\n          - train_dataset_encoded/filtered_dataset.target_frames.clustered.test.csv')
+                        #print('        data_csv_path: ../data/data_processing/train_dataset/filtered_dataset.target_frames.clustered.train.head100.csv')
+                        #print('        data_csv_path: ../data/data_processing/train_dataset/filtered_dataset.target_frames.clustered.train.head100.debug.csv')
                     else:
                         print(line, end='')
             
             # Replace lines in ddpm.py for test set
             #ddpm_replacement = f'        exp_name = \'without_comp_norm_standard_ckpt{step}/test\'\n        DEBUG = True'
-            ddpm_replacement = f'        exp_name = \'cont5psearch_a_vis_norm_standard_context{setting}_ckpt{step}/test_{DDIM_S}\'\n        DEBUG = True\n        DDIM_S = {DDIM_S}'
+            ddpm_replacement = f'        exp_name = \'cont146psearch_a_vis_norm_standard_context{setting}_ckpt{step}/test_{DDIM_S}\'\n        DEBUG = True\n        DDIM_S = {DDIM_S}'
             
             with fileinput.FileInput('../latent_diffusion/ldm/models/diffusion/ddpm.py', inplace=True, backup='.bak') as file:
                 for line in file:

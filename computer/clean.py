@@ -41,12 +41,12 @@ def clean_folder(folder):
 
     # Determine the generation based on the highest checkpoint available.
     max_step = max(checkpoints.values())
-    current_generation = max_step // 2000
+    current_generation = max_step // 1000
     print(f"[{folder}] Max checkpoint step: {max_step} (Generation {current_generation})")
 
     # Remove checkpoints from older generations.
     for fname, step in checkpoints.items():
-        file_generation = step // 2000
+        file_generation = step // 1000
         if file_generation < current_generation:
             full_path = os.path.join(folder, fname)
             try:
@@ -97,7 +97,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--base_dir",
-        default="./train_dataset_encoded/",
+        default="./train_dataset_encoded2/",
         help="Base directory to search for folders (default: current directory)"
     )
     parser.add_argument(

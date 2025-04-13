@@ -156,3 +156,5 @@ stdbuf -oL -eL python main.py --config configs/final_hs4096_oc32_nl48_ar_cm1_2_m
 
 # try training diffusion, freeze rnn
 stdbuf -oL -eL python main.py --config configs/final_hs4096_oc32_nl48_ar_cm1_2_mc512_pretrainreal_context32_cont_4Xdata_4Xb_diffusion_freezernn.yaml > log.final_hs4096_oc32_nl48_ar_cm1_2_mc512.pretrainreal.context32.4Xdata.4Xb.diffusion.freezernn 2>&1 &
+
+stdbuf -oL -eL python main.py --config configs/final_hs4096_oc32_nl48_ar_cm1_2_mc512_pretrainreal_context32_cont_4Xdata_4Xb.yaml > log.final_hs4096_oc32_nl48_ar_cm1_2_mc512.pretrainreal.context32.4Xdata.4Xb.cont.cont 2>&1 &

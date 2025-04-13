@@ -554,6 +554,10 @@ class LatentDiffusion(DDPM):
         self.temporal_encoder = None
         if temporal_encoder_config is not None:
             self.temporal_encoder = instantiate_from_config(temporal_encoder_config)
+        if self.freezernn:
+            print ('FREEZING RNN')
+            for p in self.temporal_encoder.parameters():
+                p.requires_grad = False
         DEBUG = True
         if DEBUG:
             from torchvision import transforms
@@ -2264,7 +2268,7 @@ class LatentDiffusion(DDPM):
         if self.cond_stage_trainable:
             print(f"{self.__class__.__name__}: Also optimizing conditioner params!")
             params = params + list(self.cond_stage_model.parameters())
-        if self.temporal_encoder is not None:
+        if (self.temporal_encoder is not None) and (not self.freezernn):
             print(f"{self.__class__.__name__}: Also optimizing temporal encoder params!")
             params = params + list(self.temporal_encoder.parameters())
         if self.learn_logvar:

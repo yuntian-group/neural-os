@@ -31,13 +31,13 @@ def compute_distance(current_frame, prev_frame):
 def parse_args():
     parser = argparse.ArgumentParser(description="Converts a group of videos and their respective actions into one training dataset.")
     
-    parser.add_argument("--save_dir", type=str, default='../data_collection/raw_data/train_dataset',
+    parser.add_argument("--save_dir", type=str, default='/root/volume1/train_dataset_apr3',
                         help="directory to save the entire training set.")
 
-    parser.add_argument("--video_dir", type=str, default='../data_collection/raw_data/raw_data_apr2/videos',
+    parser.add_argument("--video_dir", type=str, default='/root/volume1/raw_data_apr3/videos',
                         help="directory where the videos are saved.")
     
-    parser.add_argument("--actions_dir", type=str, default='../data_collection/raw_data/raw_data_apr2/actions',
+    parser.add_argument("--actions_dir", type=str, default='/root/volume1/raw_data_apr3/actions',
                         help="directory where the actions are saved.")
                             
     parser.add_argument("--filter_videos", action='store_true',
@@ -137,11 +137,12 @@ def process_video(record_num: int, args: argparse.Namespace, save_dir: str, vide
             all_frames[keep_frame].save(f'{record_dir}/image_{keep_frame}.png')
             
             # Save the past seq_len frames
-            start_idx = max(0, keep_frame - seq_len)
-            for seq_idx in range(start_idx, keep_frame):
-                save_path = f'{record_dir}/image_{seq_idx}.png'
-                if not os.path.exists(save_path):
-                    all_frames[seq_idx].save(save_path)
+            if filter_videos:
+                start_idx = max(0, keep_frame - seq_len)
+                for seq_idx in range(start_idx, keep_frame):
+                    save_path = f'{record_dir}/image_{seq_idx}.png'
+                    if not os.path.exists(save_path):
+                        all_frames[seq_idx].save(save_path)
             
             # Add the current frame to target data
             target_data.append((record_num, keep_frame))

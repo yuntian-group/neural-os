@@ -5,6 +5,8 @@ model:
   target: latent_diffusion.ldm.models.diffusion.ddpm.LatentDiffusion
   params:
     pretrain: false
+    freezernn: True
+    run_eval: True
     pretrain2: false
     pretrain3: false
     linear_start: 0.0015

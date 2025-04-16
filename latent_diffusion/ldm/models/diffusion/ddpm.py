@@ -1221,19 +1221,19 @@ class LatentDiffusion(DDPM):
                 ddpm = False
                 if DDIM_S > 90:
                     ddpm = True
-                #if ddpm:
-                #    sample_i = self.p_sample_loop(cond=c_i, shape=[1, 16, 48, 64], return_intermediates=False, verbose=True)
-                #else:
-                #    print ('ddim', DDIM_S)
-                #    sampler = DDIMSampler(self)
-                #    sample_i , _ = sampler.sample(
-                #        S=DDIM_S,
-                #        conditioning=c_i,
-                #        batch_size=1,
-                #        shape=[16, 48, 64],
-                #        verbose=False
-                #    )
                 sample_i = c['c_concat'][i:i+1][:,:16]
+                if ddpm:
+                    sample_i = self.p_sample_loop(cond=c_i, shape=[1, 16, 48, 64], return_intermediates=False, verbose=True)
+                else:
+                    print ('ddim', DDIM_S)
+                    sampler = DDIMSampler(self)
+                    sample_i , _ = sampler.sample(
+                        S=DDIM_S,
+                        conditioning=c_i,
+                        batch_size=1,
+                        shape=[16, 48, 64],
+                        verbose=False
+                    )
                 #if 'finetunerealpart2' in exp_name:
                 #    sample_i = c['c_concat'][i:i+1][:,16:]
                 if 'norm_standard' in exp_name:

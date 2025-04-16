@@ -41,6 +41,7 @@ LOCAL_CHECKPOINT_PATH = "saved_standard_challenging_context32_nocond_fixnorm_all
 LOCAL_CHECKPOINT_PATH = "saved_standard_challenging_context32_nocond_fixnorm_all_scheduled_sampling_0.2_feedz/model-step=030000.ckpt"
 LOCAL_CHECKPOINT_PATH = "saved_standard_challenging_context32_nocond_fixnorm_all_scheduled_sampling_0.2_feedz_comb0.1/model-step=020000.ckpt"
 LOCAL_CHECKPOINT_PATH = "saved_standard_challenging_context32_nocond_fixnorm_all_scheduled_sampling_0.2_feedz_comb0.1_rnn_fixrnn_enablegrad_all_keyevent_cont_clusters_all_realall/model-step=072000.ckpt"
+LOCAL_CHECKPOINT_PATH = "/root/computer/computer/train_dataset_encoded2/saved_final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_pretrainreal_context32_cont_4Xdata_4Xb_diffusion_freezernn_contfiltered_unfreeze_afterchallenging/model-step=048000.ckpt"
 CONFIG_PATH = "config_csllm.yaml"
 CONFIG_PATH = "configs/2e5_debug_gpt_firstframe.yaml"
 CONFIG_PATH = "configs/2e5_debug_gpt_firstframe_identity.yaml"
@@ -56,7 +57,7 @@ def upload_model_to_hub():
     config = OmegaConf.load(CONFIG_PATH)
     
     # Load the local checkpoint
-    checkpoint = torch.load(LOCAL_CHECKPOINT_PATH, map_location='cpu')
+    checkpoint = torch.load(LOCAL_CHECKPOINT_PATH, map_location='cpu', weights_only=False)
     
     # Extract only the state_dict
     state_dict = checkpoint['state_dict']

@@ -460,13 +460,20 @@ class TemporalEncoder(nn.Module):
         lstm_out_upper, (hidden_states_h_upper, hidden_states_c_upper) = self.lstm_upper(context, (hidden_states_h_upper, hidden_states_c_upper))
         feedback = lstm_out_upper.squeeze(1)
         
-        hidden_last = lstm_out_upper
+        hidden_last = torch.cat([lstm_out_upper, lstm_out_lower], dim=-1)
         
         # Project to desired output shape
         output = self.projection(hidden_last)
         
         # Reshape to spatial feature map: [B, output_channels*output_height*output_width] -> [B, output_channels, output_height, output_width]
         output = output.reshape(batch_size, self.output_channels, self.output_height, self.output_width)
+        device = output.device
+        y_grid = torch.arange(self.output_height, device=device).view(1, -1, 1)
+        x_grid = torch.arange(self.output_width, device=device).view(1, 1, -1)
+        sigma = torch.exp(self.log_sigma)
+        #import pdb; pdb.set_trace()
+        kernel = torch.exp(-((x_grid - (x/8.0).view(-1, 1, 1))**2 + (y_grid - (y/8.0).view(-1, 1, 1))**2) / (2 * sigma**2)).unsqueeze(1)
+        output = torch.cat([output[:, :-1], kernel], dim=1)
 
         hidden_states = {
             'h_lower': hidden_states_h_lower,

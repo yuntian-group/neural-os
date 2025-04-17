@@ -30,6 +30,7 @@ for input_file in tqdm(input_files, desc="Processing files"):
     # Create all new rows at once using list comprehension
     new_rows = [create_new_row(row['record_num'], row['image_num']) 
                 for _, row in tqdm(df.iterrows(), desc=f"Processing {input_file}", total=len(df))]
+    new_rows = [row for row in new_rows if row is not None]
     
     # Create new dataframe directly from the list of dictionaries
     df_new = pd.concat([df, pd.DataFrame(new_rows)], ignore_index=True)

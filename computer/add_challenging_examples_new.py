@@ -28,7 +28,7 @@ for input_file in input_files:
     df = pd.read_csv(input_file)
     new_rows = []
     for idx, row in df.iterrows():
-        new_row = create_row(row)
+        new_row = create_new_row(row)
         if new_row is not None:
             new_rows.append(new_row)
     

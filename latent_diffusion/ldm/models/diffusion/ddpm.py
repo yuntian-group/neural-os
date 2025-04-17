@@ -1183,8 +1183,8 @@ class LatentDiffusion(DDPM):
         DEBUG = False
         #exp_name = 'cont15challengingdiffusionpsearch_a_vis_norm_standard_contextpretrainreal_context32_cont_4Xdata_4Xb_diffusion_freezernn_contfiltered_unfreeze_afterchallenging_newdata_pretrainchallenging_ckpt20000/test_999'
         #DEBUG = True
+        #DDIM_S = 999
         #### REPLACEMENT_LINE
-        DDIM_S = 999
         os.makedirs(exp_name, exist_ok=True)
         if not hasattr(self, 'i'):
             self.i = 0

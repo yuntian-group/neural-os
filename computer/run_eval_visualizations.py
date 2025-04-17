@@ -51,7 +51,8 @@ ckpt_dir = 'saved_bsz64_acc1_lr8e5_512_leftclick_histpos_512_384_cont2_ddd_diffi
 #for setting in ['pretrainreal_context32_cont_4Xdata_4Xb']:
 #for setting in ['pretrainreal_context32_cont_4Xdata_4Xb_cont_cont_cont_filtered_all']:
 #for setting in ['pretrainreal_context32_cont_4Xdata_4Xb_diffusion_freezernn_contfiltered_challenging']:
-for setting in ['pretrainreal_context32_cont_4Xdata_4Xb_diffusion_freezernn_contfiltered_challenging']:
+#/root/computer/computer/train_dataset_encoded5/saved_final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_pretrainreal_context32_cont_4Xdata_4Xb_diffusion_freezernn_contfiltered_unfreeze_afterchallenging_newdata_pretrainchallenging
+for setting in ['pretrainreal_context32_cont_4Xdata_4Xb_diffusion_freezernn_contfiltered_unfreeze_afterchallenging_newdata_pretrainchallenging']:
     #/root/computer/computer/train_dataset_encoded2/saved_final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_pretrainreal_context32_cont_4Xdata_4Xb_diffusion_freezernn_contfiltered_unfreeze
     #for DDIM_S in [4, 8, 16]:
     for DDIM_S in [999,]:
@@ -68,7 +69,7 @@ for setting in ['pretrainreal_context32_cont_4Xdata_4Xb_diffusion_freezernn_cont
         #ckpt_dir = f'/root/computer/computer/train_dataset_encoded/saved_final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered_largeimg_cont4_lr8e5_b50_context8_b80_all_fixrelu_simplifyinput_debug_fullreinit_{setting}/'
         ckpt_dir = f'/root/computer/computer/train_dataset_encoded/saved_final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered_largeimg_cont4_lr8e5_b50_context8_b80_all_fixrelu_simplifyinput_debug_{setting}/'
         ckpt_dir = f'/root/computer/computer/train_dataset_encoded/saved_final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered_largeimg_cont4_lr8e5_b50_context8_b80_all_fixrelu_simplifyinput_debug_{setting}/'
-        ckpt_dir = f'/root/computer/computer/train_dataset_encoded2/saved_final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_{setting}/'
+        ckpt_dir = f'/root/computer/computer/train_dataset_encoded5/saved_final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_{setting}/'
         print ('='*10)
         print (f'processing setting {setting}')
         # Get all checkpoint files and sort them
@@ -160,7 +161,7 @@ for setting in ['pretrainreal_context32_cont_4Xdata_4Xb_diffusion_freezernn_cont
             
             # Run with modified config (test set)
             try:
-                subprocess.run(f'CUDA_VISIBLE_DEVICES=7 python main.py --config {config_file}', shell=True)
+                subprocess.run(f'CUDA_VISIBLE_DEVICES=0 python main.py --config {config_file}', shell=True)
             except Exception as e:
                 print(f"Error in test run: {e}")
                 pass

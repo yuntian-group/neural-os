@@ -1181,7 +1181,9 @@ class LatentDiffusion(DDPM):
         exp_name = 'without_comp_norm_standard'
         DDIM_S = 8
         DEBUG = False
-        #### REPLACEMENT_LINE
+        exp_name = 'cont15challengingdiffusionpsearch_a_vis_norm_standard_contextpretrainreal_context32_cont_4Xdata_4Xb_diffusion_freezernn_contfiltered_unfreeze_afterchallenging_newdata_pretrainchallenging_ckpt20000/test_999'
+        DEBUG = True
+        DDIM_S = 999
         os.makedirs(exp_name, exist_ok=True)
         if not hasattr(self, 'i'):
             self.i = 0
@@ -1237,18 +1239,18 @@ class LatentDiffusion(DDPM):
                 if DDIM_S > 90:
                     ddpm = True
                 sample_i = c['c_concat'][i:i+1][:,:16]
-                if ddpm:
-                    sample_i = self.p_sample_loop(cond=c_i, shape=[1, 16, 48, 64], return_intermediates=False, verbose=True)
-                else:
-                    print ('ddim', DDIM_S)
-                    sampler = DDIMSampler(self)
-                    sample_i , _ = sampler.sample(
-                        S=DDIM_S,
-                        conditioning=c_i,
-                        batch_size=1,
-                        shape=[16, 48, 64],
-                        verbose=False
-                    )
+                #if ddpm:
+                #    sample_i = self.p_sample_loop(cond=c_i, shape=[1, 16, 48, 64], return_intermediates=False, verbose=True)
+                #else:
+                #    print ('ddim', DDIM_S)
+                #    sampler = DDIMSampler(self)
+                #    sample_i , _ = sampler.sample(
+                #        S=DDIM_S,
+                #        conditioning=c_i,
+                #        batch_size=1,
+                #        shape=[16, 48, 64],
+                #        verbose=False
+                #    )
                 #if 'finetunerealpart2' in exp_name:
                 #    sample_i = c['c_concat'][i:i+1][:,16:]
                 if 'norm_standard' in exp_name:

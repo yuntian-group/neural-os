@@ -9,6 +9,9 @@ model:
     run_eval: True
     pretrain2: false
     pretrain3: false
+    scheduled_sampling_rate: 0.0
+    scheduled_sampling_length: 1 
+    scheduled_sampling_ddim_steps: 8
     linear_start: 0.0015
     linear_end: 0.0195
     num_timesteps_cond: 1
@@ -16,7 +19,6 @@ model:
     timesteps: 1000
     first_stage_key: image
     cond_stage_key: action_
-    scheduler_sampling_rate: 0.0
     hybrid_key: c_concat
     image_size: [64, 48]
     channels: 3
@@ -92,6 +94,7 @@ data:
       params:
         debug_mode: false
         data_csv_path: ../data/data_processing/train_dataset/filtered_dataset.target_frames.clustered.train_shuffled.shuffled.csv
+          - train_dataset_encoded/filtered_dataset.target_frames.clustered.test.csv
         normalization: standard
         context_length: 32
 

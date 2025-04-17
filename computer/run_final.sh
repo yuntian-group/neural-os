@@ -196,3 +196,6 @@ stdbuf -oL -eL python main.py --config configs/final_hs4096_oc32_nl48_ar_cm1_2_m
 
 
 stdbuf -oL -eL python main.py --config configs/final_hs4096_oc32_nl48_ar_cm1_2_mc512_pretrainreal_context32_cont_4Xdata_4Xb_diffusion_freezernn_unfreeze_afterchallenging.yaml > log.final_hs4096_oc32_nl48_ar_cm1_2_mc512.pretrainreal.context32.4Xdata.4Xb.diffusion.freezernn.contfiltered.1Xb.unfreeze.afterchallenging 2>&1 &
+
+
+stdbuf -oL -eL python main.py --config configs/final_hs4096_oc32_nl48_ar_cm1_2_mc512_pretrainreal_context32_cont_4Xdata_4Xb_diffusion_freezernn_unfreeze_afterchallenging_newdata_pretrainchallenging.yaml > log.final_hs4096_oc32_nl48_ar_cm1_2_mc512.pretrainreal.context32.4Xdata.4Xb.diffusion.freezernn.contfiltered.1Xb.unfreeze.afterchallenging.newdata.pretrainchallenging 2>&1 &

@@ -491,11 +491,13 @@ class LatentDiffusion(DDPM):
                  run_eval,
                  pretrain2,
                  pretrain3,
+                 scheduled_sampling_rate,
+                 scheduled_sampling_length,
+                 scheduled_sampling_ddim_steps,
                  first_stage_config,
                  cond_stage_config,
                  temporal_encoder_config=None,  # New parameter
                  num_timesteps_cond=None,
-                 scheduler_sampling_rate=0,
                  cond_stage_key="image",
                  cond_stage_trainable=False,
                  concat_mode=True,
@@ -511,7 +513,9 @@ class LatentDiffusion(DDPM):
         self.pretrain2 = pretrain2
         self.pretrain3 = pretrain3
         self.num_timesteps_cond = default(num_timesteps_cond, 1)
-        self.scheduler_sampling_rate = scheduler_sampling_rate
+        self.scheduled_sampling_rate = scheduled_sampling_rate
+        self.scheduled_sampling_length = scheduled_sampling_length
+        self.scheduled_sampling_ddim_steps = scheduled_sampling_ddim_steps
         self.scale_by_std = scale_by_std
         assert self.num_timesteps_cond <= kwargs['timesteps']
         # for backwards compatibility after implementation of DiffusionWrapper
@@ -980,7 +984,18 @@ class LatentDiffusion(DDPM):
                     print ('warning: no grad')
                 else:
                     with torch.enable_grad():
-                        output_from_rnn = self.temporal_encoder(inputs_to_rnn)
+                        # scheduled sampling
+                        proposal = random.random()
+                        if proposal < self.scheduled_sampling_rate:
+                            print ('scheduled sampling')
+                            sampler = DDIMSampler(self)
+                        else:
+                            sampler = None
+                        per_channel_mean = self.trainer.datamodule.datasets['train'].per_channel_mean.to(self.device)
+                        per_channel_std = self.trainer.datamodule.datasets['train'].per_channel_std.to(self.device)
+                        self.temporal_encoder.per_channel_mean = per_channel_mean
+                        self.temporal_encoder.per_channel_std = per_channel_std
+                        output_from_rnn = self.temporal_encoder(inputs_to_rnn, sampler, self.scheduled_sampling_length, self.scheduled_sampling_ddim_steps, self.first_stage_model)
                 
                 #output_from_rnn = self.temporal_encoder(inputs_to_rnn)
                 #import pdb; pdb.set_trace()
@@ -1002,7 +1017,7 @@ class LatentDiffusion(DDPM):
                 data_min = -27.681446075439453
                 data_max = 30.854148864746094
                 proposal = random.random() 
-                if proposal < self.scheduler_sampling_rate:
+                if proposal < self.scheduled_sampling_rate:
                     #assert False, "Not implemented"
                     #import pdb; pdb.set_trace()
                     with torch.no_grad():
@@ -1064,14 +1079,14 @@ class LatentDiffusion(DDPM):
                             #z_samples = self.encode_first_stage(x_samples_ddim)
                             
                             # Replace the corresponding frames in c[hkey]
-                            sampling_mask = torch.rand(batch_size, 1, 1, 1, device=c[hkey].device) < 1.5 #self.scheduler_sampling_rate
+                            sampling_mask = torch.rand(batch_size, 1, 1, 1, device=c[hkey].device) < 1.5
                             # Only apply sampling mask where is_padding is False
                             mask = sampling_mask & (~is_padding[:, j+self.context_length].view(-1, 1, 1, 1))
                             #if is_padding[:, j+7].any():
                             #    import pdb; pdb.set_trace()
                             c[hkey][:, self.context_length*4+j*4:self.context_length*4+j*4+4] = torch.where(mask, z_samples, c[hkey][:, self.context_length*4+j*4:self.context_length*4+j*4+4])
                             #break
-                elif proposal < self.scheduler_sampling_rate + 0.1:
+                elif proposal < self.scheduled_sampling_rate + 0.1:
                     #assert False, "Not implemented"
                     #import pdb; pdb.set_trace()
                     with torch.no_grad():
@@ -1133,7 +1148,7 @@ class LatentDiffusion(DDPM):
                             #z_samples = self.encode_first_stage(x_samples_ddim)
                             
                             # Replace the corresponding frames in c[hkey]
-                            sampling_mask = torch.rand(batch_size, 1, 1, 1, device=c[hkey].device) < 1.5 #self.scheduler_sampling_rate
+                            sampling_mask = torch.rand(batch_size, 1, 1, 1, device=c[hkey].device) < 1.5
                             # Only apply sampling mask where is_padding is False
                             mask = sampling_mask & (~is_padding[:, j+self.context_length].view(-1, 1, 1, 1))
                             #if is_padding[:, j+7].any():

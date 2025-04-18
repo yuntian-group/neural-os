@@ -202,3 +202,8 @@ stdbuf -oL -eL python main.py --config configs/final_hs4096_oc32_nl48_ar_cm1_2_m
 
 
 stdbuf -oL -eL python main.py --config configs/final_hs4096_oc32_nl48_ar_cm1_2_mc512_pretrainreal_context32_cont_4Xdata_4Xb_diffusion_freezernn_unfreeze_afterchallenging_newdata_pretrainchallenging_addc.yaml > log.final_hs4096_oc32_nl48_ar_cm1_2_mc512.pretrainreal.context32.4Xdata.4Xb.diffusion.freezernn.contfiltered.1Xb.unfreeze.afterchallenging.newdata.pretrainchallenging.addc 2>&1 &
+stdbuf -oL -eL python main.py --config configs/final_hs4096_oc32_nl48_ar_cm1_2_mc512_pretrainreal_context32_cont_4Xdata_4Xb_diffusion_freezernn_unfreeze_afterchallenging_newdata_pretrainchallenging_addc_allnew.yaml > log.final_hs4096_oc32_nl48_ar_cm1_2_mc512.pretrainreal.context32.4Xdata.4Xb.diffusion.freezernn.contfiltered.1Xb.unfreeze.afterchallenging.newdata.pretrainchallenging.addc.allnew 2>&1 &
+stdbuf -oL -eL python main.py --config configs/fb_diffusion_freezernn_unfreeze_afterchallenging_newdata_pretrainchallenging_addc_allnew_more_c.yaml > log.fb.diffusion.freezernn.contfiltered.1Xb.unfreeze.afterchallenging.newdata.pretrainchallenging.addc.allnew.more_c 2>&1 &
+
+
+stdbuf -oL -eL python main.py --config configs/fb_diffusion_freezernn_unfreeze_afterchallenging_newdata_pretrainchallenging_addc_allnew_more_c_alldata.yaml > log.fb.diffusion.freezernn.contfiltered.1Xb.unfreeze.afterchallenging.newdata.pretrainchallenging.addc.allnew.more_c.alldata 2>&1 &

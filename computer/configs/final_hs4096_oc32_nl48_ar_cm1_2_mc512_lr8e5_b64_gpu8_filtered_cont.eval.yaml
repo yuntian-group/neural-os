@@ -94,7 +94,6 @@ data:
       params:
         debug_mode: false
         data_csv_path: ../data/data_processing/train_dataset/filtered_dataset.target_frames.clustered.train_shuffled.shuffled.csv
-          - train_dataset_encoded/filtered_dataset.target_frames.clustered.test.csv
         normalization: standard
         context_length: 32
 

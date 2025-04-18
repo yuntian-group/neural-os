@@ -52,7 +52,8 @@ ckpt_dir = 'saved_bsz64_acc1_lr8e5_512_leftclick_histpos_512_384_cont2_ddd_diffi
 #for setting in ['pretrainreal_context32_cont_4Xdata_4Xb_cont_cont_cont_filtered_all']:
 #for setting in ['pretrainreal_context32_cont_4Xdata_4Xb_diffusion_freezernn_contfiltered_challenging']:
 #/root/computer/computer/train_dataset_encoded5/saved_final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_pretrainreal_context32_cont_4Xdata_4Xb_diffusion_freezernn_contfiltered_unfreeze_afterchallenging_newdata_pretrainchallenging
-for setting in ['pretrainreal_context32_cont_4Xdata_4Xb_diffusion_freezernn_contfiltered_unfreeze_afterchallenging_newdata_pretrainchallenging']:
+#for setting in ['pretrainreal_context32_cont_4Xdata_4Xb_diffusion_freezernn_contfiltered_unfreeze_afterchallenging_newdata_pretrainchallenging']:
+for setting in ['newdata_pretrainchallenging_addc_allnew_more_c']:
     #/root/computer/computer/train_dataset_encoded2/saved_final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_pretrainreal_context32_cont_4Xdata_4Xb_diffusion_freezernn_contfiltered_unfreeze
     #for DDIM_S in [4, 8, 16]:
     for DDIM_S in [999,]:
@@ -70,6 +71,8 @@ for setting in ['pretrainreal_context32_cont_4Xdata_4Xb_diffusion_freezernn_cont
         ckpt_dir = f'/root/computer/computer/train_dataset_encoded/saved_final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered_largeimg_cont4_lr8e5_b50_context8_b80_all_fixrelu_simplifyinput_debug_{setting}/'
         ckpt_dir = f'/root/computer/computer/train_dataset_encoded/saved_final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered_largeimg_cont4_lr8e5_b50_context8_b80_all_fixrelu_simplifyinput_debug_{setting}/'
         ckpt_dir = f'/root/computer/computer/train_dataset_encoded5/saved_final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_{setting}/'
+        ckpt_dir = f'/root/computer/computer/train_dataset_encoded5/s_f_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_pretrainreal_context32_cont_4Xdata_4Xb_diffusion_freezernn_contfiltered_unfreeze_afterchallenging_{setting}/'
+        ckpt_dir = f'/root/computer/computer/train_dataset_encoded6/sb_diffusion_freezernn_contfiltered_unfreeze_afterchallenging_{setting}/'
         print ('='*10)
         print (f'processing setting {setting}')
         # Get all checkpoint files and sort them
@@ -109,7 +112,7 @@ for setting in ['pretrainreal_context32_cont_4Xdata_4Xb_diffusion_freezernn_cont
             
             # Run for training set
             # Replace lines in ddpm.py for training set
-            ddpm_replacement = f'        exp_name = \'cont15challengingdiffusionpsearch_a_vis_norm_standard_context{setting}_ckpt{step}/train_{DDIM_S}\'\n        DEBUG = True\n        DDIM_S = {DDIM_S}'
+            ddpm_replacement = f'        exp_name = \'cont17newdatapsearch_a_vis_norm_standard_context{setting}_ckpt{step}/train_{DDIM_S}\'\n        DEBUG = True\n        DDIM_S = {DDIM_S}'
             
             with fileinput.FileInput('../latent_diffusion/ldm/models/diffusion/ddpm.py', inplace=True, backup='.bak') as file:
                 for line in file:
@@ -150,7 +153,7 @@ for setting in ['pretrainreal_context32_cont_4Xdata_4Xb_diffusion_freezernn_cont
             
             # Replace lines in ddpm.py for test set
             #ddpm_replacement = f'        exp_name = \'without_comp_norm_standard_ckpt{step}/test\'\n        DEBUG = True'
-            ddpm_replacement = f'        exp_name = \'cont15challengingdiffusionpsearch_a_vis_norm_standard_context{setting}_ckpt{step}/test_{DDIM_S}\'\n        DEBUG = True\n        DDIM_S = {DDIM_S}'
+            ddpm_replacement = f'        exp_name = \'cont17newdatapsearch_a_vis_norm_standard_context{setting}_ckpt{step}/test_{DDIM_S}\'\n        DEBUG = True\n        DDIM_S = {DDIM_S}'
             
             with fileinput.FileInput('../latent_diffusion/ldm/models/diffusion/ddpm.py', inplace=True, backup='.bak') as file:
                 for line in file:

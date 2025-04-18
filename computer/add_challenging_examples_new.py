@@ -10,7 +10,10 @@ input_files = ['train_dataset_encoded/filtered_dataset.target_frames.train.csv',
                'train_dataset_encoded2/train_dataset_apr3_encoded/filtered_dataset.target_frames.csv',
                'train_dataset_encoded3/train_dataset_apr2_encoded/filtered_dataset.target_frames.csv',
                'train_dataset_encoded4/train_dataset_apr5_encoded/filtered_dataset.target_frames.csv',
-               'train_dataset_encoded5/train_dataset_apr14_2_encoded/filtered_dataset.target_frames.csv']
+               'train_dataset_encoded5/train_dataset_apr14_2_encoded/filtered_dataset.target_frames.csv',
+               'train_dataset_encoded6/train_dataset_apr14_3_encoded/filtered_dataset.target_frames.csv']
+input_files = ['train_dataset_encoded5/train_dataset_apr14_2_encoded/filtered_dataset.target_frames.csv',
+               'train_dataset_encoded6/train_dataset_apr14_3_encoded/filtered_dataset.target_frames.csv']
 
 def create_new_row(record_num, image_num):
     if offset + 7 >= image_num:
@@ -18,7 +21,7 @@ def create_new_row(record_num, image_num):
     return {
         'record_num': record_num,
         'image_num': offset + 7,
-        'frame_difference': "(-1, -1)"
+        #'frame_difference': "(-1, -1)"
     }
 
 print(f"Processing {len(input_files)} files...")

@@ -207,3 +207,32 @@ stdbuf -oL -eL python main.py --config configs/fb_diffusion_freezernn_unfreeze_a
 
 
 stdbuf -oL -eL python main.py --config configs/fb_diffusion_freezernn_unfreeze_afterchallenging_newdata_pretrainchallenging_addc_allnew_more_c_alldata.yaml > log.fb.diffusion.freezernn.contfiltered.1Xb.unfreeze.afterchallenging.newdata.pretrainchallenging.addc.allnew.more_c.alldata 2>&1 &
+
+
+
+
+#stdbuf -oL -eL python main.py --config configs/fb_diffusion_freezernn_unfreeze_afterchallenging_newdata_pretrainchallenging_addc_allnew_more_c_alldata.yaml > log.fb.diffusion.freezernn.contfiltered.1Xb.unfreeze.afterchallenging.newdata.pretrainchallenging.addc.allnew.more_c.alldata.cont 2>&1 &
+stdbuf -oL -eL python main.py --config configs/fb_diffusion_freezernn_unfreeze_afterchallenging_newdata_pretrainchallenging_addc_allnew_more_c_alldata_diffusion_c.yaml > log.fb.diffusion.freezernn.contfiltered.1Xb.unfreeze.afterchallenging.newdata.pretrainchallenging.addc.allnew.more_c.alldata.diffusion_c 2>&1 &
+
+
+# not running this X , or maybe run this
+stdbuf -oL -eL python main.py --config configs/fb_diffusion_freezernn_unfreeze_afterchallenging_newdata_pretrainchallenging_addc_allnew_more_c_alldata_diffusion_c_alldata.yaml > log.fb.diffusion.freezernn.contfiltered.1Xb.unfreeze.afterchallenging.newdata.pretrainchallenging.addc.allnew.more_c.alldata.diffusion_c.alldata 2>&1 &
+
+
+
+# finally, unfreeze everything
+stdbuf -oL -eL python main.py --config configs/fb_diffusion_freezernn_unfreeze_afterchallenging_newdata_pretrainchallenging_addc_allnew_more_c_alldata_diffusion_c_alldata.yaml > log.fb.diffusion.freezernn.contfiltered.1Xb.unfreeze.afterchallenging.newdata.pretrainchallenging.addc.allnew.more_c.alldata.diffusion_c.alldata 2>&1 &
+
+
+
+
+stdbuf -oL -eL python main.py --config configs/fb_diffusion_freezernn_unfreeze_afterchallenging_newdata_pretrainchallenging_addc_allnew_more_c_alldata_diffusion_c_allc_unfreeze.yaml > log.fb.diffusion.freezernn.contfiltered.1Xb.unfreeze.afterchallenging.newdata.pretrainchallenging.addc.allnew.more_c.alldata.diffusion_c.allc_unfreeze 2>&1 &
+
+
+stdbuf -oL -eL python main.py --config configs/fb_diffusion_freezernn_unfreeze_afterchallenging_newdata_pretrainchallenging_addc_allnew_more_c_alldata_diffusion_c_alldata.yaml > log.fb.diffusion.freezernn.contfiltered.1Xb.unfreeze.afterchallenging.newdata.pretrainchallenging.addc.allnew.more_c.alldata.diffusion_c.alldata 2>&1 &
+
+
+# cannot run as diffusion might get very bad over time
+CUDA_VISIBLE_DEVICES=0 stdbuf -oL -eL python main.py --config configs/fb_diffusion_freezernn_unfreeze_afterchallenging_newdata_pretrainchallenging_addc_allnew_more_c_alldata_diffusion_c_alldata_pretrainrnn_ss.yaml > log.fb.diffusion.freezernn.contfiltered.1Xb.unfreeze.afterchallenging.newdata.pretrainchallenging.addc.allnew.more_c.alldata.diffusion_c.alldata.pretrainrnn_ss 2>&1 &
+# cannot run as diffusion might get very bad over time
+CUDA_VISIBLE_DEVICES=0 stdbuf -oL -eL python main.py --config configs/fb_diffusion_freezernn_unfreeze_afterchallenging_newdata_pretrainchallenging_addc_allnew_more_c_alldata_diffusion_c_alldata_joint_ss.yaml > log.fb.diffusion.freezernn.contfiltered.1Xb.unfreeze.afterchallenging.newdata.pretrainchallenging.addc.allnew.more_c.alldata.diffusion_c.alldata.joint_ss 2>&1 &

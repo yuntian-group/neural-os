@@ -236,3 +236,18 @@ stdbuf -oL -eL python main.py --config configs/fb_diffusion_freezernn_unfreeze_a
 CUDA_VISIBLE_DEVICES=0 stdbuf -oL -eL python main.py --config configs/fb_diffusion_freezernn_unfreeze_afterchallenging_newdata_pretrainchallenging_addc_allnew_more_c_alldata_diffusion_c_alldata_pretrainrnn_ss.yaml > log.fb.diffusion.freezernn.contfiltered.1Xb.unfreeze.afterchallenging.newdata.pretrainchallenging.addc.allnew.more_c.alldata.diffusion_c.alldata.pretrainrnn_ss 2>&1 &
 # cannot run as diffusion might get very bad over time
 CUDA_VISIBLE_DEVICES=0 stdbuf -oL -eL python main.py --config configs/fb_diffusion_freezernn_unfreeze_afterchallenging_newdata_pretrainchallenging_addc_allnew_more_c_alldata_diffusion_c_alldata_joint_ss.yaml > log.fb.diffusion.freezernn.contfiltered.1Xb.unfreeze.afterchallenging.newdata.pretrainchallenging.addc.allnew.more_c.alldata.diffusion_c.alldata.joint_ss 2>&1 &
+
+
+
+stdbuf -oL -eL python main.py --config configs/fb_diffusion_freezernn_unfreeze_afterchallenging_newdata_pretrainchallenging_addc_allnew_more_c_alldata_diffusion_c_alldata_joint_noss.yaml > log.fb.diffusion.freezernn.contfiltered.1Xb.unfreeze.afterchallenging.newdata.pretrainchallenging.addc.allnew.more_c.alldata.diffusion_c.alldata.joint_noss 2>&1 &
+
+
+CUDA_VISIBLE_DEVICES=0 stdbuf -oL -eL python main.py --config configs/fb_diffusion_freezernn_unfreeze_afterchallenging_newdata_pretrainchallenging_addc_allnew_more_c_alldata_diffusion_c_alldata_joint_noss_ss01.yaml > log.fb.diffusion.freezernn.contfiltered.1Xb.unfreeze.afterchallenging.newdata.pretrainchallenging.addc.allnew.more_c.alldata.diffusion_c.alldata.joint_noss.ss01 2>&1 &
+
+
+stdbuf -oL -eL python main.py --config configs/fb_diffusion_freezernn_unfreeze_afterchallenging_newdata_pretrainchallenging_addc_allnew_more_c_alldata_diffusion_c_alldata_joint_noss_2Xb.yaml > log.fb.diffusion.freezernn.contfiltered.1Xb.unfreeze.afterchallenging.newdata.pretrainchallenging.addc.allnew.more_c.alldata.diffusion_c.alldata.joint_noss.2Xb 2>&1 &
+stdbuf -oL -eL python main.py --config configs/fb_diffusion_freezernn_unfreeze_afterchallenging_newdata_pretrainchallenging_addc_allnew_more_c_alldata_diffusion_c_alldata_joint_noss_4Xb.yaml > log.fb.diffusion.freezernn.contfiltered.1Xb.unfreeze.afterchallenging.newdata.pretrainchallenging.addc.allnew.more_c.alldata.diffusion_c.alldata.joint_noss.4Xb 2>&1 &
+
+
+CUDA_VISIBLE_DEVICES=0 stdbuf -oL -eL python main.py --config configs/fb_diffusion_freezernn_unfreeze_afterchallenging_newdata_pretrainchallenging_addc_allnew_more_c_alldata_diffusion_c_alldata_joint_noss_4Xb_ss01.yaml > log.fb.diffusion.freezernn.contfiltered.1Xb.unfreeze.afterchallenging.newdata.pretrainchallenging.addc.allnew.more_c.alldata.diffusion_c.alldata.joint_noss.4Xb.ss01 2>&1 &
+stdbuf -oL -eL python main.py --config configs/fb_diffusion_freezernn_unfreeze_afterchallenging_newdata_pretrainchallenging_addc_allnew_more_c_alldata_diffusion_c_alldata_joint_noss_4Xb_ss005.yaml > log.fb.diffusion.freezernn.contfiltered.1Xb.unfreeze.afterchallenging.newdata.pretrainchallenging.addc.allnew.more_c.alldata.diffusion_c.alldata.joint_noss.4Xb.ss005 2>&1 &

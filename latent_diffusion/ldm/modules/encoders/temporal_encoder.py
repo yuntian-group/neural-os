@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import math
 from PIL import Image
+DEBUG = True
+DEBUG = False
 
 def sinusoidal_init(num_positions, hidden_size):
     print ('INIT')
@@ -276,58 +278,72 @@ class TemporalEncoder(nn.Module):
 
             if sampler is not None and t >= sequence_length - scheduled_sampling_length:
                 #import pdb; pdb.set_trace()
-                # replace image_features with the sampled image
-                with torch.no_grad():
-                    hidden_last = torch.cat([lstm_out_upper, lstm_out_lower], dim=-1)
-                    output = self.projection(hidden_last)
-                    output = output.reshape(batch_size, self.output_channels, self.output_height, self.output_width)
-                    # concatenate output with Gaussian kernel of positions
-                    device = output.device
-                    y_grid = torch.arange(self.output_height, device=device).view(1, -1, 1)
-                    x_grid = torch.arange(self.output_width, device=device).view(1, 1, -1)
-                    sigma = torch.exp(self.log_sigma)
-                    #import pdb; pdb.set_trace()
-                    kernel = torch.exp(-((x_grid - (x_prev/8.0).view(-1, 1, 1))**2 + (y_grid - (y_prev/8.0).view(-1, 1, 1))**2) / (2 * sigma**2)).unsqueeze(1)
-                    output = torch.cat([output[:, :-1], kernel], dim=1)
-                    c_dict = {'c_concat': output}
-                    samples_ddim, _ = sampler.sample(S=scheduled_sampling_ddim_steps,
-                                            conditioning=c_dict,
-                                            batch_size=batch_size,
-                                            shape=[self.input_channels, self.output_height, self.output_width],
-                                            verbose=False,)
-                    # only apply sampling mask where is_padding is False
-                    # save images for debugging
-                    DEBUG = False
-                    if DEBUG:
-                        import pdb; pdb.set_trace()
-                        decode_batch_size = 1
-                        samples = samples_ddim * self.per_channel_std.view(1, -1, 1, 1) + self.per_channel_mean.view(1, -1, 1, 1)
-                        for idx in range(0, samples.shape[0], decode_batch_size):
-                                batch_samples = samples[idx:min(idx + decode_batch_size, samples.shape[0])]
-                                batch_decoded = first_stage_model.decode(batch_samples)
-                                batch_encoded = torch.clamp(batch_decoded, min=-1.0, max=1.0)
-                                batch_encoded_images = batch_encoded * 127.5 + 127.5
-                                for kkk in range(batch_samples.shape[0]):
-                                    image = batch_encoded_images[kkk].permute(1, 2, 0).cpu().numpy()
-                                    image = image.astype(np.uint8)
-                                    image = Image.fromarray(image)
-                                    image.save(f'scheduled_sampling_ddim_step_{idx}_{t}_sample_{kkk}.png')
-                                #x_samples_ddim.append(batch_decoded)
-                                batch_gt = image_features[idx:min(idx + decode_batch_size, samples.shape[0])]
-                                batch_samples = batch_gt * self.per_channel_std.view(1, -1, 1, 1) + self.per_channel_mean.view(1, -1, 1, 1)
-                                batch_decoded = first_stage_model.decode(batch_samples)
-                                batch_encoded = torch.clamp(batch_decoded, min=-1.0, max=1.0)
-                                batch_encoded_images = batch_encoded * 127.5 + 127.5
-                                for kkk in range(batch_samples.shape[0]):
-                                    image = batch_encoded_images[kkk].permute(1, 2, 0).cpu().numpy()
-                                    image = image.astype(np.uint8)
-                                    image = Image.fromarray(image)
-                                    image.save(f'scheduled_sampling_ddim_step_{idx}_{t}_sample_{kkk}.gt.png')
-                                #batch_encoded = self.encode_first_stage(batch_decoded).sample()
-                                #z_samples.append(batch_encoded)
-                                #z_samples.append(batch_samples)
-                    image_features = torch.where(is_padding.view(-1, 1, 1, 1), image_features, samples_ddim)
+                #for scheduled_sampling_ddim_steps in [8, 16, 32, 64]:
+                if True:
+                    # replace image_features with the sampled image
+                    with torch.no_grad():
+                        hidden_last = torch.cat([lstm_out_upper, lstm_out_lower], dim=-1)
+                        output = self.projection(hidden_last)
+                        output = output.reshape(batch_size, self.output_channels, self.output_height, self.output_width)
+                        # concatenate output with Gaussian kernel of positions
+                        device = output.device
+                        y_grid = torch.arange(self.output_height, device=device).view(1, -1, 1)
+                        x_grid = torch.arange(self.output_width, device=device).view(1, 1, -1)
+                        sigma = torch.exp(self.log_sigma)
+                        #import pdb; pdb.set_trace()
+                        kernel = torch.exp(-((x_grid - (x_prev/8.0).view(-1, 1, 1))**2 + (y_grid - (y_prev/8.0).view(-1, 1, 1))**2) / (2 * sigma**2)).unsqueeze(1)
+                        output = torch.cat([output[:, :-1], kernel], dim=1)
+                        c_dict = {'c_concat': output}
+                        samples_ddim, _ = sampler.sample(S=scheduled_sampling_ddim_steps,
+                                                conditioning=c_dict,
+                                                batch_size=batch_size,
+                                                shape=[self.input_channels, self.output_height, self.output_width],
+                                                verbose=False,)
+                        # only apply sampling mask where is_padding is False
+                        # save images for debugging
+                        if DEBUG:
+                            #import pdb; pdb.set_trace()
+                            decode_batch_size = 1
+                            samples = samples_ddim * self.per_channel_std.view(1, -1, 1, 1) + self.per_channel_mean.view(1, -1, 1, 1)
+                            for idx in range(0, samples.shape[0], decode_batch_size):
+                                    batch_samples = samples[idx:min(idx + decode_batch_size, samples.shape[0])]
+                                    batch_decoded = first_stage_model.decode(batch_samples)
+                                    batch_encoded = torch.clamp(batch_decoded, min=-1.0, max=1.0)
+                                    batch_encoded_images = batch_encoded * 127.5 + 127.5
+                                    for kkk in range(batch_samples.shape[0]):
+                                        image = batch_encoded_images[kkk].permute(1, 2, 0).cpu().numpy()
+                                        image = image.astype(np.uint8)
+                                        image = Image.fromarray(image)
+                                        image.save(f'finalscheduled_sampling_ddim_step_{idx}_{t}_sample_{kkk}_{scheduled_sampling_ddim_steps}.png')
+                                    #x_samples_ddim.append(batch_decoded)
+                                    batch_gt = image_features[idx:min(idx + decode_batch_size, samples.shape[0])]
+                                    batch_samples = batch_gt * self.per_channel_std.view(1, -1, 1, 1) + self.per_channel_mean.view(1, -1, 1, 1)
+                                    batch_decoded = first_stage_model.decode(batch_samples)
+                                    batch_encoded = torch.clamp(batch_decoded, min=-1.0, max=1.0)
+                                    batch_encoded_images = batch_encoded * 127.5 + 127.5
+                                    for kkk in range(batch_samples.shape[0]):
+                                        image = batch_encoded_images[kkk].permute(1, 2, 0).cpu().numpy()
+                                        image = image.astype(np.uint8)
+                                        image = Image.fromarray(image)
+                                        image.save(f'finalscheduled_sampling_ddim_step_{idx}_{t}_sample_{kkk}.gt.png')
+                                    batch_gt = image_features_prev[idx:min(idx + decode_batch_size, samples.shape[0])]
+                                    batch_samples = batch_gt * self.per_channel_std.view(1, -1, 1, 1) + self.per_channel_mean.view(1, -1, 1, 1)
+                                    batch_decoded = first_stage_model.decode(batch_samples)
+                                    batch_encoded = torch.clamp(batch_decoded, min=-1.0, max=1.0)
+                                    batch_encoded_images = batch_encoded * 127.5 + 127.5
+                                    for kkk in range(batch_samples.shape[0]):
+                                        image = batch_encoded_images[kkk].permute(1, 2, 0).cpu().numpy()
+                                        image = image.astype(np.uint8)
+                                        image = Image.fromarray(image)
+                                        image.save(f'finalscheduled_sampling_ddim_step_{idx}_{t}_sample_{kkk}.prev.png')
+                                    #batch_encoded = self.encode_first_stage(batch_decoded).sample()
+                                    #z_samples.append(batch_encoded)
+                                    #z_samples.append(batch_samples)
+                        if not DEBUG:
+                            image_features = torch.where(is_padding.view(-1, 1, 1, 1), image_features, samples_ddim)
             assert image_features.shape[1] == self.input_channels, f"image_features.shape[1] = {image_features.shape[-1]} != self.input_channels = {self.input_channels}"
+            if DEBUG:
+                image_features_prev = image_features
             image_features = torch.einsum('bchw->bhwc', image_features).reshape(batch_size, -1, self.input_channels)
             #image_features_with_position = image_features + self.image_position_embeddings
             image_features_with_position = image_features

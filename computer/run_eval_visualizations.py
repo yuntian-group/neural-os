@@ -54,7 +54,7 @@ ckpt_dir = 'saved_bsz64_acc1_lr8e5_512_leftclick_histpos_512_384_cont2_ddd_diffi
 #/root/computer/computer/train_dataset_encoded5/saved_final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_pretrainreal_context32_cont_4Xdata_4Xb_diffusion_freezernn_contfiltered_unfreeze_afterchallenging_newdata_pretrainchallenging
 #for setting in ['pretrainreal_context32_cont_4Xdata_4Xb_diffusion_freezernn_contfiltered_unfreeze_afterchallenging_newdata_pretrainchallenging']:
 #for setting in ['newdata_pretrainchallenging_addc_allnew_more_c_alldata_diffusion_c']:
-for setting in ['newdata_pretrainchallenging_addc_allnew_more_c_alldata_diffusion_c_alldata']:
+for setting in ['newdata_pretrainchallenging_addc_allnew_more_c_alldata_diffusion_c_alldata_joint_noss_4Xb_ss005_cont']:
     #/root/computer/computer/train_dataset_encoded2/saved_final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_pretrainreal_context32_cont_4Xdata_4Xb_diffusion_freezernn_contfiltered_unfreeze
     #for DDIM_S in [4, 8, 16]:
     for DDIM_S in [999,]:

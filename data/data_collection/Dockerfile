@@ -32,7 +32,8 @@ RUN pip3 install -r requirements.txt
 # Set up virtual display
 ENV DISPLAY=:99
 ENV SCREEN_WIDTH=512
-ENV SCREEN_HEIGHT=368
+#ENV SCREEN_HEIGHT=368
+ENV SCREEN_HEIGHT=384
 ENV SCREEN_DEPTH=24
 
 # Copy your scripts

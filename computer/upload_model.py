@@ -7,7 +7,7 @@ import json
 
 # Set your Hugging Face token here
 # Set your model details
-MODEL_NAME = "yuntian-deng/computer-model-ss005-cont-lr2e5-384k"
+MODEL_NAME = "yuntian-deng/computer-model-ss005-cont-lr2e5-432k"
 LOCAL_CHECKPOINT_PATH = "test_15_no_deltas_1000_paths/model_test_15_no_deltas_1000_paths.ckpt"
 LOCAL_CHECKPOINT_PATH = "oct27_test_15_no_deltas_1000_paths/model_test_15_no_deltas_1000_paths.ckpt"
 LOCAL_CHECKPOINT_PATH = "checkpoints/model-step=007500.ckpt"
@@ -57,6 +57,7 @@ LOCAL_CHECKPOINT_PATH = "/root/computer/computer/train_dataset_encoded6/sb_diffu
 LOCAL_CHECKPOINT_PATH = "/root/computer/computer/train_dataset_encoded6/sb_diffusion_freezernn_contfiltered_unfreeze_afterchallenging_newdata_pretrainchallenging_addc_allnew_more_c_alldata_diffusion_c_alldata_joint_noss_4Xb_ss005_cont/model-step=372000.ckpt"
 LOCAL_CHECKPOINT_PATH = "/root/computer/computer/train_dataset_encoded6/sb_diffusion_freezernn_contfiltered_unfreeze_afterchallenging_newdata_pretrainchallenging_addc_allnew_more_c_alldata_diffusion_c_alldata_joint_noss_4Xb_ss005_cont_lr2e5/model-step=256000.ckpt"
 LOCAL_CHECKPOINT_PATH = "/root/computer/computer/train_dataset_encoded6/sb_diffusion_freezernn_contfiltered_unfreeze_afterchallenging_newdata_pretrainchallenging_addc_allnew_more_c_alldata_diffusion_c_alldata_joint_noss_4Xb_ss005_cont_lr2e5/model-step=384000.ckpt"
+LOCAL_CHECKPOINT_PATH = "/root/computer/computer/train_dataset_encoded6/sb_diffusion_freezernn_contfiltered_unfreeze_afterchallenging_newdata_pretrainchallenging_addc_allnew_more_c_alldata_diffusion_c_alldata_joint_noss_4Xb_ss005_cont_lr2e5/model-step=432000.ckpt"
 CONFIG_PATH = "config_csllm.yaml"
 CONFIG_PATH = "configs/2e5_debug_gpt_firstframe.yaml"
 CONFIG_PATH = "configs/2e5_debug_gpt_firstframe_identity.yaml"

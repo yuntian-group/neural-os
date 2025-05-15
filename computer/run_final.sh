@@ -251,3 +251,10 @@ stdbuf -oL -eL python main.py --config configs/fb_diffusion_freezernn_unfreeze_a
 
 CUDA_VISIBLE_DEVICES=0 stdbuf -oL -eL python main.py --config configs/fb_diffusion_freezernn_unfreeze_afterchallenging_newdata_pretrainchallenging_addc_allnew_more_c_alldata_diffusion_c_alldata_joint_noss_4Xb_ss01.yaml > log.fb.diffusion.freezernn.contfiltered.1Xb.unfreeze.afterchallenging.newdata.pretrainchallenging.addc.allnew.more_c.alldata.diffusion_c.alldata.joint_noss.4Xb.ss01 2>&1 &
 stdbuf -oL -eL python main.py --config configs/fb_diffusion_freezernn_unfreeze_afterchallenging_newdata_pretrainchallenging_addc_allnew_more_c_alldata_diffusion_c_alldata_joint_noss_4Xb_ss005.yaml > log.fb.diffusion.freezernn.contfiltered.1Xb.unfreeze.afterchallenging.newdata.pretrainchallenging.addc.allnew.more_c.alldata.diffusion_c.alldata.joint_noss.4Xb.ss005 2>&1 &
+
+
+CUDA_VISIBLE_DEVICES=0 stdbuf -oL -eL python main.py --config configs/fb_diffusion_freezernn_unfreeze_afterchallenging_newdata_pretrainchallenging_addc_allnew_more_c_alldata_diffusion_c_alldata_joint_noss_4Xb_ss005_debug.yaml > log.fb.diffusion.freezernn.contfiltered.1Xb.unfreeze.afterchallenging.newdata.pretrainchallenging.addc.allnew.more_c.alldata.diffusion_c.alldata.joint_noss.4Xb.ss005.debug 2>&1 &
+
+
+stdbuf -oL -eL python main.py --config configs/fb_diffusion_freezernn_unfreeze_afterchallenging_newdata_pretrainchallenging_addc_allnew_more_c_alldata_diffusion_c_alldata_joint_noss_4Xb_ss005.yaml > log.fb.diffusion.freezernn.contfiltered.1Xb.unfreeze.afterchallenging.newdata.pretrainchallenging.addc.allnew.more_c.alldata.diffusion_c.alldata.joint_noss.4Xb.ss005.cont 2>&1 &
+stdbuf -oL -eL python main.py --config configs/fb_diffusion_freezernn_unfreeze_afterchallenging_newdata_pretrainchallenging_addc_allnew_more_c_alldata_diffusion_c_alldata_joint_noss_4Xb_ss005_lr2e5.yaml > log.fb.diffusion.freezernn.contfiltered.1Xb.unfreeze.afterchallenging.newdata.pretrainchallenging.addc.allnew.more_c.alldata.diffusion_c.alldata.joint_noss.4Xb.ss005.cont.lr2e5 2>&1 &

@@ -585,9 +585,9 @@ class LatentDiffusion(DDPM):
                 if not match:
                     continue
                 cluster_id = int(match.group(1))
-                if cluster_id > 15:
-                    print (f'WARNING: Skipping cluster {cluster_id} because it is greater than 15')
-                    continue
+                #if cluster_id > 15:
+                #    print (f'WARNING: Skipping cluster {cluster_id} because it is greater than 15')
+                #    continue
                 
                 # Find center images
                 center_files = list(cluster_path.glob("cluster_center_*.png"))
@@ -1535,7 +1535,8 @@ class LatentDiffusion(DDPM):
                 self.i += 1
                 #if self.i >= 497:
                 #    sys.exit(1)
-                if self.i >= 731:
+                #if self.i >= 800:
+                if self.i >= 730:
                 #if self.i >= 28:
                     sys.exit(1)
             #import pdb; pdb.set_trace()

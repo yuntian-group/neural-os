@@ -54,10 +54,11 @@ ckpt_dir = 'saved_bsz64_acc1_lr8e5_512_leftclick_histpos_512_384_cont2_ddd_diffi
 #/root/computer/computer/train_dataset_encoded5/saved_final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_pretrainreal_context32_cont_4Xdata_4Xb_diffusion_freezernn_contfiltered_unfreeze_afterchallenging_newdata_pretrainchallenging
 #for setting in ['pretrainreal_context32_cont_4Xdata_4Xb_diffusion_freezernn_contfiltered_unfreeze_afterchallenging_newdata_pretrainchallenging']:
 #for setting in ['newdata_pretrainchallenging_addc_allnew_more_c_alldata_diffusion_c']:
-for setting in ['newdata_pretrainchallenging_addc_allnew_more_c_alldata_diffusion_c_alldata_joint_noss_4Xb_ss005_cont']:
+#for setting in ['newdata_pretrainchallenging_addc_allnew_more_c_alldata_diffusion_c_alldata_joint_noss_4Xb_ss005_cont']:
+for setting in ['newdata_pretrainchallenging_addc_allnew_more_c_alldata_diffusion_c_alldata_joint_noss_4Xb_ss005_cont_lr2e5_context64_b16']:
     #/root/computer/computer/train_dataset_encoded2/saved_final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_pretrainreal_context32_cont_4Xdata_4Xb_diffusion_freezernn_contfiltered_unfreeze
     #for DDIM_S in [4, 8, 16]:
-    for DDIM_S in [999,]:
+    for DDIM_S in [32,]:
     #for setting in ['a_hs4096_oc32_nl48_ar2_cm1_2_mc320']:
     #for setting in ['a_hs1024_oc4_nl20_ar2_4_8_cm1_2_3_5_mc192']:#, 'a_hs4096_oc32_nl48_ar_cm1_2_mc384', 'a_hs4096_oc32_nl48_ar2_cm1_2_mc320', 'a_hs4096_oc32_nl48_ar_cm1_2_3_mc320', 'a_hs4096_oc32_nl48_ar2_cm1_2_3_mc320', 'a_hs4096_oc32_nl48_ar4_cm1_2_3_mc320', 'a_hs1024_oc4_nl20_ar2_4_8_cm1_2_3_5_mc192', 'a_hs4096_oc32_nl48_ar2_4_8_cm1_2_3_5_mc320']:
         #ckpt_dir = f'saved_standard_challenging_context{context_length}'
@@ -74,6 +75,7 @@ for setting in ['newdata_pretrainchallenging_addc_allnew_more_c_alldata_diffusio
         ckpt_dir = f'/root/computer/computer/train_dataset_encoded5/saved_final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_{setting}/'
         ckpt_dir = f'/root/computer/computer/train_dataset_encoded5/s_f_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_pretrainreal_context32_cont_4Xdata_4Xb_diffusion_freezernn_contfiltered_unfreeze_afterchallenging_{setting}/'
         ckpt_dir = f'/root/computer/computer/train_dataset_encoded6/sb_diffusion_freezernn_contfiltered_unfreeze_afterchallenging_{setting}/'
+        #sb_diffusion_freezernn_contfiltered_unfreeze_afterchallenging_newdata_pretrainchallenging_addc_allnew_more_c_alldata_diffusion_c_alldata_joint_noss_4Xb_ss005_cont_lr2e5_context64_b16
         print ('='*10)
         print (f'processing setting {setting}')
         # Get all checkpoint files and sort them
@@ -95,6 +97,8 @@ for setting in ['newdata_pretrainchallenging_addc_allnew_more_c_alldata_diffusio
         config_file = f'configs/final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered_cont.eval.yaml'
         if 'addattn' in setting:
             config_file = f'configs/final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered_cont.addattn.eval.yaml'
+        if 'context64' in setting:
+            config_file = f'configs/final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered_cont.eval.context64.yaml'
         #config_file = f'configs/standard_challenging_context32_nocond_fixnorm_all_scheduled_sampling_0.2_feedz_comb0.1_rnn_fixrnn_enablegrad_all_keyevent_{setting}.eval.yaml'
         
         for step, ckpt in tqdm(ckpts, desc="Processing checkpoints"):

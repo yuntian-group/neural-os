@@ -575,6 +575,8 @@ class LatentDiffusion(DDPM):
             cluster_centers = []
             cluster_ids = []
             for cluster_path in cluster_paths:
+                # only consider clusters up to cluster_15
+
                 if "noise" in str(cluster_path):
                     continue
                     
@@ -583,6 +585,9 @@ class LatentDiffusion(DDPM):
                 if not match:
                     continue
                 cluster_id = int(match.group(1))
+                if cluster_id > 15:
+                    print (f'WARNING: Skipping cluster {cluster_id} because it is greater than 15')
+                    continue
                 
                 # Find center images
                 center_files = list(cluster_path.glob("cluster_center_*.png"))

@@ -28,6 +28,7 @@ import pandas as pd
 from pathlib import Path
 import json
 from einops import rearrange
+import pickle
 import torch.nn.functional as F
 from latent_diffusion.ldm.util import log_txt_as_img, exists, default, ismap, isimage, mean_flat, count_params, instantiate_from_config
 from latent_diffusion.ldm.modules.ema import LitEma
@@ -1179,7 +1180,7 @@ class LatentDiffusion(DDPM):
         exp_name = 'without_comp_norm_minmax'
         exp_name = 'without_comp_norm_none'
         exp_name = 'without_comp_norm_standard'
-        DDIM_S = 8
+        DDIM_S = 32
         DEBUG = False
         #exp_name = 'cont15challengingdiffusionpsearch_a_vis_norm_standard_contextpretrainreal_context32_cont_4Xdata_4Xb_diffusion_freezernn_contfiltered_unfreeze_afterchallenging_newdata_pretrainchallenging_ckpt20000/test_999'
         #DEBUG = True
@@ -1512,6 +1513,9 @@ class LatentDiffusion(DDPM):
                     plt.xlabel('Predicted')
                     plt.ylabel('Target')
                     plt.savefig(f'{exp_name}/confusion_matrix.png')
+                    # dump self.confusion_matrix to a file
+                    with open(f'{exp_name}/confusion_matrix.pkl', 'wb') as f:
+                        pickle.dump(self.confusion_matrix, f)
                     plt.close()
                     ## Inside your model code where confusion matrix is calculated
                     #history_length = self.context_length

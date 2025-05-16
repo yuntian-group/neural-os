@@ -1373,7 +1373,7 @@ class LatentDiffusion(DDPM):
                         y1 = center[1] - height
                         x2 = center[0] + width
                         y2 = center[1] + height
-                        cv2.rectangle(img, (x1, y1), (x2, y2), (255, 255, 0), 2)  # Yellow rectangle
+                        #cv2.rectangle(img, (x1, y1), (x2, y2), (255, 255, 0), 2)  # Yellow rectangle
                     
                     
                     if is_leftclick:
@@ -1387,16 +1387,21 @@ class LatentDiffusion(DDPM):
                                 abs(y - center[1]) <= height):
                                 inside_icon = True
                                 break
-                        
+                        inside_icon = False
                         # Green circle for clicks inside icons, red for clicks outside
                         color = (0, 255, 0) if inside_icon else (255, 0, 0)
+                        color = (0, 255, 0)
+                        color = (0, 0, 255)
                         cv2.circle(img, (x, y), 10, color, 3)
                     elif is_rightclick:
                         # Blue circle for right clicks
-                        cv2.circle(img, (x, y), 10, (0, 0, 255), 3)
+                        color = (0, 0, 255)
+                        color = (255, 255, 0)
+                        cv2.circle(img, (x, y), 10, color, 3)
                     else:
                         # White dot for moves
-                        cv2.circle(img, (x, y), 5, (255, 255, 255), -1)
+                        #cv2.circle(img, (x, y), 5, (255, 255, 255), -1)
+                        cv2.circle(img, (x, y), 10, (255, 0, 0), 3)
                     # write key downs on the frame
                     texts = []
                     for key_id, is_down in enumerate(key_events):
@@ -1406,6 +1411,7 @@ class LatentDiffusion(DDPM):
                     # write all texts on the center of the frame, one per line
                     # Draw each key on a separate line
                     font_scale = 0.5
+                    font_scale = 1.0
                     thickness = 2
                     line_spacing = 5
                     
@@ -1431,6 +1437,9 @@ class LatentDiffusion(DDPM):
                         
                     return img
 
+                # also save individual frames
+                combined_folder = f'{pair_dir}/comparison_{self.i}_individual_frames'
+                os.makedirs(combined_folder, exist_ok=True)
                 # Draw all frames in grid
                 for j in range(rows * cols):
                     
@@ -1441,6 +1450,7 @@ class LatentDiffusion(DDPM):
                         frame = draw_action_on_frame(frame, is_leftclicks[j], is_rightclicks[j], key_events[j], xs[j], ys[j])
                         combined_img[row*frame_height:(row+1)*frame_height, 
                                    col*frame_width:(col+1)*frame_width] = frame
+                        Image.fromarray(frame).save(f'{combined_folder}/frame_{j}_action.png')
                     elif j < self.context_length+1:  # History frames
                         prev_frame = prev_frames[j-1]
                         prev_frame_img = ((prev_frame.transpose(0,1).transpose(1,2).cpu().float().numpy()+1)*255/2).astype(np.uint8)
@@ -1449,12 +1459,15 @@ class LatentDiffusion(DDPM):
                         frame = draw_action_on_frame(frame, is_leftclicks[j], is_rightclicks[j], key_events[j], xs[j], ys[j])
                         combined_img[row*frame_height:(row+1)*frame_height, 
                                    col*frame_width:(col+1)*frame_width] = frame
+                        Image.fromarray(frame).save(f'{combined_folder}/frame_{j}_history.png')
                     elif j == self.context_length+1:  # Target frame
                         combined_img[row*frame_height:(row+1)*frame_height, 
                                    col*frame_width:(col+1)*frame_width] = zz_img
+                        Image.fromarray(zz_img).save(f'{combined_folder}/frame_{j}_target.png')
                     elif j == self.context_length+2:  # Prediction frame
                         combined_img[row*frame_height:(row+1)*frame_height, 
                                    col*frame_width:(col+1)*frame_width] = sample_img
+                        Image.fromarray(sample_img).save(f'{combined_folder}/frame_{j}_pred.png')
 
                 Image.fromarray(combined_img).save(f'{pair_dir}/comparison_{self.i}.png')
                 

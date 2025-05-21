@@ -31,13 +31,13 @@ def compute_distance(current_frame, prev_frame):
 def parse_args():
     parser = argparse.ArgumentParser(description="Converts a group of videos and their respective actions into one training dataset.")
     
-    parser.add_argument("--save_dir", type=str, default='/root/volume1/train_dataset_apr3',
+    parser.add_argument("--save_dir", type=str, default='/scratch/yuntian/train_dataset_may19',
                         help="directory to save the entire training set.")
 
-    parser.add_argument("--video_dir", type=str, default='/root/volume1/raw_data_apr3/videos',
+    parser.add_argument("--video_dir", type=str, default='../data_collection/raw_data/raw_data/videos',
                         help="directory where the videos are saved.")
     
-    parser.add_argument("--actions_dir", type=str, default='/root/volume1/raw_data_apr3/actions',
+    parser.add_argument("--actions_dir", type=str, default='../data_collection/raw_data/raw_data/actions',
                         help="directory where the actions are saved.")
                             
     parser.add_argument("--filter_videos", action='store_true',

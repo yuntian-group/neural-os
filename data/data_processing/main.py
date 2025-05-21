@@ -9,6 +9,8 @@ import numpy as np
 from moviepy.editor import VideoFileClip
 import ast
 import pickle
+import webdataset as wds
+import io
 
 
 #Creates the padding image for your model as a starting point for the generation process.
@@ -31,13 +33,13 @@ def compute_distance(current_frame, prev_frame):
 def parse_args():
     parser = argparse.ArgumentParser(description="Converts a group of videos and their respective actions into one training dataset.")
     
-    parser.add_argument("--save_dir", type=str, default='/root/volume1/train_dataset_apr3',
+    parser.add_argument("--save_dir", type=str, default='./train_dataset_may20_webdataset',
                         help="directory to save the entire training set.")
 
-    parser.add_argument("--video_dir", type=str, default='/root/volume1/raw_data_apr3/videos',
+    parser.add_argument("--video_dir", type=str, default='../data_collection/raw_data/raw_data/videos',
                         help="directory where the videos are saved.")
     
-    parser.add_argument("--actions_dir", type=str, default='/root/volume1/raw_data_apr3/actions',
+    parser.add_argument("--actions_dir", type=str, default='../data_collection/raw_data/raw_data/actions',
                         help="directory where the actions are saved.")
                             
     parser.add_argument("--filter_videos", action='store_true',
@@ -58,7 +60,6 @@ def parse_args():
     return args
 
 def process_video(record_num: int, args: argparse.Namespace, save_dir: str, video_files: list[str]) -> pd.DataFrame | None:
-    #import pdb; pdb.set_trace()
     video_file = f'record_{record_num}.mp4'
     if video_file not in video_files:
         return None
@@ -66,6 +67,7 @@ def process_video(record_num: int, args: argparse.Namespace, save_dir: str, vide
     actions_path = os.path.join(args.actions_dir, f'record_{record_num}.csv')
     filter_videos = args.filter_videos
     seq_len = args.seq_len
+    
     if not os.path.exists(video_path):
         raise FileNotFoundError(f"Video file not found: {video_path}")
     if not os.path.exists(actions_path):
@@ -75,7 +77,11 @@ def process_video(record_num: int, args: argparse.Namespace, save_dir: str, vide
     # List to hold the frames (as numpy arrays)
     mapping_dict = {}
     target_data = []
-    # Open the video file
+    
+    # Create WebDataset writer for this video
+    tar_path = os.path.join(save_dir, f'record_{record_num}.tar')
+    sink = wds.TarWriter(tar_path)
+    
     with VideoFileClip(video_path) as video:
         fps = video.fps
         duration = video.duration
@@ -98,7 +104,7 @@ def process_video(record_num: int, args: argparse.Namespace, save_dir: str, vide
             right_click = True if action_row['Right Click'] == 1 else False
             key_events = ast.literal_eval(action_row['Key Events'])
             
-            current_frame = Image.fromarray(video.get_frame(image_num / fps))
+            current_frame = video.get_frame(image_num / fps)  # Get as numpy array directly
             all_frames.append(current_frame)
             
             # Track key states
@@ -129,24 +135,35 @@ def process_video(record_num: int, args: argparse.Namespace, save_dir: str, vide
         
         # Second pass: save frames and their sequences
         for keep_frame in frames_to_keep:
-            # Save the current frame that we want to keep
-            record_dir = f'{save_dir}/record_{record_num}'
-            os.makedirs(record_dir, exist_ok=True)
+            # Save the current frame
+            frame_data = all_frames[keep_frame]
+            # Store raw bytes with metadata
+            sample = {
+                "__key__": str(keep_frame),
+                "shape": str(frame_data.shape),
+                "dtype": str(frame_data.dtype),
+                "raw": frame_data.tobytes(),  # Direct byte representation
+            }
+            sink.write(sample)
             
-            # Save this frame
-            all_frames[keep_frame].save(f'{record_dir}/image_{keep_frame}.png')
-            
-            # Save the past seq_len frames
+            # Save the past seq_len frames if filtering
             if filter_videos:
                 start_idx = max(0, keep_frame - seq_len)
                 for seq_idx in range(start_idx, keep_frame):
-                    save_path = f'{record_dir}/image_{seq_idx}.png'
-                    if not os.path.exists(save_path):
-                        all_frames[seq_idx].save(save_path)
+                    frame_data = all_frames[seq_idx]
+                    frame_bytes = io.BytesIO()
+                    np.save(frame_bytes, frame_data)
+                    frame_bytes.seek(0)
+                    
+                    sample = {
+                        "__key__": str(seq_idx),
+                        "npy": frame_bytes.getvalue(),
+                    }
+                    sink.write(sample)
             
-            # Add the current frame to target data
             target_data.append((record_num, keep_frame))
-
+    
+    sink.close()
     return (target_data, mapping_dict)
 
 def get_video_dimensions(video_path: str) -> tuple[int, int]:
@@ -202,8 +219,14 @@ if __name__ == "__main__":
     print(f"Video dimensions: width: {width}, height: {height}")
 
     # Create a padding image with the same size
-    padding_image = create_padding_img(width, height)
-    padding_image.save(os.path.join(save_dir, 'padding.png'))
+    padding_image = np.array(create_padding_img(width, height))
+    padding_bytes = io.BytesIO()
+    np.save(padding_bytes, padding_image)
+    padding_bytes.seek(0)
+
+    # Save padding image as a separate file since it's small
+    with open(os.path.join(save_dir, 'padding.npy'), 'wb') as f:
+        f.write(padding_bytes.getvalue())
 
     all_seqs = []
 
@@ -214,7 +237,7 @@ if __name__ == "__main__":
     process_video_partial = partial(process_video, args=args, save_dir=save_dir, video_files=video_files)
 
     # Use all available CPU cores (removed hardcoding to 1)
-    num_workers = min(multiprocessing.cpu_count(), 150)
+    num_workers = min(multiprocessing.cpu_count(), 70)
     print(f"Using {num_workers} workers.")
 
     try:

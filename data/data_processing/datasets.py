@@ -25,6 +25,9 @@ from PIL import Image, ImageDraw
 from io import BytesIO
 from cairosvg import svg2png  # You might need to pip install cairosvg
 import pickle
+import webdataset as wds
+import functools
+from collections import OrderedDict
 
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
@@ -289,30 +292,24 @@ class ActionsData(Dataset):
         for (i, data_path) in enumerate(self.data_paths):
             self._lengths.append(len(self.record_nums_list[i]))
         
-        # Check for processed data
-        #first_record = self.record_nums[0]
-        #first_frame = self.image_nums[0]
-        #processed_path = f'train_dataset_encoded/record_{first_record}/image_{first_frame}.npy'
-        #self.use_processed = os.path.exists(processed_path)
+        # Always use processed data with WebDataset
         self.use_processed = True
-        if self.use_processed:
-            print("Found processed data in train_dataset_encoded/")
-            
-            # Load model for reprocessing if needed
-            if False and 'train' in self.data_path:
-                print('Loading autoencoder model for reprocessing')
-                config = OmegaConf.load("../autoencoder/config_kl4_lr4.5e6_load_acc1_512_384.yaml")
-                #self.model = load_model_from_config(config, "autoencoder_saved_kl4_bsz8_acc8_lr4.5e6_load_acc1_model-603000.ckpt")
-                self.model = load_model_from_config(config, "../autoencoder/saved_kl4_bsz8_acc8_lr4.5e6_load_acc1_512_384/model-354000.ckpt")
-                #self.model.load_state_dict(torch.load("autoencoder_saved_kl4_bsz8_acc8_lr4.5e6_load_acc1_model-603000.ckpt"))
-                #self.model = self.model.to(device)
-                self.model.eval()
-                print("Loaded model for reprocessing if needed")
-            else:
-                self.model = None
-            #except Exception as e:
-            #    print(f"Warning: Could not load model for reprocessing: {e}")
-            #    self.model = None
+        
+        # Load model for reprocessing if needed
+        if False and 'train' in self.data_path:
+            print('Loading autoencoder model for reprocessing')
+            config = OmegaConf.load("../autoencoder/config_kl4_lr4.5e6_load_acc1_512_384.yaml")
+            #self.model = load_model_from_config(config, "autoencoder_saved_kl4_bsz8_acc8_lr4.5e6_load_acc1_model-603000.ckpt")
+            self.model = load_model_from_config(config, "../autoencoder/saved_kl4_bsz8_acc8_lr4.5e6_load_acc1_512_384/model-354000.ckpt")
+            #self.model.load_state_dict(torch.load("autoencoder_saved_kl4_bsz8_acc8_lr4.5e6_load_acc1_model-603000.ckpt"))
+            #self.model = self.model.to(device)
+            self.model.eval()
+            print("Loaded model for reprocessing if needed")
+        else:
+            self.model = None
+        #except Exception as e:
+        #    print(f"Warning: Could not load model for reprocessing: {e}")
+        #    self.model = None
 
     def normalize_features(self, x):
         """Normalize features based on specified strategy"""
@@ -351,47 +348,11 @@ class ActionsData(Dataset):
         else:
             return sum(self._lengths)
 
-    def load_processed_image(self, image_path):
-        """Load preprocessed latent from .npy file, reprocess if loading fails"""
-        #processed_path = image_path.replace('train_dataset/', 'train_dataset_encoded/').replace('.png', '.npy')
-        processed_path = image_path.replace('.png', '.npy')
-
-        try:
-            return torch.from_numpy(np.load(processed_path))
-        except Exception as e:
-            print(f"Warning: Failed to load {processed_path}, reprocessing...")
-            print(e)
-            
-            if self.model is None:
-                raise RuntimeError("Model not available for reprocessing")
-            
-            # Load and process the original image
-            image = normalize_image(image_path)
-            image = torch.unsqueeze(image, dim=0)
-            image = rearrange(image, 'b h w c -> b c h w')#.to(device)
-            
-            # Get latent representation
-            with torch.no_grad():
-                posterior = self.model.encode(image)
-                latent = posterior.sample()
-                
-                # Special handling for padding.png
-                if os.path.basename(image_path) == 'padding.png':
-                    latent = torch.zeros_like(latent)
-                latent = latent.squeeze(0)
-            try:
-                # Ensure directory exists
-                os.makedirs(os.path.dirname(processed_path), exist_ok=True)
-                # Save the processed latent
-                np.save(processed_path, latent.cpu().numpy())
-            except Exception as e:
-                print(f"Warning: Failed to save {processed_path}")
-                print(e)
-                
-            return latent
-
     def __getitem__(self, i):
         example = dict()
+        # Local cache for tar files used in this call
+        local_tar_cache = {}
+        
         i = i % sum(self._lengths)
         for (data_partition, length) in enumerate(self._lengths):
             if i < length:
@@ -410,18 +371,15 @@ class ActionsData(Dataset):
         frame_numbers = list(range(target_frame - self.context_length*2, target_frame))
         
         # Generate image paths and actions
-        image_paths = []
         actions = []
         
         for frame_num in frame_numbers:
             if frame_num < 0:
                 # Use padding for negative frame numbers
-                image_paths.append(f'{base_dir}/padding.png')
                 x, y, left_click, right_click, key_events = 0, 0, False, False, []
                 #actions.append('N N N N N N : N N N N N')
             else:
                 # Use actual image and look up action
-                image_paths.append(f'{base_dir}/record_{record_num}/image_{frame_num}.png')
                 assert (record_num, frame_num) in mapping_dict, f"No action found for record {record_num} and frame {frame_num}"
                 x, y, left_click, right_click, key_events = mapping_dict.get((record_num, frame_num))
                 #actions.append(self.mapping_dict.get((record_num, frame_num), 'N N N N N N : N N N N N'))
@@ -433,14 +391,57 @@ class ActionsData(Dataset):
         #actions.append(self.mapping_dict.get((record_num, target_frame), 'N N N N N N : N N N N N'))
         assert len(actions) == self.context_length*2+1, f"Action sequence must be {self.context_length*2+1} actions long"
         
+        # Helper function to load image using the local cache - directly takes record_num and frame_num
+        def load_image_with_cache(record_num, frame_num, is_padding=False):
+            # Handle padding
+            if is_padding:
+                padding_path = os.path.join(base_dir, 'padding.npy')
+                return torch.from_numpy(np.load(padding_path))
+            
+            # Get tar path
+            tar_path = os.path.join(base_dir, f'record_{record_num}.tar')
+            key = str(frame_num)
+            
+            try:
+                # Open tar file if not already in local cache
+                if tar_path not in local_tar_cache:
+                    local_tar_cache[tar_path] = wds.WebDataset(tar_path).decode()
+                
+                # Search for the specific frame
+                for sample in local_tar_cache[tar_path]:
+                    if sample["__key__"] == key:
+                        # Reset the dataset iterator for future use
+                        local_tar_cache[tar_path] = wds.WebDataset(tar_path).decode()
+                        return torch.from_numpy(sample["npy"])
+                
+                # Frame not found, use padding
+                print(f"Warning: Frame {frame_num} not found in record {record_num}")
+                padding_path = os.path.join(base_dir, 'padding.npy')
+                return torch.from_numpy(np.load(padding_path))
+            
+            except Exception as e:
+                print(f"Error loading from {tar_path}: {e}")
+                padding_path = os.path.join(base_dir, 'padding.npy')
+                return torch.from_numpy(np.load(padding_path))
+        
         if self.use_original_image:
             assert False
             example['image'] = normalize_image(f'../data/data_processing/train_dataset/record_{record_num}/image_{target_frame}.png')
         else:
-            example["image_processed"] = self.normalize_features(self.load_processed_image(f'{base_dir}/record_{record_num}/image_{target_frame}.png'))
-            example["c_concat_processed"] = self.normalize_features(torch.stack([
-                self.load_processed_image(path) for path in image_paths
-            ]))
+            # Load target image
+            example["image_processed"] = self.normalize_features(
+                load_image_with_cache(record_num, target_frame)
+            )
+            
+            # Load context images
+            context_frames = []
+            for idx, frame_num in enumerate(frame_numbers):
+                is_padding = frame_num < 0
+                frame = load_image_with_cache(record_num, frame_num, is_padding=is_padding)
+                context_frames.append(frame)
+            
+            example["c_concat_processed"] = self.normalize_features(torch.stack(context_frames))
+            
             if self.debug_mode:
                 assert False
                 #print ('gere', example["image_processed"].shape)
@@ -490,6 +491,13 @@ class ActionsData(Dataset):
             example['c_concat_processed'] = example['c_concat_processed'] * 0
             assert False
 
+        # Cleanup: close all tar files
+        for tar in local_tar_cache.values():
+            try:
+                tar.close()
+            except:
+                pass
+            
         return example 
 
 def normalize_image(image_path): 

@@ -156,7 +156,7 @@ def parse_args():
                         help="Path to model config.")
     
     parser.add_argument("--input_dir", type=str, 
-                        default="./train_dataset_may20_webdataset",
+                        default="../data/data_processing/train_dataset_may20_webdataset",
                         help="Path to input dataset directory with WebDataset tar files.")
     
     parser.add_argument("--output_dir", type=str, 

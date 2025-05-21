@@ -224,7 +224,8 @@ if __name__ == '__main__':
             args.input_dir, 
             args.output_dir, 
             args.batch_size,
-            debug_first_batch=(record_file == record_files[0])
+            #debug_first_batch=(record_file == record_files[0])
+            debug_first_batch=False
         )
     
     # Copy the metadata files (CSV and PKL)

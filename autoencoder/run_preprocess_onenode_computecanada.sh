@@ -20,4 +20,4 @@ CUDA_VISIBLE_DEVICES=7 stdbuf -oL -eL python preprocess_dataset.py --start_idx 3
 
 
 
-CUDA_VISIBLE_DEVICES=0 stdbuf -oL -eL python preprocess_dataset.py --start_idx 0 --end_idx 10 > log.preprocess_dataset.0_5k 2>&1 &
+python preprocess_dataset.py --start_idx 0 --end_idx 1000 --batch_size 8

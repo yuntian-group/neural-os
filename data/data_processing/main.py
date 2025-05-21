@@ -137,30 +137,37 @@ def process_video(record_num: int, args: argparse.Namespace, save_dir: str, vide
         for keep_frame in frames_to_keep:
             # Save the current frame
             frame_data = all_frames[keep_frame]
-            frame_bytes = io.BytesIO()
-            np.save(frame_bytes, frame_data)
-            frame_bytes.seek(0)
+            # Save frame directly to a temporary file
+            temp_frame_path = os.path.join(save_dir, f'temp_{record_num}_{keep_frame}.npy')
+            np.save(temp_frame_path, frame_data)
             
-            sample = {
-                "__key__": str(keep_frame),  # Just use the frame number as key
-                "npy": frame_bytes.getvalue(),
-            }
-            sink.write(sample)
+            # Read the saved file and write to tar
+            with open(temp_frame_path, 'rb') as f:
+                sample = {
+                    "__key__": str(keep_frame),
+                    "npy": f.read(),
+                }
+                sink.write(sample)
+            
+            # Clean up temp file
+            os.remove(temp_frame_path)
             
             # Save the past seq_len frames if filtering
             if filter_videos:
                 start_idx = max(0, keep_frame - seq_len)
                 for seq_idx in range(start_idx, keep_frame):
                     frame_data = all_frames[seq_idx]
-                    frame_bytes = io.BytesIO()
-                    np.save(frame_bytes, frame_data)
-                    frame_bytes.seek(0)
+                    temp_frame_path = os.path.join(save_dir, f'temp_{record_num}_{seq_idx}.npy')
+                    np.save(temp_frame_path, frame_data)
                     
-                    sample = {
-                        "__key__": str(seq_idx),  # Just use the frame number as key
-                        "npy": frame_bytes.getvalue(),
-                    }
-                    sink.write(sample)
+                    with open(temp_frame_path, 'rb') as f:
+                        sample = {
+                            "__key__": str(seq_idx),
+                            "npy": f.read(),
+                        }
+                        sink.write(sample)
+                    
+                    os.remove(temp_frame_path)
             
             target_data.append((record_num, keep_frame))
     

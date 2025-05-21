@@ -138,11 +138,13 @@ def process_video(record_num: int, args: argparse.Namespace, save_dir: str, vide
             # Save the current frame
             frame_data = all_frames[keep_frame]
             # Convert frame to bytes directly
-            frame_bytes = np.save(None, frame_data)  # This returns bytes directly
+            frame_bytes = io.BytesIO()
+            np.save(frame_bytes, frame_data)
+            frame_bytes.seek(0)
             
             sample = {
                 "__key__": str(keep_frame),
-                "npy": frame_bytes,
+                "npy": frame_bytes.getvalue(),
             }
             sink.write(sample)
             
@@ -151,11 +153,13 @@ def process_video(record_num: int, args: argparse.Namespace, save_dir: str, vide
                 start_idx = max(0, keep_frame - seq_len)
                 for seq_idx in range(start_idx, keep_frame):
                     frame_data = all_frames[seq_idx]
-                    frame_bytes = np.save(None, frame_data)  # This returns bytes directly
+                    frame_bytes = io.BytesIO()
+                    np.save(frame_bytes, frame_data)
+                    frame_bytes.seek(0)
                     
                     sample = {
                         "__key__": str(seq_idx),
-                        "npy": frame_bytes,
+                        "npy": frame_bytes.getvalue(),
                     }
                     sink.write(sample)
             
@@ -218,11 +222,13 @@ if __name__ == "__main__":
 
     # Create a padding image with the same size
     padding_image = np.array(create_padding_img(width, height))
-    padding_bytes = np.save(None, padding_image)  # Use the same direct bytes approach
-    
+    padding_bytes = io.BytesIO()
+    np.save(padding_bytes, padding_image)
+    padding_bytes.seek(0)
+
     # Save padding image as a separate file since it's small
     with open(os.path.join(save_dir, 'padding.npy'), 'wb') as f:
-        f.write(padding_bytes)
+        f.write(padding_bytes.getvalue())
 
     all_seqs = []
 

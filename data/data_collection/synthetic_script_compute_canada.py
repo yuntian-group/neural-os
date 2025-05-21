@@ -237,4 +237,4 @@ if __name__ == "__main__":
     #create_synthetic_dataset(16000)
     #create_synthetic_dataset(24000)
     #create_synthetic_dataset(40000)
-    create_synthetic_dataset(10000)
+    create_synthetic_dataset(40000)

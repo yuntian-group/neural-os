@@ -403,16 +403,23 @@ class ActionsData(Dataset):
             key = str(frame_num)
             
             try:
-                # Open tar file if not already in local cache
+                # If we don't have this tar file cached yet, load and index all its contents
                 if tar_path not in local_tar_cache:
-                    local_tar_cache[tar_path] = wds.WebDataset(tar_path).decode()
+                    # Create a dictionary to store frames by key for fast lookup
+                    samples_dict = {}
+                    
+                    # Open the tar file and read all samples
+                    dataset = wds.WebDataset(tar_path).decode()
+                    for sample in dataset:
+                        # Store each sample in our dictionary, keyed by __key__
+                        samples_dict[sample["__key__"]] = sample["npy"]
+                    
+                    # Cache the dictionary instead of the WebDataset object
+                    local_tar_cache[tar_path] = samples_dict
                 
-                # Search for the specific frame
-                for sample in local_tar_cache[tar_path]:
-                    if sample["__key__"] == key:
-                        # Reset the dataset iterator for future use
-                        local_tar_cache[tar_path] = wds.WebDataset(tar_path).decode()
-                        return torch.from_numpy(sample["npy"])
+                # Now do a direct dictionary lookup - O(1) operation
+                if key in local_tar_cache[tar_path]:
+                    return torch.from_numpy(local_tar_cache[tar_path][key])
                 
                 # Frame not found, use padding
                 print(f"Warning: Frame {frame_num} not found in record {record_num}")

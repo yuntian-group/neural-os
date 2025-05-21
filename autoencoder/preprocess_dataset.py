@@ -44,7 +44,22 @@ def process_record(model, record_file, input_dir, output_dir, batch_size=16, deb
     for sample in tqdm(dataset, desc=f"Processing {record_file}"):
         # Get key and image data
         key = sample["__key__"]
-        image_data = np.load(io.BytesIO(sample["npy"]), allow_pickle=True)
+        # Array is stored with .npy headers, but might need to handle magic number differently
+        bio = io.BytesIO(sample["npy"])
+        try:
+            image_data = np.load(bio, allow_pickle=True)
+        except:
+            # If the first attempt fails, try fixing the header
+            bio.seek(0)  # Reset position
+            content = bio.read()
+            # Check if content begins with the numpy file signature (magic number)
+            if not content.startswith(b'\x93NUMPY'):
+                print(f"Data does not start with NumPy magic number! First bytes: {content[:20]}")
+                raise ValueError("Unable to load NumPy data - incorrect format")
+            else:
+                # If it has the right header but still fails, there may be a version mismatch
+                print(f"Found NumPy header but failed to load. Version issue?")
+                raise
         
         # Add to batch
         batch_images.append(image_data)

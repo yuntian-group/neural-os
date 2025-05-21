@@ -11,7 +11,6 @@ import ast
 import pickle
 import webdataset as wds
 import io
-import torch
 
 
 #Creates the padding image for your model as a starting point for the generation process.
@@ -34,7 +33,7 @@ def compute_distance(current_frame, prev_frame):
 def parse_args():
     parser = argparse.ArgumentParser(description="Converts a group of videos and their respective actions into one training dataset.")
     
-    parser.add_argument("--save_dir", type=str, default='/scratch/yuntian/train_dataset_may19',
+    parser.add_argument("--save_dir", type=str, default='./train_dataset_may20_webdataset',
                         help="directory to save the entire training set.")
 
     parser.add_argument("--video_dir", type=str, default='../data_collection/raw_data/raw_data/videos',

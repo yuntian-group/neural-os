@@ -44,7 +44,7 @@ def process_record(model, record_file, input_dir, output_dir, batch_size=16, deb
     for sample in tqdm(dataset, desc=f"Processing {record_file}"):
         # Get key and image data
         key = sample["__key__"]
-        image_data = np.load(io.BytesIO(sample["npy"]))
+        image_data = np.load(io.BytesIO(sample["npy"]), allow_pickle=True)
         
         # Add to batch
         batch_images.append(image_data)
@@ -192,7 +192,7 @@ if __name__ == '__main__':
         if os.path.exists(root_padding):
             print("Processing root padding.npy...")
             # Load padding data
-            padding_data = np.load(root_padding)
+            padding_data = np.load(root_padding, allow_pickle=True)
             
             # Normalize and convert to tensor
             padding_image = (padding_data / 127.5 - 1.0).astype(np.float32)

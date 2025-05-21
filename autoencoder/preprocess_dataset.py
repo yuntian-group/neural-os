@@ -231,7 +231,7 @@ if __name__ == '__main__':
     # Copy the metadata files (CSV and PKL)
     # Copy any non-image files (like CSV) directly
     for file in os.listdir(args.input_dir):
-        if not file.endswith('.tar'):
+        if (not file.endswith('.tar')) and (not file.endswith('.npy')):
             src = os.path.join(args.input_dir, file)
             dst = os.path.join(args.output_dir, file)
             shutil.copy2(src, dst)

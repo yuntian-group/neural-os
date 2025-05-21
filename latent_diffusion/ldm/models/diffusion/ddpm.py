@@ -564,6 +564,7 @@ class LatentDiffusion(DDPM):
             for p in self.temporal_encoder.parameters():
                 p.requires_grad = False
         DEBUG = True
+        DEBUG = False
         if DEBUG:
             from torchvision import transforms
             from PIL import Image

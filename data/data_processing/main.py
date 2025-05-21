@@ -137,14 +137,12 @@ def process_video(record_num: int, args: argparse.Namespace, save_dir: str, vide
         for keep_frame in frames_to_keep:
             # Save the current frame
             frame_data = all_frames[keep_frame]
-            # Convert frame to bytes directly
-            frame_bytes = io.BytesIO()
-            np.save(frame_bytes, frame_data)
-            frame_bytes.seek(0)
-            
+            # Store raw bytes with metadata
             sample = {
                 "__key__": str(keep_frame),
-                "npy": frame_bytes.getvalue(),
+                "shape": str(frame_data.shape),
+                "dtype": str(frame_data.dtype),
+                "raw": frame_data.tobytes(),  # Direct byte representation
             }
             sink.write(sample)
             

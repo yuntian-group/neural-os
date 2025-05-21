@@ -137,37 +137,27 @@ def process_video(record_num: int, args: argparse.Namespace, save_dir: str, vide
         for keep_frame in frames_to_keep:
             # Save the current frame
             frame_data = all_frames[keep_frame]
-            # Save frame directly to a temporary file
-            temp_frame_path = os.path.join(save_dir, f'temp_{record_num}_{keep_frame}.npy')
-            np.save(temp_frame_path, frame_data)
+            # Convert frame to bytes directly
+            frame_bytes = np.save(None, frame_data)  # This returns bytes directly
             
-            # Read the saved file and write to tar
-            with open(temp_frame_path, 'rb') as f:
-                sample = {
-                    "__key__": str(keep_frame),
-                    "npy": f.read(),
-                }
-                sink.write(sample)
-            
-            # Clean up temp file
-            os.remove(temp_frame_path)
+            sample = {
+                "__key__": str(keep_frame),
+                "npy": frame_bytes,
+            }
+            sink.write(sample)
             
             # Save the past seq_len frames if filtering
             if filter_videos:
                 start_idx = max(0, keep_frame - seq_len)
                 for seq_idx in range(start_idx, keep_frame):
                     frame_data = all_frames[seq_idx]
-                    temp_frame_path = os.path.join(save_dir, f'temp_{record_num}_{seq_idx}.npy')
-                    np.save(temp_frame_path, frame_data)
+                    frame_bytes = np.save(None, frame_data)  # This returns bytes directly
                     
-                    with open(temp_frame_path, 'rb') as f:
-                        sample = {
-                            "__key__": str(seq_idx),
-                            "npy": f.read(),
-                        }
-                        sink.write(sample)
-                    
-                    os.remove(temp_frame_path)
+                    sample = {
+                        "__key__": str(seq_idx),
+                        "npy": frame_bytes,
+                    }
+                    sink.write(sample)
             
             target_data.append((record_num, keep_frame))
     
@@ -228,13 +218,11 @@ if __name__ == "__main__":
 
     # Create a padding image with the same size
     padding_image = np.array(create_padding_img(width, height))
-    padding_bytes = io.BytesIO()
-    np.save(padding_bytes, padding_image)
-    padding_bytes.seek(0)
+    padding_bytes = np.save(None, padding_image)  # Use the same direct bytes approach
     
     # Save padding image as a separate file since it's small
     with open(os.path.join(save_dir, 'padding.npy'), 'wb') as f:
-        f.write(padding_bytes.getvalue())
+        f.write(padding_bytes)
 
     all_seqs = []
 

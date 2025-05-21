@@ -238,7 +238,7 @@ if __name__ == "__main__":
     process_video_partial = partial(process_video, args=args, save_dir=save_dir, video_files=video_files)
 
     # Use all available CPU cores (removed hardcoding to 1)
-    num_workers = min(multiprocessing.cpu_count(), 150)
+    num_workers = min(multiprocessing.cpu_count(), 70)
     print(f"Using {num_workers} workers.")
 
     try:

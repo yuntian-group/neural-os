@@ -354,35 +354,35 @@ class DDPM(pl.LightningModule):
         loss, loss_dict = self(x)
         return loss, loss_dict
 
-    def on_after_backward(self):
-        if self.global_step % 500 == 0:
-            # Compute gradient norm for self.model
-            model_grad_norm = torch.nn.utils.clip_grad_norm_(
-                self.model.parameters(), max_norm=float('inf'), norm_type=2.0)
-            
-            # Compute gradient norm for self.temporal_encoder
-            temporal_encoder_grad_norm = torch.nn.utils.clip_grad_norm_(
-                self.temporal_encoder.parameters(), max_norm=float('inf'), norm_type=2.0)
-            # Compute gradient norm for self.temporal_encoder
-            embedding_x_grad_norm = torch.nn.utils.clip_grad_norm_(
-                self.temporal_encoder.embedding_x.parameters(), max_norm=float('inf'), norm_type=2.0)
-            embedding_y_grad_norm = torch.nn.utils.clip_grad_norm_(
-                self.temporal_encoder.embedding_y.parameters(), max_norm=float('inf'), norm_type=2.0)
-            embedding_is_leftclick_norm  = torch.nn.utils.clip_grad_norm_(
-                self.temporal_encoder.embedding_is_leftclick.parameters(), max_norm=float('inf'), norm_type=2.0)
-            embedding_is_rightclick_norm  = torch.nn.utils.clip_grad_norm_(
-                self.temporal_encoder.embedding_is_rightclick.parameters(), max_norm=float('inf'), norm_type=2.0)
-            embedding_key_events_norm = torch.nn.utils.clip_grad_norm_(
-                self.temporal_encoder.embedding_key_events.parameters(), max_norm=float('inf'), norm_type=2.0)
-            
-            print(f'Model Gradient Norm: {model_grad_norm:.8f}')
-            print(f'Temporal Encoder Gradient Norm: {temporal_encoder_grad_norm:.8f}')
-            print(f'X Gradient Norm: {embedding_x_grad_norm:.8f}')
-            print(f'Y Gradient Norm: {embedding_y_grad_norm:.8f}')
-            print(f'embedding_is_leftclick Gradient Norm: {embedding_is_leftclick_norm:.8f}')
-            print(f'embedding_is_rightclick Gradient Norm: {embedding_is_rightclick_norm:.8f}')
-            print(f'embedding_key_events Gradient Norm: {embedding_key_events_norm:.8f}')
-            print (f'current sigma: {self.temporal_encoder.log_sigma.exp().item():.8f}')
+    ##def on_after_backward(self):
+    ##    if self.global_step % 500 == 0 and False:
+    ##        # Compute gradient norm for self.model
+    ##        model_grad_norm = torch.nn.utils.clip_grad_norm_(
+    ##            self.model.parameters(), max_norm=float('inf'), norm_type=2.0)
+    ##        
+    ##        # Compute gradient norm for self.temporal_encoder
+    ##        temporal_encoder_grad_norm = torch.nn.utils.clip_grad_norm_(
+    ##            self.temporal_encoder.parameters(), max_norm=float('inf'), norm_type=2.0)
+    ##        # Compute gradient norm for self.temporal_encoder
+    ##        embedding_x_grad_norm = torch.nn.utils.clip_grad_norm_(
+    ##            self.temporal_encoder.embedding_x.parameters(), max_norm=float('inf'), norm_type=2.0)
+    ##        embedding_y_grad_norm = torch.nn.utils.clip_grad_norm_(
+    ##            self.temporal_encoder.embedding_y.parameters(), max_norm=float('inf'), norm_type=2.0)
+    ##        embedding_is_leftclick_norm  = torch.nn.utils.clip_grad_norm_(
+    ##            self.temporal_encoder.embedding_is_leftclick.parameters(), max_norm=float('inf'), norm_type=2.0)
+    ##        embedding_is_rightclick_norm  = torch.nn.utils.clip_grad_norm_(
+    ##            self.temporal_encoder.embedding_is_rightclick.parameters(), max_norm=float('inf'), norm_type=2.0)
+    ##        embedding_key_events_norm = torch.nn.utils.clip_grad_norm_(
+    ##            self.temporal_encoder.embedding_key_events.parameters(), max_norm=float('inf'), norm_type=2.0)
+    ##        
+    ##        print(f'Model Gradient Norm: {model_grad_norm:.8f}')
+    ##        print(f'Temporal Encoder Gradient Norm: {temporal_encoder_grad_norm:.8f}')
+    ##        print(f'X Gradient Norm: {embedding_x_grad_norm:.8f}')
+    ##        print(f'Y Gradient Norm: {embedding_y_grad_norm:.8f}')
+    ##        print(f'embedding_is_leftclick Gradient Norm: {embedding_is_leftclick_norm:.8f}')
+    ##        print(f'embedding_is_rightclick Gradient Norm: {embedding_is_rightclick_norm:.8f}')
+    ##        print(f'embedding_key_events Gradient Norm: {embedding_key_events_norm:.8f}')
+    ##        print (f'current sigma: {self.temporal_encoder.log_sigma.exp().item():.8f}')
 
 
     def training_step(self, batch, batch_idx):

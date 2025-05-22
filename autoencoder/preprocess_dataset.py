@@ -19,10 +19,10 @@ from moviepy.editor import VideoFileClip
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
 @torch.no_grad()
-def process_record(model, video_file, raw_video_dir, output_dir, batch_size=16, debug_first_batch=False):
+def process_record(model, video_file, video_dir, output_dir, batch_size=16, debug_first_batch=False):
     """Process a single record's tar file through the encoder in batches"""
     #input_tar_path = os.path.join(input_dir, record_file)
-    input_video_path = os.path.join(raw_video_dir, video_file)
+    input_video_path = os.path.join(video_dir, video_file)
     output_tar_path = os.path.join(output_dir, video_file.split('.')[0] + '.tar')
     
     # Make sure we have an input tar file
@@ -167,13 +167,13 @@ def parse_args():
                         help="Path to model config.")
     
     parser.add_argument("--input_dir", type=str, 
-                        default="../data/data_processing/train_dataset_may20_webdataset",
+                        default="../data/data_processing/train_dataset_may20_2_webdataset",
                         help="Path to input dataset directory with WebDataset tar files.")
-    parser.add_argument("--raw_video_dir", type=str, default="../data/data_collection/raw_data/raw_data/videos",
+    parser.add_argument("--video_dir", type=str, default="/home/yuntian/scratch/raw_data/raw_data_may20_2/videos",
                         help="Path to raw video files. If provided, will process videos directly instead of tar files.")
     
     parser.add_argument("--output_dir", type=str, 
-                        default="./train_dataset_may20_webdataset_encoded",
+                        default="./train_dataset_may20_2_webdataset_encoded",
                         help="Where to save processed dataset.")
     
     parser.add_argument("--batch_size", type=int, default=150,
@@ -221,7 +221,7 @@ if __name__ == '__main__':
             np.save(os.path.join(args.output_dir, 'padding.npy'), latent.cpu().numpy())
     
     # Get sorted list of record folders
-    video_files = sorted([f for f in os.listdir(args.raw_video_dir) if f.startswith('record_')])
+    video_files = sorted([f for f in os.listdir(args.video_dir) if f.startswith('record_')])
     #record_files = sorted([f for f in os.listdir(args.input_dir) if f.startswith('record_')])
     
     # Apply folder range if specified
@@ -236,10 +236,10 @@ if __name__ == '__main__':
         process_record(
             model, 
             video_file, 
-            args.raw_video_dir, 
+            args.video_dir, 
             args.output_dir, 
             args.batch_size,
-            #debug_first_batch=(record_file == record_files[0])
+            #debug_first_batch=(video_file == video_files[0])
             debug_first_batch=False
         )
     

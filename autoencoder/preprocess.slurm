@@ -1,15 +1,15 @@
 #!/bin/bash
 #SBATCH --account=def-yuntian
 #SBATCH --job-name=preproc_ds
-#SBATCH --output=logs/preproc_%A_%a.out
-#SBATCH --error=logs/preproc_%A_%a.err
+#SBATCH --output=logs_2/preproc_%A_%a.out
+#SBATCH --error=logs_2/preproc_%A_%a.err
 #SBATCH --nodes=1
 #SBATCH --tasks-per-node=1
 #SBATCH --cpus-per-task=24
 #SBATCH --mem=60G
 #SBATCH --gres=gpu:h100:1
 #SBATCH --time=08:00:00
-#SBATCH --array=0-9
+#SBATCH --array=0-39
 
 # calculate start/end indices
 START=$(( SLURM_ARRAY_TASK_ID * 1000 ))

@@ -33,22 +33,23 @@ def compute_distance(current_frame, prev_frame):
 def parse_args():
     parser = argparse.ArgumentParser(description="Converts a group of videos and their respective actions into one training dataset.")
     
-    parser.add_argument("--save_dir", type=str, default='./train_dataset_may20_webdataset',
+    parser.add_argument("--save_dir", type=str, default='./train_dataset_may20_2_webdataset',
                         help="directory to save the entire training set.")
 
-    parser.add_argument("--video_dir", type=str, default='../data_collection/raw_data/raw_data/videos',
+    parser.add_argument("--video_dir", type=str, default='/home/yuntian/scratch/raw_data/raw_data_may20_2/videos',
                         help="directory where the videos are saved.")
     
-    parser.add_argument("--actions_dir", type=str, default='../data_collection/raw_data/raw_data/actions',
+    parser.add_argument("--actions_dir", type=str, default='/home/yuntian/scratch/raw_data/raw_data_may20_2/actions',
                         help="directory where the actions are saved.")
                             
     parser.add_argument("--filter_videos", action='store_true',
                         help="Whether to filter videos based on their dimensions.")
     parser.add_argument("--seq_len", type=int, default=32,
                         help="The length of the sequence to process.")
-    parser.add_argument("--save_to_tar", action='store_true', default=True,
+    parser.add_argument("--save_to_tar", action='store_true',
                         help="Whether to save frames to tar files. If False, only metadata will be saved.")
     parser.set_defaults(filter_videos=False)
+    parser.set_defaults(save_to_tar=False)
     args = parser.parse_args()
     print (args)
     if args.filter_videos:

@@ -72,7 +72,7 @@ def load_model(config):
     print("\u23F3 Loading configuration...")
     model = instantiate_from_config(config.model)
 
-    model.cuda()
+    #model.cuda()
     # model.initialize_weights_diffusion_model()
     return model
 
@@ -109,7 +109,7 @@ def load_model_from_config(config, ckpt, verbose=True):
             print("\u2757 Input block module could not load weights from ckpt due to the change in input channels.")
         else: raise
 
-    model.cuda()
+    #model.cuda()
     model.eval()
     return model
 

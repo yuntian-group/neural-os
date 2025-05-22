@@ -29,7 +29,7 @@ import webdataset as wds
 import functools
 from collections import OrderedDict
 
-device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+#device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
 def parse_action_string(action_str):
     """Convert formatted action string to x, y coordinates
@@ -409,7 +409,7 @@ class ActionsData(Dataset):
                     samples_dict = {}
                     
                     # Open the tar file and read all samples
-                    dataset = wds.WebDataset(tar_path).decode()
+                    dataset = wds.WebDataset(tar_path, workersplitter=lambda urls: urls, nodesplitter=lambda urls: urls).decode()
                     for sample in dataset:
                         # Store each sample in our dictionary, keyed by __key__
                         samples_dict[sample["__key__"]] = sample["npy"]
@@ -427,9 +427,10 @@ class ActionsData(Dataset):
                 return torch.from_numpy(np.load(padding_path))
             
             except Exception as e:
-                print(f"Error loading from {tar_path}: {e}")
-                padding_path = os.path.join(base_dir, 'padding.npy')
-                return torch.from_numpy(np.load(padding_path))
+                raise e
+                #print(f"Error loading from {tar_path}: {e}")
+                #padding_path = os.path.join(base_dir, 'padding.npy')
+                #return torch.from_numpy(np.load(padding_path))
         
         if self.use_original_image:
             assert False

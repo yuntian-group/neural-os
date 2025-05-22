@@ -113,8 +113,8 @@ if __name__ == "__main__":
 
     #model = load_autoencoder_from_ckpt(model, 'autoencoder/train_0/model_ae_epoch=00.ckpt') #loads autoencoder weights.
     #model = load_cond_from_ckpt(model, 'model_bert.ckpt') #loads encoder weights.
-    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-    model = model.to(device)
+    #device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+    #model = model.to(device)
     data: DataModule = instantiate_from_config(config.data)
     data.setup()
 
@@ -133,7 +133,7 @@ if __name__ == "__main__":
     # sample_model(model, prompts, image_sequences, save_path, create_video=True)
 
     model = train_model(model, data, save_path, config)
-    model = model.to(device)
+    #model = model.to(device)
 
     #sample_model(model, prompts, image_sequences, save_path, True)
     #prompts, image_sequences, targets = get_ground_truths(data.datasets['train'], idxs=[i for i in range(173)])

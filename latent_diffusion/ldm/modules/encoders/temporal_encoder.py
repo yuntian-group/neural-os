@@ -190,7 +190,7 @@ class TemporalEncoder(nn.Module):
             bidirectional=False
         )
 
-        self.log_sigma = nn.Parameter(torch.tensor(math.log(1.0)))
+        self.log_sigma = nn.Parameter(torch.tensor(math.log(1.0)).view(1))
         print ('fixing sigma during pretraining')
         self.log_sigma.requires_grad = False
         

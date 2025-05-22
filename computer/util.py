@@ -95,7 +95,7 @@ def load_model_from_config(config, ckpt, verbose=True):
     print (len(sd), 'filtered state dict')
 
     try:
-        m, u = model.load_state_dict(sd, strict=True)
+        m, u = model.load_state_dict(sd, strict=False)
 
         if len(m) > 0 and verbose:
             print("missing keys:")

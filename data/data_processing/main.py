@@ -46,6 +46,8 @@ def parse_args():
                         help="Whether to filter videos based on their dimensions.")
     parser.add_argument("--seq_len", type=int, default=32,
                         help="The length of the sequence to process.")
+    parser.add_argument("--save_to_tar", action='store_true', default=True,
+                        help="Whether to save frames to tar files. If False, only metadata will be saved.")
     parser.set_defaults(filter_videos=False)
     args = parser.parse_args()
     print (args)
@@ -67,6 +69,7 @@ def process_video(record_num: int, args: argparse.Namespace, save_dir: str, vide
     actions_path = os.path.join(args.actions_dir, f'record_{record_num}.csv')
     filter_videos = args.filter_videos
     seq_len = args.seq_len
+    save_to_tar = args.save_to_tar
     
     if not os.path.exists(video_path):
         raise FileNotFoundError(f"Video file not found: {video_path}")
@@ -78,9 +81,11 @@ def process_video(record_num: int, args: argparse.Namespace, save_dir: str, vide
     mapping_dict = {}
     target_data = []
     
-    # Create WebDataset writer for this video
-    tar_path = os.path.join(save_dir, f'record_{record_num}.tar')
-    sink = wds.TarWriter(tar_path)
+    # Create WebDataset writer for this video (only if save_to_tar is True)
+    sink = None
+    if save_to_tar:
+        tar_path = os.path.join(save_dir, f'record_{record_num}.tar')
+        sink = wds.TarWriter(tar_path)
     
     with VideoFileClip(video_path) as video:
         fps = video.fps
@@ -104,8 +109,9 @@ def process_video(record_num: int, args: argparse.Namespace, save_dir: str, vide
             right_click = True if action_row['Right Click'] == 1 else False
             key_events = ast.literal_eval(action_row['Key Events'])
             
-            current_frame = video.get_frame(image_num / fps)  # Get as numpy array directly
-            all_frames.append(current_frame)
+            if save_to_tar or filter_videos:
+                current_frame = video.get_frame(image_num / fps)  # Get as numpy array directly
+                all_frames.append(current_frame)
             
             # Track key states
             for key_state, key in key_events:
@@ -128,42 +134,48 @@ def process_video(record_num: int, args: argparse.Namespace, save_dir: str, vide
                     if distance < 0.1:
                         filtered = True
             
-            prev_frame = current_frame
+            if save_to_tar or filter_videos:
+                prev_frame = current_frame
             
             if not filtered:
                 frames_to_keep.append(image_num)
         
-        # Second pass: save frames and their sequences
+        # Second pass: save frames and their sequences (if save_to_tar is True)
         for keep_frame in frames_to_keep:
-            # Save the current frame
-            frame_data = all_frames[keep_frame]
-            # Store raw bytes with metadata
-            sample = {
-                "__key__": str(keep_frame),
-                "shape": str(frame_data.shape),
-                "dtype": str(frame_data.dtype),
-                "raw": frame_data.tobytes(),  # Direct byte representation
-            }
-            sink.write(sample)
-            
-            # Save the past seq_len frames if filtering
-            if filter_videos:
-                start_idx = max(0, keep_frame - seq_len)
-                for seq_idx in range(start_idx, keep_frame):
-                    frame_data = all_frames[seq_idx]
-                    frame_bytes = io.BytesIO()
-                    np.save(frame_bytes, frame_data)
-                    frame_bytes.seek(0)
-                    
-                    sample = {
-                        "__key__": str(seq_idx),
-                        "npy": frame_bytes.getvalue(),
-                    }
-                    sink.write(sample)
-            
+            # Always add to target data regardless of save_to_tar
             target_data.append((record_num, keep_frame))
+            
+            # Only save frames to tar if save_to_tar is True
+            if save_to_tar:
+                # Save the current frame
+                frame_data = all_frames[keep_frame]
+                frame_bytes = io.BytesIO()
+                np.save(frame_bytes, frame_data)
+                frame_bytes.seek(0)
+                # Store raw bytes with metadata
+                sample = {
+                    "__key__": str(keep_frame),
+                    "npy": frame_bytes.getvalue(),
+                }
+                sink.write(sample)
+                
+                # Save the past seq_len frames if filtering
+                if filter_videos:
+                    start_idx = max(0, keep_frame - seq_len)
+                    for seq_idx in range(start_idx, keep_frame):
+                        frame_data = all_frames[seq_idx]
+                        frame_bytes = io.BytesIO()
+                        np.save(frame_bytes, frame_data)
+                        frame_bytes.seek(0)
+                        
+                        sample = {
+                            "__key__": str(seq_idx),
+                            "npy": frame_bytes.getvalue(),
+                        }
+                        sink.write(sample)
     
-    sink.close()
+    if sink:
+        sink.close()
     return (target_data, mapping_dict)
 
 def get_video_dimensions(video_path: str) -> tuple[int, int]:

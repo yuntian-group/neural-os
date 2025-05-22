@@ -13,25 +13,28 @@ import shutil
 import multiprocessing as mp
 from functools import partial
 import webdataset as wds
+from moviepy.editor import VideoFileClip
+
 
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
 @torch.no_grad()
-def process_record(model, record_file, input_dir, output_dir, batch_size=16, debug_first_batch=False):
+def process_record(model, video_file, raw_video_dir, output_dir, batch_size=16, debug_first_batch=False):
     """Process a single record's tar file through the encoder in batches"""
-    input_tar_path = os.path.join(input_dir, record_file)
-    output_tar_path = os.path.join(output_dir, record_file)
+    #input_tar_path = os.path.join(input_dir, record_file)
+    input_video_path = os.path.join(raw_video_dir, video_file)
+    output_tar_path = os.path.join(output_dir, video_file.split('.')[0] + '.tar')
     
     # Make sure we have an input tar file
-    if not os.path.exists(input_tar_path):
-        print(f"Skipping {input_tar_path} - file not found")
+    if not os.path.exists(input_video_path):
+        print(f"Skipping {input_video_path} - file not found")
         return
     
     # Create output tar writer
     sink = wds.TarWriter(output_tar_path)
     
     # Load dataset from tar file
-    dataset = wds.WebDataset(input_tar_path).decode()
+    #dataset = wds.WebDataset(input_tar_path).decode()
     
     # Process in batches
     batch_images = []
@@ -40,40 +43,48 @@ def process_record(model, record_file, input_dir, output_dir, batch_size=16, deb
     # Flag to enable debug on the first batch if requested
     first_batch = True
     
-    # Process dataset samples
-    for sample in tqdm(dataset, desc=f"Processing {record_file}"):
-        # Get key and image data
-        key = sample["__key__"]
-        image_data = sample["npy"]  # Already a numpy array
-        
-        # Add to batch
-        batch_images.append(image_data)
-        batch_keys.append(key)
-        
-        # Process batch when it reaches the specified size
-        if len(batch_images) >= batch_size:
-            process_batch(model, batch_images, batch_keys, sink, 
-                          debug=debug_first_batch and first_batch, 
-                          record_file=record_file, 
-                          output_dir=output_dir)
+    # Load video
+    with VideoFileClip(input_video_path) as video:
+        fps = video.fps
+        duration = video.duration
+        # Make FPS check a warning instead of hard assertion
+        if fps != 15:
+            print(f"Warning: Expected FPS of 15, got {fps}")
+            assert False
+        for image_num in tqdm(range(0, int(fps * duration)), desc=f"Processing {video_file}"):
+            frame = video.get_frame(image_num / fps)        
+            # Get key and image data
+            key = str(image_num)
+            image_data = frame  # Already a numpy array
             
-            # Reset batch
-            batch_images = []
-            batch_keys = []
-            first_batch = False
-    
-    # Process any remaining images
-    if batch_images:
-        process_batch(model, batch_images, batch_keys, sink, 
-                      debug=debug_first_batch and first_batch, 
-                      record_file=record_file, 
-                      output_dir=output_dir)
+            # Add to batch
+            batch_images.append(image_data)
+            batch_keys.append(key)
+            
+            # Process batch when it reaches the specified size
+            if len(batch_images) >= batch_size:
+                process_batch(model, batch_images, batch_keys, sink, 
+                            debug=debug_first_batch and first_batch, 
+                            video_file=video_file, 
+                            output_dir=output_dir)
+                
+                # Reset batch
+                batch_images = []
+                batch_keys = []
+                first_batch = False
+        
+        # Process any remaining images
+        if batch_images:
+            process_batch(model, batch_images, batch_keys, sink, 
+                        debug=debug_first_batch and first_batch, 
+                        video_file=video_file, 
+                        output_dir=output_dir)
     
     # Close tar writer
     sink.close()
 
 @torch.no_grad()
-def process_batch(model, images, keys, sink, debug=False, record_file=None, output_dir=None):
+def process_batch(model, images, keys, sink, debug=False, video_file=None, output_dir=None):
     """Process a batch of images through the encoder"""
     # Stack and process all images
     image_array = np.stack(images)
@@ -140,7 +151,7 @@ def process_batch(model, images, keys, sink, debug=False, record_file=None, outp
             
             # Save comparison image
             Image.fromarray(comparison).save(
-                os.path.join(debug_dir, f'debug_{record_file}_{idx}_{keys[idx]}.png')
+                os.path.join(debug_dir, f'debug_{video_file}_{idx}_{keys[idx]}.png')
             )
         print(f"\nDebug visualizations saved to {debug_dir}")
 
@@ -158,6 +169,8 @@ def parse_args():
     parser.add_argument("--input_dir", type=str, 
                         default="../data/data_processing/train_dataset_may20_webdataset",
                         help="Path to input dataset directory with WebDataset tar files.")
+    parser.add_argument("--raw_video_dir", type=str, default="../data/data_collection/raw_data/raw_data/videos",
+                        help="Path to raw video files. If provided, will process videos directly instead of tar files.")
     
     parser.add_argument("--output_dir", type=str, 
                         default="./train_dataset_may20_webdataset_encoded",
@@ -208,20 +221,22 @@ if __name__ == '__main__':
             np.save(os.path.join(args.output_dir, 'padding.npy'), latent.cpu().numpy())
     
     # Get sorted list of record folders
-    record_files = sorted([f for f in os.listdir(args.input_dir) if f.startswith('record_')])
+    video_files = sorted([f for f in os.listdir(args.raw_video_dir) if f.startswith('record_')])
+    #record_files = sorted([f for f in os.listdir(args.input_dir) if f.startswith('record_')])
     
     # Apply folder range if specified
     if args.start_idx is not None and args.end_idx is not None:
-        record_files = record_files[args.start_idx:args.end_idx]
-    
+        #record_files = record_files[args.start_idx:args.end_idx]
+        video_files = video_files[args.start_idx:args.end_idx]
     print(f"Processing dataset (records {args.start_idx} to {args.end_idx})...")
     
     # Process each record in sequence
-    for record_file in tqdm(record_files, desc="Processing records"):
+    #for record_file in tqdm(record_files, desc="Processing records"):
+    for video_file in tqdm(video_files, desc="Processing records"):
         process_record(
             model, 
-            record_file, 
-            args.input_dir, 
+            video_file, 
+            args.raw_video_dir, 
             args.output_dir, 
             args.batch_size,
             #debug_first_batch=(record_file == record_files[0])

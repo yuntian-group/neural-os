@@ -105,6 +105,7 @@ data:
         data_csv_paths:
           - ../autoencoder/train_dataset_may20_webdataset_encoded/train_dataset.target_frames.csv
           - ../autoencoder/train_dataset_may20_2_webdataset_encoded/train_dataset.target_frames.csv
+          - ../autoencoder/train_dataset_may20_3_webdataset_encoded/train_dataset.target_frames.csv
         normalization: standard
         context_length: 64
 

@@ -167,13 +167,13 @@ def parse_args():
                         help="Path to model config.")
     
     parser.add_argument("--input_dir", type=str, 
-                        default="../data/data_processing/train_dataset_may20_2_webdataset",
+                        default="../data/data_processing/train_dataset_may20_3_webdataset",
                         help="Path to input dataset directory with WebDataset tar files.")
-    parser.add_argument("--video_dir", type=str, default="/home/yuntian/scratch/raw_data/raw_data_may20_2/videos",
+    parser.add_argument("--video_dir", type=str, default="/home/yuntian/scratch/raw_data_may20_3/raw_data/videos",
                         help="Path to raw video files. If provided, will process videos directly instead of tar files.")
     
     parser.add_argument("--output_dir", type=str, 
-                        default="./train_dataset_may20_2_webdataset_encoded",
+                        default="./train_dataset_may20_3_webdataset_encoded",
                         help="Where to save processed dataset.")
     
     parser.add_argument("--batch_size", type=int, default=150,

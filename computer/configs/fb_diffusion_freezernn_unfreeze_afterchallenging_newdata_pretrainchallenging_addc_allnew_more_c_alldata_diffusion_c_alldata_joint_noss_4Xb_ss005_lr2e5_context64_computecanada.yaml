@@ -90,7 +90,7 @@ model:
 data:
   target: data.data_processing.datasets.DataModule
   params:
-    batch_size: 16
+    batch_size: 14
     num_workers: 4
     wrap: false
     shuffle: True
@@ -104,6 +104,7 @@ data:
         debug_mode: false
         data_csv_paths:
           - ../autoencoder/train_dataset_may20_webdataset_encoded/train_dataset.target_frames.csv
+          - ../autoencoder/train_dataset_may20_2_webdataset_encoded/train_dataset.target_frames.csv
         normalization: standard
         context_length: 64
 

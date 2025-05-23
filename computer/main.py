@@ -7,6 +7,7 @@ from latent_diffusion.ldm.util import instantiate_from_config
 import torch
 import os
 import argparse
+import re
 #torch.set_float32_matmul_precision('highest')
 torch.set_float32_matmul_precision('high')
 
@@ -95,8 +96,20 @@ if __name__ == "__main__":
         #model = load_model_from_config(config, '/root/computer/computer/train_dataset_encoded6/sb_diffusion_freezernn_contfiltered_unfreeze_afterchallenging_newdata_pretrainchallenging_addc_allnew_more_c_alldata_diffusion_c_alldata_joint_noss_4Xb_ss005_cont/model-step=376000.ckpt')
         ##model = load_model_from_config(config, '/root/computer/computer/train_dataset_encoded6/sb_diffusion_freezernn_contfiltered_unfreeze_afterchallenging_newdata_pretrainchallenging_addc_allnew_more_c_alldata_diffusion_c_alldata_joint_noss_4Xb_ss005_cont_lr2e5/model-step=432000.ckpt')
         #model = load_model_from_config(config, 'sb_diffusion_freezernn_contfiltered_unfreeze_afterchallenging_newdata_pretrainchallenging_addc_allnew_more_c_alldata_diffusion_c_alldata_joint_noss_4Xb_ss005_cont_lr2e5_context64_b16/model-step=116000.ckpt')
-        model = load_model_from_config(config, 'sb_diffusion_freezernn_contfiltered_unfreeze_afterchallenging_newdata_pretrainchallenging_addc_allnew_more_c_alldata_diffusion_c_alldata_joint_noss_4Xb_ss005_cont_lr2e5_context64_b16_computecanada_fsdp_noema/model-step=012000.ckpt')
+        # Find latest checkpoint in the folder
+        ckpt_folder = 'sb_diffusion_freezernn_contfiltered_unfreeze_afterchallenging_newdata_pretrainchallenging_addc_allnew_more_c_alldata_diffusion_c_alldata_joint_noss_4Xb_ss005_cont_lr2e5_context64_b16_computecanada_fsdp_noema'
+        ckpt_files = [f for f in os.listdir(ckpt_folder) if f.startswith('model-step=') and f.endswith('.ckpt')]
+        if not ckpt_files:
+            raise FileNotFoundError(f"No checkpoint files found in {ckpt_folder}")
+        step_pattern = re.compile(r'model-step=(\d+)\.ckpt')
+        ckpt_steps = [(f, int(step_pattern.search(f).group(1))) for f in ckpt_files if step_pattern.search(f)]
+        ckpt_steps.sort(key=lambda x: x[1])
+        latest_ckpt_file, latest_step = ckpt_steps[-1]
+        latest_ckpt_path = os.path.join(ckpt_folder, latest_ckpt_file)
+        print(f"Found latest checkpoint: {latest_ckpt_path} (step {latest_step})")
+        model = load_model_from_config(config, latest_ckpt_path)
         #### REPLACEMENT_LINE
+        pass
         #model = load_model_from_config(config, 'saved_bsz64_acc1_lr8e5_512_leftclick_histpos_512_384_cont2_ddd_difficult_only_withlstmencoder_without_standard_filtered/model-step=010000.ckpt')
         pass
         #model = load_model_from_config(config, 'saved_bsz64_acc1_lr8e5_512_leftclick_histpos_512_384_cont2_ddd_difficult_only_withlstmencoder_without_minmax/model-step=740000.ckpt')

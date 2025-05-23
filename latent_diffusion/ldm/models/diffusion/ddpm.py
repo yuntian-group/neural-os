@@ -993,7 +993,7 @@ class LatentDiffusion(DDPM):
                     with torch.enable_grad():
                         # scheduled sampling
                         proposal = random.random()
-                        if self.global_step % 20 == 0: #proposal < self.scheduled_sampling_rate:
+                        if self.global_step % 20 == 0 and (not self.pretrain): #proposal < self.scheduled_sampling_rate:
                             print ('scheduled sampling')
                             sampler = DDIMSampler(self)
                         else:

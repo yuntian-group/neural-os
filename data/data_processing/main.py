@@ -238,8 +238,9 @@ if __name__ == "__main__":
     padding_bytes.seek(0)
 
     # Save padding image as a separate file since it's small
-    with open(os.path.join(save_dir, 'padding.npy'), 'wb') as f:
-        f.write(padding_bytes.getvalue())
+    if not args.filter_videos:
+        with open(os.path.join(save_dir, 'padding.npy'), 'wb') as f:
+            f.write(padding_bytes.getvalue())
 
     all_seqs = []
 
@@ -275,9 +276,12 @@ if __name__ == "__main__":
 
         # save to a csv of two columns, record_num and image_num
         all_seqs_df = pd.DataFrame(all_seqs, columns=['record_num', 'image_num'])
-        all_seqs_df.to_csv(os.path.join(save_dir, 'train_dataset.target_frames.csv'), index=False)
-        with open(os.path.join(save_dir, 'image_action_mapping_with_key_states.pkl'), 'wb') as f:
-            pickle.dump(all_mapping_dict, f)
+        if args.filter_videos:
+            all_seqs_df.to_csv(os.path.join(save_dir, 'filtered_dataset.target_frames.csv'), index=False)
+        else:
+            all_seqs_df.to_csv(os.path.join(save_dir, 'train_dataset.target_frames.csv'), index=False)
+            with open(os.path.join(save_dir, 'image_action_mapping_with_key_states.pkl'), 'wb') as f:
+                pickle.dump(all_mapping_dict, f)
         
     except Exception as e:
         print(f"Error during processing: {str(e)}")

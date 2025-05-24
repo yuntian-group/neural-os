@@ -28,7 +28,6 @@ import pickle
 import webdataset as wds
 import functools
 from collections import OrderedDict
-from torch.utils.data import BatchSampler
 
 #device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
@@ -194,8 +193,8 @@ class ActionsData(Dataset):
                  debug_mode=False,
                  normalization='none',  # Options: 'none', 'minmax', 'standard'
                  context_length=7,  # New parameter for flexible context length
-                 latent_stats_path='../latent_stats.json'  # Path to the JSON file with per-channel stats
-                 ):
+                 latent_stats_path='../latent_stats.json',  # Path to the JSON file with per-channel stats
+                 balanced_sampling=False):  # Add this parameter
         self.data_paths = data_csv_paths
         self.debug_mode = debug_mode
         self._length = None  # Will be set in setup
@@ -204,6 +203,9 @@ class ActionsData(Dataset):
         self.context_length = context_length
         self.use_original_image = use_original_image
         self.latent_stats_path = latent_stats_path
+        self.balanced_sampling = balanced_sampling
+        if self.balanced_sampling:
+            print('warning: balanced sampling is enabled')
 
         # Load action mapping
         self.mapping_dicts = []
@@ -354,11 +356,20 @@ class ActionsData(Dataset):
         # Local cache for tar files used in this call
         local_tar_cache = {}
         
-        i = i % sum(self._lengths)
-        for (data_partition, length) in enumerate(self._lengths):
-            if i < length:
-                break
-            i -= length
+        # For balanced sampling, ignore the input index i and pick a random partition and record
+        if self.balanced_sampling:  # Add this flag to __init__
+            # Randomly select a data partition
+            data_partition = torch.randint(0, len(self._lengths), (1,)).item()
+            # Randomly select an item within that partition
+            i = torch.randint(0, self._lengths[data_partition], (1,)).item()
+        else:
+            # Original sequential sampling logic
+            i = i % sum(self._lengths)
+            for (data_partition, length) in enumerate(self._lengths):
+                if i < length:
+                    break
+                i -= length
+        
         record_nums = self.record_nums_list[data_partition]
         image_nums = self.image_nums_list[data_partition]
         mapping_dict = self.mapping_dicts[data_partition]
@@ -537,7 +548,6 @@ class DataModule(pl.LightningDataModule):
                  train=None, 
                  validation=None, 
                  test=None,
-                 use_balanced_sampling=False,  # New flag to control sampling behavior
                  **kwargs):
         super().__init__()
         self.batch_size = batch_size
@@ -551,8 +561,6 @@ class DataModule(pl.LightningDataModule):
         # Filter out Lightning-specific kwargs
         self.dataloader_kwargs = {k: v for k, v in kwargs.items() 
                                 if k not in ['wrap']}
-        # Store the balanced sampling flag
-        self.use_balanced_sampling = use_balanced_sampling
 
     def setup(self, stage=None):
         """Called by Lightning before train/val/test."""
@@ -564,29 +572,10 @@ class DataModule(pl.LightningDataModule):
                 self.datasets[k] = dataset
 
     def train_dataloader(self):
-        dataset = self.datasets["train"]
-        
-        # Use balanced sampling if flag is enabled
-        if self.use_balanced_sampling:
-            print("Using balanced sampling strategy")
-            
-            # Create a basic sampler first (required by BatchSampler contract)
-            base_sampler = torch.utils.data.RandomSampler(dataset)
-            
-            # Pass the sampler to your batch sampler
-            batch_sampler = BalancedBatchSampler(base_sampler, self.batch_size)
-            
-            # Remove incompatible parameters when using batch_sampler
-            compatible_kwargs = {k: v for k, v in self.dataloader_kwargs.items() 
-                               if k not in ['batch_size', 'shuffle', 'sampler', 'drop_last']}
-            
-            return DataLoader(dataset, batch_sampler=batch_sampler, **compatible_kwargs)
-        else:
-            print("Using standard sequential sampling")
-            # Standard DataLoader with all kwargs
-            return DataLoader(dataset, 
-                             batch_size=self.batch_size,
-                             **self.dataloader_kwargs)
+        # No need for custom sampler anymore
+        return DataLoader(self.datasets["train"], 
+                         batch_size=self.batch_size,
+                         **self.dataloader_kwargs)
 
     def val_dataloader(self):
         return DataLoader(self.datasets["validation"],
@@ -597,49 +586,3 @@ class DataModule(pl.LightningDataModule):
         return DataLoader(self.datasets["test"], 
                          batch_size=self.batch_size,
                          **self.dataloader_kwargs)
-        
-
-class BalancedBatchSampler(BatchSampler):
-    def __init__(self, sampler, batch_size, drop_last=False):
-        # Store the provided sampler (we won't use it, but Lightning expects it)
-        self.sampler = sampler
-        self.dataset = sampler.dataset
-        self.batch_size = batch_size
-        self.drop_last = drop_last
-        self.drop_last = True
-        print ('warning: drop_last is set to True')
-                
-        # Store cumulative lengths for fast mapping
-        self.cumulative_lengths = [0]
-        current_sum = 0
-        for length in self.dataset._lengths:
-            current_sum += length
-            self.cumulative_lengths.append(current_sum)
-        print(f"Initialized BalancedBatchSampler with {len(self.dataset._lengths)} dataset partitions")
-        
-        
-    def __iter__(self):
-        for _ in range(len(self)):
-            batch = []
-            for _ in range(self.batch_size):
-                # First, randomly choose a dataset index
-                dataset_idx = np.random.randint(0, len(self.dataset._lengths))
-                
-                # Then, randomly choose an item from that dataset
-                item_idx = np.random.randint(0, self.dataset._lengths[dataset_idx])
-                
-                # Convert to global index
-                global_idx = self.cumulative_lengths[dataset_idx] + item_idx
-                batch.append(global_idx)
-            
-            yield batch
-    
-    def __len__(self):
-        # This determines how many batches per epoch
-        total_samples = len(self.dataset)
-            
-        if self.drop_last:
-            return total_samples // self.batch_size
-        else:
-            return (total_samples + self.batch_size - 1) // self.batch_size
-        

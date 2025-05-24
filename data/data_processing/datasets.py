@@ -569,10 +569,15 @@ class DataModule(pl.LightningDataModule):
         if self.use_balanced_sampling:
             print("Using balanced sampling strategy")
             sampler = BalancedBatchSampler(dataset, self.batch_size)
-            return DataLoader(dataset, batch_sampler=sampler, **self.dataloader_kwargs)
+            
+            # Remove incompatible parameters when using batch_sampler
+            compatible_kwargs = {k: v for k, v in self.dataloader_kwargs.items() 
+                               if k not in ['batch_size', 'shuffle', 'sampler', 'drop_last']}
+            
+            return DataLoader(dataset, batch_sampler=sampler, **compatible_kwargs)
         else:
             print("Using standard sequential sampling")
-            # Standard DataLoader with optional shuffle
+            # Standard DataLoader with all kwargs
             return DataLoader(dataset, 
                              batch_size=self.batch_size,
                              **self.dataloader_kwargs)

@@ -106,7 +106,7 @@ def smooth_losses(losses, window_size=100):
     #    window_size = max(1, len(losses) // 10)
     #return np.convolve(losses, np.ones(window_size)/window_size, mode='valid')
 
-def plot_and_compare_losses(losses_dict, output_png='psearch_newdatajdiffusion_loss_curve_comparison.png'):
+def plot_and_compare_losses(losses_dict, output_png='psearch_newdatajdiffusion_loss_curve_comparison_computecanada.png'):
     """
     Plot and compare multiple loss curves on a single graph.
     

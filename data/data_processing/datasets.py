@@ -603,7 +603,7 @@ class BalancedBatchSampler(BatchSampler):
     def __init__(self, sampler, batch_size, drop_last=False):
         # Store the provided sampler (we won't use it, but Lightning expects it)
         self.sampler = sampler
-        self.dataset = sampler.data_source
+        self.dataset = sampler.dataset
         self.batch_size = batch_size
         self.drop_last = drop_last
         self.drop_last = True

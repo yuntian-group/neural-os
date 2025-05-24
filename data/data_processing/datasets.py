@@ -28,6 +28,7 @@ import pickle
 import webdataset as wds
 import functools
 from collections import OrderedDict
+from torch.utils.data import BatchSampler
 
 #device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
@@ -593,10 +594,13 @@ class DataModule(pl.LightningDataModule):
                          **self.dataloader_kwargs)
         
 
-class BalancedBatchSampler(torch.utils.data.Sampler):
-    def __init__(self, dataset, batch_size):
+class BalancedBatchSampler(BatchSampler):
+    def __init__(self, dataset, batch_size, drop_last=False):
         self.dataset = dataset
         self.batch_size = batch_size
+        self.drop_last = drop_last
+        self.drop_last = True
+        print ('warning: drop_last is set to True')
         
         # Store cumulative lengths for fast mapping
         self.cumulative_lengths = [0]
@@ -624,5 +628,9 @@ class BalancedBatchSampler(torch.utils.data.Sampler):
     def __len__(self):
         # This determines how many batches per epoch
         # You can customize this based on your needs
-        return sum(self.dataset._lengths) // self.batch_size
+        total_samples = sum(self.dataset._lengths)
+        if self.drop_last:
+            return total_samples // self.batch_size
+        else:
+            return (total_samples + self.batch_size - 1) // self.batch_size
         

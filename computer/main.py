@@ -6,6 +6,7 @@ from omegaconf import OmegaConf
 from latent_diffusion.ldm.util import instantiate_from_config
 import torch
 import os
+import re
 import argparse
 #torch.set_float32_matmul_precision('highest')
 torch.set_float32_matmul_precision('high')
@@ -96,7 +97,7 @@ if __name__ == "__main__":
         ##model = load_model_from_config(config, '/root/computer/computer/train_dataset_encoded6/sb_diffusion_freezernn_contfiltered_unfreeze_afterchallenging_newdata_pretrainchallenging_addc_allnew_more_c_alldata_diffusion_c_alldata_joint_noss_4Xb_ss005_cont_lr2e5/model-step=432000.ckpt')
         #model = load_model_from_config(config, 'sb_diffusion_freezernn_contfiltered_unfreeze_afterchallenging_newdata_pretrainchallenging_addc_allnew_more_c_alldata_diffusion_c_alldata_joint_noss_4Xb_ss005_cont_lr2e5_context64_b16/model-step=116000.ckpt')
         # Find latest checkpoint in the folder
-        ckpt_folder = 'sb_diffusion_freezernn_contfiltered_unfreeze_afterchallenging_newdata_pretrainchallenging_addc_allnew_more_c_alldata_diffusion_c_alldata_joint_noss_4Xb_ss005_cont_lr2e5_context64_b16_computecanada_fsdp_noema'
+        ckpt_folder = 'sb_diffusion_freezernn_contfiltered_unfreeze_afterchallenging_newdata_pretrainchallenging_addc_allnew_more_c_alldata_diffusion_c_alldata_joint_noss_4Xb_ss005_cont_lr2e5_context64_b16_computecanada_fsdp_noema_challengingandsample_pretrainrnn'
         ckpt_files = [f for f in os.listdir(ckpt_folder) if f.startswith('model-step=') and f.endswith('.ckpt')]
         if not ckpt_files:
             raise FileNotFoundError(f"No checkpoint files found in {ckpt_folder}")

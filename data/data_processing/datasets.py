@@ -536,6 +536,7 @@ class DataModule(pl.LightningDataModule):
                  train=None, 
                  validation=None, 
                  test=None,
+                 use_balanced_sampling=False,  # New flag to control sampling behavior
                  **kwargs):
         super().__init__()
         self.batch_size = batch_size
@@ -549,6 +550,8 @@ class DataModule(pl.LightningDataModule):
         # Filter out Lightning-specific kwargs
         self.dataloader_kwargs = {k: v for k, v in kwargs.items() 
                                 if k not in ['wrap']}
+        # Store the balanced sampling flag
+        self.use_balanced_sampling = use_balanced_sampling
 
     def setup(self, stage=None):
         """Called by Lightning before train/val/test."""
@@ -560,9 +563,19 @@ class DataModule(pl.LightningDataModule):
                 self.datasets[k] = dataset
 
     def train_dataloader(self):
-        return DataLoader(self.datasets["train"], 
-                         batch_size=self.batch_size,
-                         **self.dataloader_kwargs)
+        dataset = self.datasets["train"]
+        
+        # Use balanced sampling if flag is enabled
+        if self.use_balanced_sampling:
+            print("Using balanced sampling strategy")
+            sampler = BalancedBatchSampler(dataset, self.batch_size)
+            return DataLoader(dataset, batch_sampler=sampler, **self.dataloader_kwargs)
+        else:
+            print("Using standard sequential sampling")
+            # Standard DataLoader with optional shuffle
+            return DataLoader(dataset, 
+                             batch_size=self.batch_size,
+                             **self.dataloader_kwargs)
 
     def val_dataloader(self):
         return DataLoader(self.datasets["validation"],
@@ -573,4 +586,38 @@ class DataModule(pl.LightningDataModule):
         return DataLoader(self.datasets["test"], 
                          batch_size=self.batch_size,
                          **self.dataloader_kwargs)
+        
+
+class BalancedBatchSampler(torch.utils.data.Sampler):
+    def __init__(self, dataset, batch_size):
+        self.dataset = dataset
+        self.batch_size = batch_size
+        
+        # Store cumulative lengths for fast mapping
+        self.cumulative_lengths = [0]
+        current_sum = 0
+        for length in dataset._lengths:
+            current_sum += length
+            self.cumulative_lengths.append(current_sum)
+        
+    def __iter__(self):
+        for _ in range(len(self)):
+            batch = []
+            for _ in range(self.batch_size):
+                # First, randomly choose a dataset index
+                dataset_idx = np.random.randint(0, len(self.dataset._lengths))
+                
+                # Then, randomly choose an item from that dataset
+                item_idx = np.random.randint(0, self.dataset._lengths[dataset_idx])
+                
+                # Convert to global index
+                global_idx = self.cumulative_lengths[dataset_idx] + item_idx
+                batch.append(global_idx)
+            
+            yield batch
+    
+    def __len__(self):
+        # This determines how many batches per epoch
+        # You can customize this based on your needs
+        return sum(self.dataset._lengths) // self.batch_size
         

@@ -7,7 +7,6 @@ from latent_diffusion.ldm.util import instantiate_from_config
 import torch
 import os
 import argparse
-import re
 #torch.set_float32_matmul_precision('highest')
 torch.set_float32_matmul_precision('high')
 
@@ -109,7 +108,6 @@ if __name__ == "__main__":
         print(f"Found latest checkpoint: {latest_ckpt_path} (step {latest_step})")
         model = load_model_from_config(config, latest_ckpt_path)
         #### REPLACEMENT_LINE
-        pass
         #model = load_model_from_config(config, 'saved_bsz64_acc1_lr8e5_512_leftclick_histpos_512_384_cont2_ddd_difficult_only_withlstmencoder_without_standard_filtered/model-step=010000.ckpt')
         pass
         #model = load_model_from_config(config, 'saved_bsz64_acc1_lr8e5_512_leftclick_histpos_512_384_cont2_ddd_difficult_only_withlstmencoder_without_minmax/model-step=740000.ckpt')

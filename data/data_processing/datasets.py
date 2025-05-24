@@ -569,13 +569,18 @@ class DataModule(pl.LightningDataModule):
         # Use balanced sampling if flag is enabled
         if self.use_balanced_sampling:
             print("Using balanced sampling strategy")
-            sampler = BalancedBatchSampler(dataset, self.batch_size)
+            
+            # Create a basic sampler first (required by BatchSampler contract)
+            base_sampler = torch.utils.data.RandomSampler(dataset)
+            
+            # Pass the sampler to your batch sampler
+            batch_sampler = BalancedBatchSampler(base_sampler, self.batch_size)
             
             # Remove incompatible parameters when using batch_sampler
             compatible_kwargs = {k: v for k, v in self.dataloader_kwargs.items() 
                                if k not in ['batch_size', 'shuffle', 'sampler', 'drop_last']}
             
-            return DataLoader(dataset, batch_sampler=sampler, **compatible_kwargs)
+            return DataLoader(dataset, batch_sampler=batch_sampler, **compatible_kwargs)
         else:
             print("Using standard sequential sampling")
             # Standard DataLoader with all kwargs
@@ -595,19 +600,23 @@ class DataModule(pl.LightningDataModule):
         
 
 class BalancedBatchSampler(BatchSampler):
-    def __init__(self, dataset, batch_size, drop_last=False):
-        self.dataset = dataset
+    def __init__(self, sampler, batch_size, drop_last=False):
+        # Store the provided sampler (we won't use it, but Lightning expects it)
+        self.sampler = sampler
+        self.dataset = sampler.data_source
         self.batch_size = batch_size
         self.drop_last = drop_last
         self.drop_last = True
         print ('warning: drop_last is set to True')
-        
+                
         # Store cumulative lengths for fast mapping
         self.cumulative_lengths = [0]
         current_sum = 0
-        for length in dataset._lengths:
+        for length in self.dataset._lengths:
             current_sum += length
             self.cumulative_lengths.append(current_sum)
+        print(f"Initialized BalancedBatchSampler with {len(self.dataset._lengths)} dataset partitions")
+        
         
     def __iter__(self):
         for _ in range(len(self)):
@@ -627,8 +636,8 @@ class BalancedBatchSampler(BatchSampler):
     
     def __len__(self):
         # This determines how many batches per epoch
-        # You can customize this based on your needs
-        total_samples = sum(self.dataset._lengths)
+        total_samples = len(self.dataset)
+            
         if self.drop_last:
             return total_samples // self.batch_size
         else:

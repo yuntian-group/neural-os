@@ -11,6 +11,8 @@
 #SBATCH --time=08:00:00
 #SBATCH --array=0-39
 
+source ~/.bashrc
+
 # calculate start/end indices
 START=$(( SLURM_ARRAY_TASK_ID * 1000 ))
 END=$(( START + 1000 ))

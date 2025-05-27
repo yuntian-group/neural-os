@@ -638,7 +638,7 @@ class BalancedEpochSampler(torch.utils.data.Sampler):
     def __iter__(self):
         # Create deterministic generator for this epoch
         g = torch.Generator()
-        print ('******* iter seed {self.seed} and epoch {self.epoch}')
+        print (f'******* iter seed {self.seed} and epoch {self.epoch}')
         g.manual_seed(self.seed + self.epoch)
         
         indices = []

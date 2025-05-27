@@ -613,10 +613,12 @@ class LatentDiffusion(DDPM):
         self.cond_ids[:self.num_timesteps_cond] = ids
     # In your LightningModule's on_train_epoch_start method:
     
-def on_train_epoch_start(self):
-    # Access the sampler from the datamodule
-    if hasattr(self.trainer.datamodule, 'train_sampler'):
-        self.trainer.datamodule.train_sampler.set_epoch(self.current_epoch)
+    def on_train_epoch_start(self):
+        print ('=== on_train_epoch_start called', self.current_epoch)
+        # Access the sampler from the datamodule
+        if hasattr(self.trainer.datamodule, 'train_sampler'):
+            print ('set === on_train_epoch_start called', self.current_epoch)
+            self.trainer.datamodule.train_sampler.set_epoch(self.current_epoch)
 
     @rank_zero_only
     @torch.no_grad()

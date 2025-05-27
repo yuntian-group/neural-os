@@ -580,6 +580,7 @@ class DataModule(pl.LightningDataModule):
         # Use balanced epoch sampler
         if self.use_balanced_sampling:
             sampler = BalancedEpochSampler(dataset, shuffle=True)
+            self.train_sampler = sampler
         else:
             sampler = None
         
@@ -615,7 +616,7 @@ class BalancedEpochSampler(torch.utils.data.Sampler):
         self.dataset = dataset
         self.shuffle = shuffle
         self.seed = seed
-        #self.epoch = 0
+        self.epoch = 0
         
         # Get the number of examples in each partition
         self.partition_sizes = dataset._lengths
@@ -637,6 +638,7 @@ class BalancedEpochSampler(torch.utils.data.Sampler):
     def __iter__(self):
         # Create deterministic generator for this epoch
         g = torch.Generator()
+        print ('******* iter seed {self.seed} and epoch {self.epoch}')
         g.manual_seed(self.seed + self.epoch)
         
         indices = []
@@ -665,7 +667,7 @@ class BalancedEpochSampler(torch.utils.data.Sampler):
             # Create final permutation of all selected indices
             perm = torch.randperm(len(indices), generator=g).tolist()
             indices = [indices[i] for i in perm]
-        print ('=======indices[:10]', indices[:10])
+        print ('=======indices[:5]', indices[:5])
         
         return iter(indices)
     

@@ -98,6 +98,7 @@ if __name__ == "__main__":
         #model = load_model_from_config(config, 'sb_diffusion_freezernn_contfiltered_unfreeze_afterchallenging_newdata_pretrainchallenging_addc_allnew_more_c_alldata_diffusion_c_alldata_joint_noss_4Xb_ss005_cont_lr2e5_context64_b16/model-step=116000.ckpt')
         # Find latest checkpoint in the folder
         ckpt_folder = 'sb_diffusion_freezernn_contfiltered_unfreeze_afterchallenging_newdata_pretrainchallenging_addc_allnew_more_c_alldata_diffusion_c_alldata_joint_noss_4Xb_ss005_cont_lr2e5_context64_b16_computecanada_fsdp_noema_challengingandsample_pretrainrnn'
+        ckpt_folder = 'sb_diffusion_freezernn_contfiltered_unfreeze_afterchallenging_newdata_pretrainchallenging_addc_allnew_more_c_alldata_diffusion_c_alldata_joint_noss_4Xb_ss005_cont_lr2e5_context64_b16_computecanada_fsdp_noema_challengingandsample_pretrainrnn'
         ckpt_files = [f for f in os.listdir(ckpt_folder) if f.startswith('model-step=') and f.endswith('.ckpt')]
         if not ckpt_files:
             raise FileNotFoundError(f"No checkpoint files found in {ckpt_folder}")

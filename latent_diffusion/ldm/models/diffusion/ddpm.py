@@ -611,6 +611,12 @@ class LatentDiffusion(DDPM):
         self.cond_ids = torch.full(size=(self.num_timesteps,), fill_value=self.num_timesteps - 1, dtype=torch.long)
         ids = torch.round(torch.linspace(0, self.num_timesteps - 1, self.num_timesteps_cond)).long()
         self.cond_ids[:self.num_timesteps_cond] = ids
+    # In your LightningModule's on_train_epoch_start method:
+    
+def on_train_epoch_start(self):
+    # Access the sampler from the datamodule
+    if hasattr(self.trainer.datamodule, 'train_sampler'):
+        self.trainer.datamodule.train_sampler.set_epoch(self.current_epoch)
 
     @rank_zero_only
     @torch.no_grad()

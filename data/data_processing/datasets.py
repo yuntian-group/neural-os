@@ -205,6 +205,7 @@ class ActionsData(Dataset):
         self.latent_stats_path = latent_stats_path
         self.balanced_sampling = balanced_sampling
         if self.balanced_sampling:
+            assert False, 'balanced sampling is not supported'
             print('warning: balanced sampling is enabled')
 
         # Load action mapping
@@ -548,10 +549,12 @@ class DataModule(pl.LightningDataModule):
                  train=None, 
                  validation=None, 
                  test=None,
+                 use_balanced_sampling=False,
                  **kwargs):
         super().__init__()
         self.batch_size = batch_size
         self.dataset_configs = {}
+        self.use_balanced_sampling = use_balanced_sampling
         if train:
             self.dataset_configs["train"] = train
         if validation:
@@ -572,10 +575,22 @@ class DataModule(pl.LightningDataModule):
                 self.datasets[k] = dataset
 
     def train_dataloader(self):
-        # No need for custom sampler anymore
-        return DataLoader(self.datasets["train"], 
+        dataset = self.datasets["train"]
+        
+        # Use balanced epoch sampler
+        if self.use_balanced_sampling:
+            sampler = BalancedEpochSampler(dataset, shuffle=True)
+        else:
+            sampler = None
+        
+        # Remove incompatible parameters
+        compatible_kwargs = {k: v for k, v in self.dataloader_kwargs.items() 
+                           if (not self.use_balanced_sampling) or k not in ['shuffle', 'sampler']}
+        
+        return DataLoader(dataset, 
                          batch_size=self.batch_size,
-                         **self.dataloader_kwargs)
+                         sampler=sampler,
+                         **compatible_kwargs)
 
     def val_dataloader(self):
         return DataLoader(self.datasets["validation"],
@@ -586,3 +601,78 @@ class DataModule(pl.LightningDataModule):
         return DataLoader(self.datasets["test"], 
                          batch_size=self.batch_size,
                          **self.dataloader_kwargs)
+
+class BalancedEpochSampler(torch.utils.data.Sampler):
+    def __init__(self, dataset, shuffle=True, seed=42):
+        """
+        A sampler that ensures balanced sampling across partitions with each example seen exactly once per epoch.
+        
+        Args:
+            dataset: ActionsData dataset
+            shuffle: Whether to shuffle indices
+            seed: Random seed for reproducibility
+        """
+        self.dataset = dataset
+        self.shuffle = shuffle
+        self.seed = seed
+        #self.epoch = 0
+        
+        # Get the number of examples in each partition
+        self.partition_sizes = dataset._lengths
+        
+        # Find the minimum partition size
+        self.min_partition_size = min(self.partition_sizes)
+        
+        # Calculate total samples per epoch (balanced)
+        self.samples_per_epoch = self.min_partition_size * len(self.partition_sizes)
+        
+        # Store cumulative sizes for quick indexing
+        self.cumulative_sizes = [0]
+        for size in self.partition_sizes:
+            self.cumulative_sizes.append(self.cumulative_sizes[-1] + size)
+        
+        print(f"BalancedEpochSampler: {len(self.partition_sizes)} partitions with min size {self.min_partition_size}")
+        print(f"Total samples per epoch: {self.samples_per_epoch}")
+    
+    def __iter__(self):
+        # Create deterministic generator for this epoch
+        g = torch.Generator()
+        g.manual_seed(self.seed + self.epoch)
+        
+        indices = []
+        
+        # For each partition, select min_partition_size random indices
+        for p_idx in range(len(self.partition_sizes)):
+            # Get all indices for this partition
+            partition_indices = list(range(self.cumulative_sizes[p_idx], 
+                                           self.cumulative_sizes[p_idx + 1]))
+            
+            # If we need to subsample (partition is larger than min size)
+            if len(partition_indices) > self.min_partition_size:
+                # Generate random permutation and take first min_partition_size elements
+                if self.shuffle:
+                    perm = torch.randperm(len(partition_indices), generator=g).tolist()
+                    partition_indices = [partition_indices[i] for i in perm[:self.min_partition_size]]
+                else:
+                    # If not shuffling, take the first min_partition_size elements
+                    assert False, 'ERROR: BalancedEpochSampler should not be used with shuffle=False'
+                    partition_indices = partition_indices[:self.min_partition_size]
+            
+            indices.extend(partition_indices)
+        
+        # Shuffle the combined indices if requested
+        if self.shuffle:
+            # Create final permutation of all selected indices
+            perm = torch.randperm(len(indices), generator=g).tolist()
+            indices = [indices[i] for i in perm]
+        print ('=======indices[:10]', indices[:10])
+        
+        return iter(indices)
+    
+    def __len__(self):
+        return self.samples_per_epoch
+    
+    def set_epoch(self, epoch):
+        print('-------setting epoch', epoch)
+        """Sets the epoch for this sampler for deterministic shuffling per epoch."""
+        self.epoch = epoch

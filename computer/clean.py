@@ -55,16 +55,21 @@ def clean_folder(folder):
             except Exception as e:
                 print(f"Error removing file {full_path}: {e}")
 
-def monitor_folders(folders, interval=10):
+def monitor_folders(base_dir, substring, interval=10):
     """
-    Monitor each folder in the list. Every `interval` seconds,
-    check each folder and clean older checkpoints.
+    Monitor folders in the base directory that contain the specified substring.
+    Periodically check for new folders and clean older checkpoints.
     """
     print("Starting checkpoint monitor. Press Ctrl+C to exit.")
     try:
         while True:
-            for folder in folders:
-                clean_folder(folder)
+            # Find folders matching the criteria - this will detect newly created folders
+            folders = find_checkpoint_folders(substring=substring, base_dir=base_dir)
+            if not folders:
+                print(f"No folders found in '{base_dir}' containing '{substring}'.")
+            else:
+                for folder in folders:
+                    clean_folder(folder)
             time.sleep(interval)
     except KeyboardInterrupt:
         print("\nMonitor stopped.")
@@ -107,13 +112,15 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    # Automatically find all folders in base_dir that contain the specified substring.
-    folders = find_checkpoint_folders(substring=args.substring, base_dir=args.base_dir)
-    if not folders:
-        print(f"No folders found in '{args.base_dir}' containing '{args.substring}'.")
+    # Initial folder scan for informational purposes
+    initial_folders = find_checkpoint_folders(substring=args.substring, base_dir=args.base_dir)
+    if not initial_folders:
+        print(f"No folders found in '{args.base_dir}' containing '{args.substring}'. Will continue monitoring for new folders.")
     else:
-        print("Monitoring the following folders:")
-        for folder in folders:
+        print("Initially monitoring the following folders:")
+        for folder in initial_folders:
             print(" -", folder)
-        monitor_folders(folders, args.interval)
+    
+    # Pass base_dir and substring to monitor_folders instead of the folder list
+    monitor_folders(args.base_dir, args.substring, args.interval)
 

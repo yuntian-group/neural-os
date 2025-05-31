@@ -206,9 +206,9 @@ if __name__ == "__main__":
         #('pretrain_challenging_balanced', 'log.fb.diffusion.freezernn.contfiltered.1Xb.unfreeze.afterchallenging.newdata.pretrainchallenging.addc.allnew.more_c.alldata.diffusion_c.alldata.joint_noss.4Xb.ss005.cont.lr2e5.context64.computecanada.challengingandsample.pretrainrnn.balanced'),
         #('pretrain_challenging_balanced_lr5e6', 'log.fb.diffusion.freezernn.contfiltered.1Xb.unfreeze.afterchallenging.newdata.pretrainchallenging.addc.allnew.more_c.alldata.diffusion_c.alldata.joint_noss.4Xb.ss005.cont.lr2e5.context64.computecanada.challengingandsample.pretrainrnn.balanced.lr5e6'),
         #('pretrain_challenging_balanced_lr1.25e6', 'log.fb.diffusion.freezernn.contfiltered.1Xb.unfreeze.afterchallenging.newdata.pretrainchallenging.addc.allnew.more_c.alldata.diffusion_c.alldata.joint_noss.4Xb.ss005.cont.lr2e5.context64.computecanada.challengingandsample.pretrainrnn.balanced.lr1.25e6'),
-        ('newd_pretrain_challenging_balanced_lr5e6', 'log.fb.computecanada.challengingandsample.pretrainrnn.balanced.lr5e6.contbest.samplercover.newd'),
-        ('newd_pretrain_challenging_balanced_lr1.25e6', 'log.fb.computecanada.challengingandsample.pretrainrnn.balanced.lr1.25e6.contbest.samplercover.newd'),
-        ('newd_pretrain_challenging_balanced_lr2e5', 'log.fb.computecanada.challengingandsample.pretrainrnn.balanced.lr2e5.contbest.samplercover.newd'),
+        #('newd_pretrain_challenging_balanced_lr5e6', 'log.fb.computecanada.challengingandsample.pretrainrnn.balanced.lr5e6.contbest.samplercover.newd'),
+        #('newd_pretrain_challenging_balanced_lr1.25e6', 'log.fb.computecanada.challengingandsample.pretrainrnn.balanced.lr1.25e6.contbest.samplercover.newd'),
+        #('newd_pretrain_challenging_balanced_lr2e5', 'log.fb.computecanada.challengingandsample.pretrainrnn.balanced.lr2e5.contbest.samplercover.newd'),
         #('pretrain_challenging_balanced_lr8e5', 'log.fb.diffusion.freezernn.contfiltered.1Xb.unfreeze.afterchallenging.newdata.pretrainchallenging.addc.allnew.more_c.alldata.diffusion_c.alldata.joint_noss.4Xb.ss005.cont.lr2e5.context64.computecanada.challengingandsample.pretrainrnn.balanced.lr8e5'),
         #('pretrain2', 'log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.loadbest.context8.all.fixrelu.simplifyinput.debug.pretrain2282.samesetting2.real.contdebug'),
         #('pretrain2', 'log.final_hs4096_oc32_nl48_ar_cm1_2_mc512.pretrain2.context8'),
@@ -224,6 +224,10 @@ if __name__ == "__main__":
         #('1gpu', 'log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.lr4e5.gpu1'),
         #('2gpu', 'log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.lr4e5.gpu2'),
         #('4gpu', 'log.final_hs4096_oc32_nl48_ar_cm1_2_mc512_lr8e5_b64_gpu8_filtered.largeimg.lr4e5.gpu4'),
+        ('newnewd_freezernn', 'log.fb.computecanada.challengingandsample.pretrainrnn.balanced.lr5e6.contbest.samplercover.newd.contfreezernn.newnewd2'),
+        ('newnewd_unfreezernn', 'log.fb.computecanada.challengingandsample.pretrainrnn.balanced.lr5e6.contbest.samplercover.newd.contunfreezernn.newnewd2'),
+        ('newnewd_freezernn_origunet_nospatial', 'log.fb.computecanada.challengingandsample.pretrainrnn.balanced.lr5e6.contbest.samplercover.newd.contfreezernn.newnewd.origunet.nospatial2'),
+        ('newnewd_unfreezernn_origunet_nospatial', 'log.fb.computecanada.challengingandsample.pretrainrnn.balanced.lr5e6.contbest.samplercover.newd.contunfreezernn.newnewd.origunet.nospatial2'),
     ]
     
     losses_dict = {}

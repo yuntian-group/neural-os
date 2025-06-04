@@ -15,11 +15,20 @@ MODEL_NAME = "yuntian-deng/computer-model-ss005-cont-lr2e5-computecanada-lr8e5-8
 MODEL_NAME = "yuntian-deng/computer-model-ss005-cont-lr2e5-computecanada-pretrainrnn-48k"
 MODEL_NAME = "yuntian-deng/computer-model-ss005-cont-lr2e5-computecanada-pretrainrnn-challenging-46k"
 
+
+
 MODEL_NAME = "yuntian-deng/computer-model-ss005-cont-lr2e5-computecanada-challenging-166k"
 MODEL_NAME = "yuntian-deng/computer-model-ss005-cont-lr2e5-computecanada-pretrainrnn-challenging-184k"
 MODEL_NAME = "yuntian-deng/computer-model-ss005-cont-lr2e5-computecanada-pretrainrnn-challenging-balanced-120k"
 MODEL_NAME = "yuntian-deng/computer-model-ss005-cont-lr2e5-computecanada-pretrainrnn-challenging-balanced-lr5e6-124k"
 MODEL_NAME = "yuntian-deng/computer-model-ss005-cont-lr2e5-computecanada-pretrainrnn-challenging-balanced-lr1.25e6-110k"
+
+
+MODEL_NAME = "yuntian-deng/computer-model-ss005-cont-lr2e5-computecanada-newnewd-freezernn-370k"
+MODEL_NAME = "yuntian-deng/computer-model-ss005-cont-lr2e5-computecanada-newnewd-freezernn-origunet-nospatial-368k"
+MODEL_NAME = "yuntian-deng/computer-model-ss005-cont-lr2e5-computecanada-newnewd-unfreezernn-160k"
+MODEL_NAME = "yuntian-deng/computer-model-ss005-cont-lr2e5-computecanada-newnewd-unfreezernn-origunet-nospatial-144k"
+
 LOCAL_CHECKPOINT_PATH = "test_15_no_deltas_1000_paths/model_test_15_no_deltas_1000_paths.ckpt"
 LOCAL_CHECKPOINT_PATH = "oct27_test_15_no_deltas_1000_paths/model_test_15_no_deltas_1000_paths.ckpt"
 LOCAL_CHECKPOINT_PATH = "checkpoints/model-step=007500.ckpt"
@@ -81,6 +90,10 @@ LOCAL_CHECKPOINT_PATH = "./sb_diffusion_freezernn_contfiltered_unfreeze_aftercha
 LOCAL_CHECKPOINT_PATH = "./sb_diffusion_freezernn_contfiltered_unfreeze_afterchallenging_newdata_pretrainchallenging_addc_allnew_more_c_alldata_diffusion_c_alldata_joint_noss_4Xb_ss005_cont_lr2e5_context64_b16_computecanada_fsdp_noema_challengingandsample_pretrainrnn_balanced/model-step=120000.ckpt"
 LOCAL_CHECKPOINT_PATH = "./sb_diffusion_freezernn_contfiltered_unfreeze_afterchallenging_newdata_pretrainchallenging_addc_allnew_more_c_alldata_diffusion_c_alldata_joint_noss_4Xb_ss005_cont_lr2e5_context64_b16_computecanada_fsdp_noema_challengingandsample_pretrainrnn_balanced_lr5e6/model-step=124000.ckpt"
 LOCAL_CHECKPOINT_PATH = "./sb_context64_b16_computecanada_fsdp_noema_challengingandsample_pretrainrnn_balanced_lr1.25e6/model-step=110000.ckpt"
+LOCAL_CHECKPOINT_PATH = "./sb_computecanada_fsdp_noema_challengingandsample_pretrainrnn_balanced_lr5e6_contbest_samplercover_newd_contfreezernn_newnewd2/model-step=370000.ckpt"
+LOCAL_CHECKPOINT_PATH = "./sb_computecanada_fsdp_noema_challengingandsample_pretrainrnn_balanced_lr5e6_contbest_samplercover_newd_contfreezernn_newnewd_origunet_nospatial2/model-step=368000.ckpt"
+LOCAL_CHECKPOINT_PATH = "./sb_computecanada_fsdp_noema_challengingandsample_pretrainrnn_balanced_lr5e6_contbest_samplercover_newd_contunfreezernn_newnewd2/model-step=160000.ckpt"
+LOCAL_CHECKPOINT_PATH = "./sb_computecanada_fsdp_noema_challengingandsample_pretrainrnn_balanced_lr5e6_contbest_samplercover_newd_contunfreezernn_newnewd_origunet_nospatial2/model-step=144000.ckpt"
 CONFIG_PATH = "config_csllm.yaml"
 CONFIG_PATH = "configs/2e5_debug_gpt_firstframe.yaml"
 CONFIG_PATH = "configs/2e5_debug_gpt_firstframe_identity.yaml"
@@ -96,10 +109,11 @@ def upload_model_to_hub():
     config = OmegaConf.load(CONFIG_PATH)
     
     # Load the local checkpoint
-    checkpoint = torch.load(LOCAL_CHECKPOINT_PATH, map_location='cpu', weights_only=False)
+    #checkpoint = torch.load(LOCAL_CHECKPOINT_PATH, map_location='cpu', weights_only=False)
     
     # Extract only the state_dict
-    state_dict = checkpoint['state_dict']
+    #state_dict = checkpoint['state_dict']
+    state_dict = torch.load(LOCAL_CHECKPOINT_PATH, map_location='cpu', weights_only=False, mmap=True)['state_dict']
     
     # Create or get the repo
     api = HfApi()

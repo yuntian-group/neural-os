@@ -28,6 +28,8 @@ import pickle
 import webdataset as wds
 import functools
 from collections import OrderedDict
+import os.path
+import time
 
 #device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
@@ -186,6 +188,7 @@ def load_model_from_config(config, ckpt, verbose=False):
     return model
 class ActionsData(Dataset):
     _shared_data = {}  # Class-level cache for dataframes
+    _last_modified_times = {}  # Track when each file was last loaded
     
     def __init__(self,
                  data_csv_paths,
@@ -194,7 +197,8 @@ class ActionsData(Dataset):
                  normalization='none',  # Options: 'none', 'minmax', 'standard'
                  context_length=7,  # New parameter for flexible context length
                  latent_stats_path='../latent_stats.json',  # Path to the JSON file with per-channel stats
-                 balanced_sampling=False):  # Add this parameter
+                 balanced_sampling=False,  # Add this parameter
+                 check_data_updates=True):  # Add this parameter
         self.data_paths = data_csv_paths
         self.debug_mode = debug_mode
         self._length = None  # Will be set in setup
@@ -204,6 +208,7 @@ class ActionsData(Dataset):
         self.use_original_image = use_original_image
         self.latent_stats_path = latent_stats_path
         self.balanced_sampling = balanced_sampling
+        self.check_data_updates = check_data_updates
         if self.balanced_sampling:
             assert False, 'balanced sampling is not supported'
             print('warning: balanced sampling is enabled')
@@ -217,6 +222,11 @@ class ActionsData(Dataset):
             with open(mapping_dict_path, 'rb') as f:
                 self.mapping_dicts.append(pickle.load(f))
             self.base_dirs.append(base_dir)
+            
+            # Track initial modification times
+            if self.check_data_updates:
+                ActionsData._last_modified_times[data_csv_path] = os.path.getmtime(data_csv_path)
+                ActionsData._last_modified_times[mapping_dict_path] = os.path.getmtime(mapping_dict_path)
         
         #with open('../computer/image_action_mapping_with_key_states.pkl', 'rb') as f:
         #    self.mapping_dict = pickle.load(f)
@@ -268,6 +278,74 @@ class ActionsData(Dataset):
         self.stoi = {key: i for i, key in enumerate(KEYS)}
 
         
+    def check_for_updates(self):
+        """Check if any data files have been modified and reload if necessary."""
+        if not self.check_data_updates:
+            return False
+        print('check_for_updates called')
+        updated = False
+        
+        for (i, data_csv_path) in enumerate(self.data_paths):
+            csv_mtime = os.path.getmtime(data_csv_path)
+            base_dir = os.path.dirname(data_csv_path)
+            mapping_dict_path = os.path.join(base_dir, f'image_action_mapping_with_key_states.pkl')
+            pkl_mtime = os.path.getmtime(mapping_dict_path)
+            
+            # Check if either file has been modified
+            if (csv_mtime > ActionsData._last_modified_times.get(data_csv_path, 0) or
+                pkl_mtime > ActionsData._last_modified_times.get(mapping_dict_path, 0)):
+                
+                print(f"Detected changes in {data_csv_path} or {mapping_dict_path}, reloading...")
+                
+                # Reload CSV data until success, since it may be written by another process
+                if csv_mtime > ActionsData._last_modified_times.get(data_csv_path, 0):
+                    print(f"Reloading CSV data for {data_csv_path}")
+                    while True:
+                        try:
+                            data = pd.read_csv(data_csv_path)
+                            ActionsData._shared_data[data_csv_path] = {
+                                'record_nums': data['record_num'].tolist(),
+                                'image_nums': data['image_num'].tolist()
+                            }
+                            # Update instance-specific lists for this partition
+                            print (f"Updating instance-specific lists for {data_csv_path}")
+                            print (f"size before: {len(self.record_nums_list[i])}")
+                            self.record_nums_list[i] = ActionsData._shared_data[data_csv_path]['record_nums']
+                            self.image_nums_list[i] = ActionsData._shared_data[data_csv_path]['image_nums']
+                            print (f"size after: {len(self.record_nums_list[i])}")
+                            del data
+                            break
+                        except Exception as e:
+                            print(f"Error loading {data_csv_path}: {e}")
+                            time.sleep(10)
+                
+                # Reload mapping dict until success, since it may be written by another process
+                if pkl_mtime > ActionsData._last_modified_times.get(mapping_dict_path, 0):
+                    print(f"Reloading mapping dict for {mapping_dict_path}")
+                    while True:
+                        try:
+                            with open(mapping_dict_path, 'rb') as f:
+                                print (f"Updating instance-specific lists for {mapping_dict_path}")
+                                print (f"size before: {len(self.mapping_dicts[i])}")
+                                self.mapping_dicts[i] = pickle.load(f)
+                                print (f"size after: {len(self.mapping_dicts[i])}")
+                            break
+                        except Exception as e:
+                            print(f"Error loading {mapping_dict_path}: {e}")
+                            time.sleep(10)
+                
+                # Update lengths
+                self._lengths[i] = len(self.record_nums_list[i])
+                
+                # Update modification times
+                ActionsData._last_modified_times[data_csv_path] = csv_mtime
+                ActionsData._last_modified_times[mapping_dict_path] = pkl_mtime
+                
+                updated = True
+                print(f"Updated partition {i}: new length = {self._lengths[i]}")
+        
+        return updated
+
     def setup(self):
         print ('setup called')
         for (i, data_path) in enumerate(self.data_paths):
@@ -618,8 +696,13 @@ class BalancedEpochSampler(torch.utils.data.Sampler):
         self.seed = seed
         self.epoch = 0
         
+        # Initial setup
+        self.update_partition_info()
+        
+    def update_partition_info(self):
+        """Update partition sizes and cumulative sizes based on current dataset state."""
         # Get the number of examples in each partition
-        self.partition_sizes = dataset._lengths
+        self.partition_sizes = self.dataset._lengths
         
         # Find the minimum partition size
         self.min_partition_size = min(self.partition_sizes)
@@ -636,9 +719,15 @@ class BalancedEpochSampler(torch.utils.data.Sampler):
         print(f"Total samples per epoch: {self.samples_per_epoch}")
     
     def __iter__(self):
+        # Check for dataset updates
+        if hasattr(self.dataset, 'check_for_updates') and self.dataset.check_for_updates():
+            print('=======dataset was updated, recalculating partition info')
+            # If dataset was updated, recalculate partition info
+            self.update_partition_info()
+        
         # Create deterministic generator for this epoch
         g = torch.Generator()
-        print (f'******* iter seed {self.seed} and epoch {self.epoch}')
+        print(f'******* iter seed {self.seed} and epoch {self.epoch}')
         g.manual_seed(self.seed + self.epoch)
         
         indices = []

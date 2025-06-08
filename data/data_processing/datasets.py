@@ -569,7 +569,8 @@ class ActionsData(Dataset):
             example[f"is_rightclick_{j}"] = torch.BoolTensor([right_click])
             example[f"key_events_{j}"] = torch.LongTensor([0 for _ in self.itos])
             for key in key_events:
-                example[f"key_events_{j}"][self.stoi[key]] = 1
+                if key in self.stoi:
+                    example[f"key_events_{j}"][self.stoi[key]] = 1
             
 
         for j in range(-1, -(self.context_length + 1), -1):
@@ -583,7 +584,8 @@ class ActionsData(Dataset):
             example[f"is_rightclick_{j}"] = torch.BoolTensor([right_click])
             example[f"key_events_{j}"] = torch.LongTensor([0 for _ in self.itos])
             for key in key_events:
-                example[f"key_events_{j}"][self.stoi[key]] = 1
+                if key in self.stoi:
+                    example[f"key_events_{j}"][self.stoi[key]] = 1
 
         if self.normalization == 'standard_maskprev0':
             assert False
@@ -719,6 +721,10 @@ class BalancedEpochSampler(torch.utils.data.Sampler):
         print(f"Total samples per epoch: {self.samples_per_epoch}")
     
     def __iter__(self):
+        # Debug prints
+        print(f"Dataset lengths: {self.partition_sizes}")
+        print(f"Cumulative sizes: {self.cumulative_sizes}")
+        
         # Check for dataset updates
         if hasattr(self.dataset, 'check_for_updates') and self.dataset.check_for_updates():
             print('=======dataset was updated, recalculating partition info')

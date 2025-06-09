@@ -615,6 +615,7 @@ class LatentDiffusion(DDPM):
     
     def on_train_epoch_start(self):
         print ('=== on_train_epoch_start called', self.current_epoch)
+        print ('=== train dataloader length', len(self.trainer.train_dataloader), type(self.trainer.train_dataloader))
         # Access the sampler from the datamodule
         if hasattr(self.trainer.datamodule, 'train_sampler'):
             print ('set === on_train_epoch_start called', self.current_epoch)

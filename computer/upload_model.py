@@ -29,6 +29,10 @@ MODEL_NAME = "yuntian-deng/computer-model-ss005-cont-lr2e5-computecanada-newnewd
 MODEL_NAME = "yuntian-deng/computer-model-ss005-cont-lr2e5-computecanada-newnewd-unfreezernn-160k"
 MODEL_NAME = "yuntian-deng/computer-model-ss005-cont-lr2e5-computecanada-newnewd-unfreezernn-origunet-nospatial-144k"
 
+
+MODEL_NAME = "yuntian-deng/computer-model-ss005-cont-lr2e5-computecanada-newnewd-freezernn-origunet-nospatial-674k"
+MODEL_NAME = "yuntian-deng/computer-model-ss005-cont-lr2e5-computecanada-newnewd-unfreezernn-198k"
+
 LOCAL_CHECKPOINT_PATH = "test_15_no_deltas_1000_paths/model_test_15_no_deltas_1000_paths.ckpt"
 LOCAL_CHECKPOINT_PATH = "oct27_test_15_no_deltas_1000_paths/model_test_15_no_deltas_1000_paths.ckpt"
 LOCAL_CHECKPOINT_PATH = "checkpoints/model-step=007500.ckpt"
@@ -94,6 +98,12 @@ LOCAL_CHECKPOINT_PATH = "./sb_computecanada_fsdp_noema_challengingandsample_pret
 LOCAL_CHECKPOINT_PATH = "./sb_computecanada_fsdp_noema_challengingandsample_pretrainrnn_balanced_lr5e6_contbest_samplercover_newd_contfreezernn_newnewd_origunet_nospatial2/model-step=368000.ckpt"
 LOCAL_CHECKPOINT_PATH = "./sb_computecanada_fsdp_noema_challengingandsample_pretrainrnn_balanced_lr5e6_contbest_samplercover_newd_contunfreezernn_newnewd2/model-step=160000.ckpt"
 LOCAL_CHECKPOINT_PATH = "./sb_computecanada_fsdp_noema_challengingandsample_pretrainrnn_balanced_lr5e6_contbest_samplercover_newd_contunfreezernn_newnewd_origunet_nospatial2/model-step=144000.ckpt"
+
+
+LOCAL_CHECKPOINT_PATH = "./sb_computecanada_fsdp_noema_challengingandsample_pretrainrnn_balanced_lr5e6_contbest_samplercover_newd_contfreezernn_newnewd_origunet_nospatial2/model-step=674000.ckpt"
+LOCAL_CHECKPOINT_PATH = "./sb_computecanada_fsdp_noema_challengingandsample_pretrainrnn_balanced_lr5e6_contbest_samplercover_newd_contunfreezernn_newnewd2/model-step=198000.ckpt"
+
+
 CONFIG_PATH = "config_csllm.yaml"
 CONFIG_PATH = "configs/2e5_debug_gpt_firstframe.yaml"
 CONFIG_PATH = "configs/2e5_debug_gpt_firstframe_identity.yaml"

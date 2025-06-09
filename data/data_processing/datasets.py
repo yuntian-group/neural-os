@@ -659,7 +659,11 @@ class DataModule(pl.LightningDataModule):
         
         # Use balanced epoch sampler
         if self.use_balanced_sampling:
+            epoch = 0
+            if hasattr(self, 'train_sampler'):
+                epoch = self.train_sampler.epoch
             sampler = BalancedEpochSampler(dataset, shuffle=True)
+            sampler.epoch = epoch
             self.train_sampler = sampler
         else:
             sampler = None

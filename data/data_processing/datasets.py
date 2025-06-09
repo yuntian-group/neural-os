@@ -655,6 +655,7 @@ class DataModule(pl.LightningDataModule):
                 self.datasets[k] = dataset
 
     def train_dataloader(self):
+        print ('>>>>>>>>>train_dataloader called')
         dataset = self.datasets["train"]
         
         # Use balanced epoch sampler
@@ -662,6 +663,7 @@ class DataModule(pl.LightningDataModule):
             epoch = 0
             if hasattr(self, 'train_sampler'):
                 epoch = self.train_sampler.epoch
+            dataset.check_for_updates()
             sampler = BalancedEpochSampler(dataset, shuffle=True)
             sampler.epoch = epoch
             self.train_sampler = sampler
@@ -701,7 +703,7 @@ class BalancedEpochSampler(torch.utils.data.Sampler):
         self.shuffle = shuffle
         self.seed = seed
         self.epoch = 0
-        
+
         # Initial setup
         self.update_partition_info()
         
@@ -730,10 +732,10 @@ class BalancedEpochSampler(torch.utils.data.Sampler):
         print(f"Cumulative sizes: {self.cumulative_sizes}")
         
         # Check for dataset updates
-        if hasattr(self.dataset, 'check_for_updates') and self.dataset.check_for_updates():
-            print('=======dataset was updated, recalculating partition info')
-            # If dataset was updated, recalculate partition info
-            self.update_partition_info()
+        #if hasattr(self.dataset, 'check_for_updates') and self.dataset.check_for_updates():
+        #    print('=======dataset was updated, recalculating partition info')
+        #    # If dataset was updated, recalculate partition info
+        #    self.update_partition_info()
         
         # Create deterministic generator for this epoch
         g = torch.Generator()

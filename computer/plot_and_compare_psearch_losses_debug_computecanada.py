@@ -228,6 +228,7 @@ if __name__ == "__main__":
         ('newnewd_unfreezernn', 'log.fb.computecanada.challengingandsample.pretrainrnn.balanced.lr5e6.contbest.samplercover.newd.contunfreezernn.newnewd2'),
         ('newnewd_freezernn_origunet_nospatial', 'log.fb.computecanada.challengingandsample.pretrainrnn.balanced.lr5e6.contbest.samplercover.newd.contfreezernn.newnewd.origunet.nospatial2'),
         ('newnewd_unfreezernn_origunet_nospatial', 'log.fb.computecanada.challengingandsample.pretrainrnn.balanced.lr5e6.contbest.samplercover.newd.contunfreezernn.newnewd.origunet.nospatial2'),
+        ('newnewd_unfreezernn_origunet_nospatial_online', 'log.fb.computecanada.challengingandsample.pretrainrnn.balanced.lr5e6.contbest.samplercover.newd.contfreezernn.newnewd.origunet.nospatial2.ONLINE.online'),
     ]
     
     losses_dict = {}

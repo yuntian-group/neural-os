@@ -101,9 +101,11 @@ if __name__ == "__main__":
         ckpt_folder = 'sb_diffusion_freezernn_contfiltered_unfreeze_afterchallenging_newdata_pretrainchallenging_addc_allnew_more_c_alldata_diffusion_c_alldata_joint_noss_4Xb_ss005_cont_lr2e5_context64_b16_computecanada_fsdp_noema_challengingandsample_pretrainrnn'
         ckpt_folder = 'sb_computecanada_fsdp_noema_challengingandsample_pretrainrnn_balanced_lr5e6_contbest_samplercover_newd'
         #ckpt_folder = save_path.rstrip('2')
-        ckpt_folder = save_path.replace('_online', '')
+        #ckpt_folder = save_path.replace('_online', '')
         if save_path.endswith('_online'):
             ckpt_folder = save_path[:-len('_online')]
+        if save_path.endswith('_online_x0'):
+            ckpt_folder = save_path[:-len('_online_x0')]
         if save_path.endswith('_pretrainrnn'):
             ckpt_folder = save_path[:-len('_pretrainrnn')]
 

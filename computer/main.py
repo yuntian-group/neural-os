@@ -114,6 +114,10 @@ if __name__ == "__main__":
             ckpt_folder = save_path[:-len('_online_x0_unfreeze')]
         if save_path.endswith('_online_x0_noorig'):
             ckpt_folder = save_path[:-len('_online_x0_noorig')]
+        if save_path.endswith('_ddpm32'):
+            ckpt_folder = save_path[:-len('_ddpm32')]
+        if save_path.endswith('_ddpm32_eps'):
+            ckpt_folder = save_path[:-len('_ddpm32_eps')]
 
         #ckpt_folder = 'sb_computecanada_fsdp_noema_challengingandsample_pretrainrnn_balanced_lr5e6_contbest_samplercover_newd_contfreezernn_newnewd_origunet_nospatial2'
         ckpt_files = [f for f in os.listdir(ckpt_folder) if f.startswith('model-step=') and f.endswith('.ckpt')]

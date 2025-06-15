@@ -1011,8 +1011,12 @@ class LatentDiffusion(DDPM):
                         # scheduled sampling
                         proposal = random.random()
                         if False and (self.global_step % 20 == 0 and (not self.pretrain)): #proposal < self.scheduled_sampling_rate:
-                            print ('scheduled sampling')
-                            sampler = DDIMSampler(self)
+                            if self.scheduled_sampling_ddim_steps >= self.timesteps:
+                                print ('scheduled sampling with ddpm sampler')
+                                sampler = self
+                            else:
+                                print ('scheduled sampling with ddim sampler')
+                                sampler = DDIMSampler(self)
                         else:
                             sampler = None
                         per_channel_mean = self.trainer.datamodule.datasets['train'].per_channel_mean.to(self.device)

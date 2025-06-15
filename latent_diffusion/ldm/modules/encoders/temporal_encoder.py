@@ -294,11 +294,16 @@ class TemporalEncoder(nn.Module):
                         kernel = torch.exp(-((x_grid - (x_prev/8.0).view(-1, 1, 1))**2 + (y_grid - (y_prev/8.0).view(-1, 1, 1))**2) / (2 * sigma**2)).unsqueeze(1)
                         output = torch.cat([output[:, :-1], kernel], dim=1)
                         c_dict = {'c_concat': output}
-                        samples_ddim, _ = sampler.sample(S=scheduled_sampling_ddim_steps,
-                                                conditioning=c_dict,
-                                                batch_size=batch_size,
-                                                shape=[self.input_channels, self.output_height, self.output_width],
-                                                verbose=False,)
+                        if hasattr(sampler, 'p_sample_loop'):
+                            print ('p_sample_loop')
+                            samples_ddim = sampler.p_sample_loop(cond=c_dict, shape=[1, self.input_channels, self.output_height, self.output_width], return_intermediates=False, verbose=True)
+                        else:
+                            print ('ddim sampling loop')
+                            samples_ddim, _ = sampler.sample(S=scheduled_sampling_ddim_steps,
+                                                    conditioning=c_dict,
+                                                    batch_size=batch_size,
+                                                    shape=[self.input_channels, self.output_height, self.output_width],
+                                                    verbose=False,)
                         # only apply sampling mask where is_padding is False
                         # save images for debugging
                         if DEBUG:

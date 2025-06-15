@@ -216,6 +216,12 @@ class DDIMSampler(object):
 
         # current prediction for x_0
         pred_x0 = (x - sqrt_one_minus_at * e_t) / a_t.sqrt()
+        # ADDED
+        if self.model.parameterization == 'x0':
+            print ('ddim x0 latent-diffusion/ldm/models/diffusion/ddim.py')
+            pred_x0 = e_t
+            e_t = (x - a_t.sqrt() * pred_x0) / sqrt_one_minus_at
+        # ADDED
         if quantize_denoised:
             pred_x0, _, *_ = self.model.first_stage_model.quantize(pred_x0)
         # direction pointing to x_t

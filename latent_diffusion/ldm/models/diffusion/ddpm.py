@@ -110,6 +110,7 @@ class DDPM(pl.LightningModule):
         self.v_posterior = v_posterior
         self.original_elbo_weight = original_elbo_weight
         self.l_simple_weight = l_simple_weight
+        self.timesteps = timesteps
 
         if monitor is not None:
             self.monitor = monitor

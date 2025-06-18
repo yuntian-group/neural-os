@@ -9,7 +9,7 @@
 #SBATCH --mem=0
 #SBATCH --exclusive
 #SBATCH --gres=gpu:h100:8
-#SBATCH --time=7-00:00:00
+#SBATCH --time=3-00:00:00
 
 source ~/.bashrc
 

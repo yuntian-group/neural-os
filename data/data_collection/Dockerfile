@@ -48,6 +48,10 @@ COPY background.png /usr/share/backgrounds/xfce/
 WORKDIR /app
 ENV PYTHONPATH=/app
 
+# Icon positions
+RUN mkdir -p /root/.config/xfce4/desktop
+COPY icons.screen.latest.rc /root/.config/xfce4/desktop/
+
 RUN chmod +x /app/start.sh
 #
 CMD ["/app/start.sh"]

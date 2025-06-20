@@ -500,6 +500,9 @@ class ActionsData(Dataset):
                     samples_dict = {}
                     
                     # Open the tar file and read all samples
+                    while not os.path.exists(tar_path):
+                        print(f"Error loading {tar_path}")
+                        time.sleep(10)
                     dataset = wds.WebDataset(tar_path, workersplitter=lambda urls: urls, nodesplitter=lambda urls: urls).decode()
                     for sample in dataset:
                         # Store each sample in our dictionary, keyed by __key__

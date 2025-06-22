@@ -503,10 +503,17 @@ class ActionsData(Dataset):
                     while not os.path.exists(tar_path):
                         print(f"Error loading {tar_path}")
                         time.sleep(10)
-                    dataset = wds.WebDataset(tar_path, workersplitter=lambda urls: urls, nodesplitter=lambda urls: urls).decode()
-                    for sample in dataset:
-                        # Store each sample in our dictionary, keyed by __key__
-                        samples_dict[sample["__key__"]] = sample["npy"]
+                    tar_loaded = False
+                    while not tar_loaded:
+                        try:
+                            dataset = wds.WebDataset(tar_path, workersplitter=lambda urls: urls, nodesplitter=lambda urls: urls).decode()
+                            for sample in dataset:
+                                # Store each sample in our dictionary, keyed by __key__
+                                samples_dict[sample["__key__"]] = sample["npy"]
+                            tar_loaded = True
+                        except Exception as e:
+                            print(f"Error loading {tar_path}: {e}")
+                            time.sleep(10)
                     
                     # Cache the dictionary instead of the WebDataset object
                     local_tar_cache[tar_path] = samples_dict

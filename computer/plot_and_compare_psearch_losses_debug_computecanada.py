@@ -242,6 +242,8 @@ if __name__ == "__main__":
         ('joint_onlineonly_eps22', 'log.fb.computecanada.challengingandsample.pretrainrnn.balanced.lr5e6.contbest.samplercover.newd.contfreezernn.newnewd.origunet.nospatial2.ONLINE.online.online.x0.joint_onlineonly.eps.2.2.2'),
         ('joint_onlineonly_x02222', 'log.fb.computecanada.challengingandsample.pretrainrnn.balanced.lr5e6.contbest.samplercover.newd.contfreezernn.newnewd.origunet.nospatial2.ONLINE.online.online.x0.joint_onlineonly.2.2.2.2'),
         ('joint_onlineonly_eps2222', 'log.fb.computecanada.challengingandsample.pretrainrnn.balanced.lr5e6.contbest.samplercover.newd.contfreezernn.newnewd.origunet.nospatial2.ONLINE.online.online.x0.joint_onlineonly.eps.2.2.2.2'),
+        ('joint_onlineonly_x022223', 'log.fb.computecanada.challengingandsample.pretrainrnn.balanced.lr5e6.contbest.samplercover.newd.contfreezernn.newnewd.origunet.nospatial2.ONLINE.online.online.x0.joint_onlineonly.2.2.2.2.3'),
+        ('joint_onlineonly_eps22223', 'log.fb.computecanada.challengingandsample.pretrainrnn.balanced.lr5e6.contbest.samplercover.newd.contfreezernn.newnewd.origunet.nospatial2.ONLINE.online.online.x0.joint_onlineonly.eps.2.2.2.2.3'),
     ]
     
     losses_dict = {}

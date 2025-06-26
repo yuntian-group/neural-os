@@ -9,7 +9,7 @@
 #SBATCH --mem=0
 #SBATCH --exclusive
 #SBATCH --gres=gpu:h100:8
-#SBATCH --time=3-00:00:00
+#SBATCH --time=7-00:00:00
 
 source ~/.bashrc
 
@@ -22,4 +22,4 @@ export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True,max_split_size_mb:512
 
 nvidia-smi
 
-python main.py --config configs/fb_computecanada_challengingandsample_pretrainrnn_balanced_lr5e6_contbest_samplercover_newd_contfreezernn_newnewd_origunet_nospatial_online_x0_joint_onlineonly.yaml > log.fb.computecanada.challengingandsample.pretrainrnn.balanced.lr5e6.contbest.samplercover.newd.contfreezernn.newnewd.origunet.nospatial2.ONLINE.online.online.x0.joint_onlineonly.2.2.2.2.3.2 2>&1
+python main.py --config configs/fb_computecanada_challengingandsample_pretrainrnn_balanced_lr5e6_contbest_samplercover_newd_contfreezernn_newnewd_origunet_nospatial_online_x0_joint_onlineonly_eps_7.yaml > log.fb.computecanada.challengingandsample.pretrainrnn.balanced.lr5e6.contbest.samplercover.newd.contfreezernn.newnewd.origunet.nospatial2.ONLINE.online.online.x0.joint_onlineonly.eps.2.2.2.2.3.7 2>&1

@@ -1,10 +1,10 @@
-save_path: ./sb_computecanada_fsdp_noema_challengingandsample_pretrainrnn_balanced_lr5e6_contbest_samplercover_newd_contfreezernn_newnewd_origunet_nospatial2_ONLINE_online_online_x0_joint_onlineonly222222
+save_path: ./sb_computecanada_fsdp_noema_challengingandsample_pretrainrnn_balanced_lr5e6_contbest_samplercover_newd_contfreezernn_newnewd_origunet_nospatial2_ONLINE_online_online_x0_joint_onlineonly_eps222222
 
 model:
   base_learning_rate: 5e-06
   target: latent_diffusion.ldm.models.diffusion.ddpm.LatentDiffusion
   params:
-    parameterization: x0
+    parameterization: eps
     use_ema: false
     pretrain: false
     freezernn: false

@@ -124,6 +124,8 @@ if __name__ == "__main__":
             ckpt_folder = save_path[:-len('_joint_onlineonly_eps')]
         if save_path.endswith('2'):
             ckpt_folder = save_path[:-len('2')]
+        if save_path.endswith('7'):
+            ckpt_folder = save_path[:-len('7')]
 
         #ckpt_folder = 'sb_computecanada_fsdp_noema_challengingandsample_pretrainrnn_balanced_lr5e6_contbest_samplercover_newd_contfreezernn_newnewd_origunet_nospatial2'
         ckpt_files = [f for f in os.listdir(ckpt_folder) if f.startswith('model-step=') and f.endswith('.ckpt')]

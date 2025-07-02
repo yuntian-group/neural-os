@@ -2,6 +2,10 @@
 
 This repository contains the code for reproducing **NeuralOS**, a neural framework that simulates graphical user interfaces (GUIs) of operating systems by directly predicting screen frames from user inputs.
 
+## Online Demo
+
+Available at [https://neural-os.com/](https://neural-os.com/)
+
 ## Abstract
 
 We introduce NeuralOS, a neural framework that simulates graphical user interfaces (GUIs) of operating systems by directly predicting screen frames from user inputs such as mouse movements, clicks, and keyboard events. NeuralOS combines a recurrent neural network (RNN), which tracks computer state, with a diffusion-based neural renderer that generates desktop images. The model is trained on a large-scale dataset of Ubuntu XFCE recordings, which include both randomly generated interactions and realistic interactions produced by AI agents. Our experiments demonstrate that NeuralOS successfully renders realistic GUI sequences, accurately captures mouse interactions, and reliably predicts state transitions like application launches. Although precisely modeling fine-grained keyboard interactions remains challenging, NeuralOS offers a step toward creating fully adaptive, generative neural interfaces for future human-computer interaction systems.
@@ -12,7 +16,6 @@ This repository is based on the [Latent Diffusion Models](https://github.com/Com
 
 ## Repository Structure
 
-- **Online Demo**: Available at [https://neural-os.com/](https://neural-os.com/)
 - **`data/`**: Code for generating and processing training data
 - **`autoencoder/`**: Code for training the autoencoder to reduce image resolution
 - **`computer/`**: Code for training the main NeuralOS model

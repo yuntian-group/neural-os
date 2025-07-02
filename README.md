@@ -4,7 +4,7 @@ This repository contains the code for reproducing **NeuralOS**, a neural framewo
 
 ## Online Demo
 
-Available at [https://neural-os.com/](https://neural-os.com/)
+Try our demo at [https://neural-os.com/](https://neural-os.com/)!
 
 ## Abstract
 

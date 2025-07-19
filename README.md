@@ -122,9 +122,11 @@ This research was supported by Compute Canada through the Resources for Research
 If you use this code in your research, please cite our paper:
 
 ```
-@article{neuralOS2025,
+@article{rivard2025neuralos,
   title={NeuralOS: Towards Simulating Operating Systems via Neural Generative Models},
-  author={Luke Rivard and Sun Sun and Hongyu Guo and Wenhu Chen and Yuntian Deng},
+  author={Rivard, Luke and Sun, Sun and Guo, Hongyu and Chen, Wenhu and Deng, Yuntian},
+  journal={arXiv preprint arXiv:2507.08800},
   year={2025}
 }
+
 ```

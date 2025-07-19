@@ -471,6 +471,23 @@ class ActionsData(Dataset):
                 #actions.append('N N N N N N : N N N N N')
             else:
                 # Use actual image and look up action
+                while (record_num, frame_num) not in mapping_dict:
+                    print(f"No action found for record {record_num} and frame {frame_num}")
+                    mapping_dict_path = os.path.join(base_dir, f'image_action_mapping_with_key_states.pkl')
+                    print(f"Reloading mapping dict for {mapping_dict_path}")
+                    while True:
+                        try:
+                            with open(mapping_dict_path, 'rb') as f:
+                                print (f"Updating instance-specific lists for {mapping_dict_path}")
+                                print (f"size before: {len(self.mapping_dicts[data_partition])}")
+                                self.mapping_dicts[data_partition] = pickle.load(f)
+                                mapping_dict = self.mapping_dicts[data_partition]
+                                print (f"size after: {len(self.mapping_dicts[data_partition])}")
+                            break
+                        except Exception as e:
+                            print(f"Error loading {mapping_dict_path}: {e}")
+                            time.sleep(10)
+                    time.sleep(10)
                 assert (record_num, frame_num) in mapping_dict, f"No action found for record {record_num} and frame {frame_num}"
                 x, y, left_click, right_click, key_events = mapping_dict.get((record_num, frame_num))
                 #actions.append(self.mapping_dict.get((record_num, frame_num), 'N N N N N N : N N N N N'))

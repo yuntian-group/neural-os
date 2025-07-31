@@ -54,6 +54,9 @@ MODEL_NAME = "yuntian-deng/computer-model-s-newnewd-freezernn-origunet-nospatial
 MODEL_NAME = "yuntian-deng/computer-model-s-newnewd-freezernn-origunet-nospatial-online-x0-joint-oo-eps222222k7-270k"
 MODEL_NAME = "yuntian-deng/computer-model-s-newnewd-freezernn-origunet-nospatial-online-x0-joint-oo-eps222222k72-270k" # wrong name, should be 050k
 MODEL_NAME = "yuntian-deng/computer-model-s-newnewd-freezernn-origunet-nospatial-online-x0-joint-onlineonly-222222k72-108k"
+MODEL_NAME = "yuntian-deng/computer-model-s-x0-onlineonly-222222k72222-62k"
+MODEL_NAME = "yuntian-deng/computer-model-s-x0-onlineonly-222222k722222-60k"
+MODEL_NAME = "yuntian-deng/computer-model-s-x0-onlineonly-222222k722222-88k"
 
 LOCAL_CHECKPOINT_PATH = "test_15_no_deltas_1000_paths/model_test_15_no_deltas_1000_paths.ckpt"
 LOCAL_CHECKPOINT_PATH = "oct27_test_15_no_deltas_1000_paths/model_test_15_no_deltas_1000_paths.ckpt"
@@ -144,6 +147,10 @@ LOCAL_CHECKPOINT_PATH = "./sb_computecanada_fsdp_noema_challengingandsample_pret
 LOCAL_CHECKPOINT_PATH = "./sb_computecanada_fsdp_noema_challengingandsample_pretrainrnn_balanced_lr5e6_contbest_samplercover_newd_contfreezernn_newnewd_origunet_nospatial2_ONLINE_online_online_x0_joint_onlineonly_eps222222k7/model-step=270000.ckpt"
 LOCAL_CHECKPOINT_PATH = "./sb_computecanada_fsdp_noema_challengingandsample_pretrainrnn_balanced_lr5e6_contbest_samplercover_newd_contfreezernn_newnewd_origunet_nospatial2_ONLINE_online_online_x0_joint_onlineonly_eps222222k72/model-step=050000.ckpt"
 LOCAL_CHECKPOINT_PATH = "./sb_computecanada_fsdp_noema_challengingandsample_pretrainrnn_balanced_lr5e6_contbest_samplercover_newd_contfreezernn_newnewd_origunet_nospatial2_ONLINE_online_online_x0_joint_onlineonly222222k72/model-step=108000.ckpt"
+LOCAL_CHECKPOINT_PATH = "./sb_computecanada_fsdp_noema_challengingandsample_pretrainrnn_balanced_lr5e6_contbest_samplercover_newd_contfreezernn_newnewd_origunet_nospatial2_ONLINE_online_online_x0_joint_onlineonly222222k72222/model-step=062000.ckpt"
+LOCAL_CHECKPOINT_PATH = "./sb_computecanada_fsdp_noema_challengingandsample_pretrainrnn_balanced_lr5e6_contbest_samplercover_newd_contfreezernn_newnewd_origunet_nospatial2_ONLINE_online_online_x0_joint_onlineonly222222k722222/model-step=042000.ckpt"
+LOCAL_CHECKPOINT_PATH = "./sb_computecanada_fsdp_noema_challengingandsample_pretrainrnn_balanced_lr5e6_contbest_samplercover_newd_contfreezernn_newnewd_origunet_nospatial2_ONLINE_online_online_x0_joint_onlineonly222222k722222/model-step=060000.ckpt"
+LOCAL_CHECKPOINT_PATH = "./sb_computecanada_fsdp_noema_challengingandsample_pretrainrnn_balanced_lr5e6_contbest_samplercover_newd_contfreezernn_newnewd_origunet_nospatial2_ONLINE_online_online_x0_joint_onlineonly222222k722222/model-step=088000.ckpt"
 CONFIG_PATH = "config_csllm.yaml"
 CONFIG_PATH = "configs/2e5_debug_gpt_firstframe.yaml"
 CONFIG_PATH = "configs/2e5_debug_gpt_firstframe_identity.yaml"

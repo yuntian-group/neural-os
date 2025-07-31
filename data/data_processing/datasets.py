@@ -31,6 +31,13 @@ from collections import OrderedDict
 import os.path
 import time
 
+SCREEN_WIDTH = 512
+SCREEN_HEIGHT = 384
+
+print ('-'*10)
+print ('screen resolution:')
+print (SCREEN_WIDTH, SCREEN_HEIGHT)
+print ('-'*10)
 #device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
 def parse_action_string(action_str):
@@ -590,6 +597,8 @@ class ActionsData(Dataset):
             #position_map, leftclick_map = create_position_and_click_map((x,y), action_type)
             #example[f"position_map_{j}"] = position_map
             #example[f"leftclick_map_{j}"] = leftclick_map
+            x = min(max(0, x), SCREEN_WIDTH - 1) if x is not None else 0
+            y = min(max(0, y), SCREEN_HEIGHT - 1) if y is not None else 0
             example[f"x_{j}"] = torch.LongTensor([x if x is not None else 0])
             example[f"y_{j}"] = torch.LongTensor([y if y is not None else 0])
             example[f"is_leftclick_{j}"] = torch.BoolTensor([left_click])
@@ -602,6 +611,8 @@ class ActionsData(Dataset):
 
         for j in range(-1, -(self.context_length + 1), -1):
             x, y, left_click, right_click, key_events = actions[j+self.context_length]
+            x = min(max(0, x), SCREEN_WIDTH - 1) if x is not None else 0
+            y = min(max(0, y), SCREEN_HEIGHT - 1) if y is not None else 0
             #position_map, leftclick_map = create_position_and_click_map((x,y), action_type)
             #example[f"position_map_{j}"] = position_map
             #example[f"leftclick_map_{j}"] = leftclick_map

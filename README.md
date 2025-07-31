@@ -109,6 +109,10 @@ python upload_model.py
 
 **Important**: Set model names and checkpoint paths correctly before running.
 
+### 7. Demo Deployment
+
+The code for deploying the demo (using a dispatcher-worker architecture which allows for serving multiple GPUs even across machines) can be found at [github.com/yuntian-group/neuralos-demo](https://github.com/yuntian-group/neuralos-demo).
+
 ## Acknowledgments
 
 This research was supported by Compute Canada through the Resources for Research Groups (RRG) 2025 competition, awarded to Yuntian Deng (RRG No. 5275), and was also partially supported by collaborative research funding from the National Research Council of Canada's Artificial Intelligence for Design Program (AI4D-150). Additionally, Yuntian Deng acknowledges support from an NSERC Discovery Grant (RGPIN-2024-05178) and a Starter Grant provided by the University of Waterloo.
@@ -118,9 +122,11 @@ This research was supported by Compute Canada through the Resources for Research
 If you use this code in your research, please cite our paper:
 
 ```
-@article{neuralOS2025,
+@article{rivard2025neuralos,
   title={NeuralOS: Towards Simulating Operating Systems via Neural Generative Models},
-  author={Luke Rivard and Sun Sun and Hongyu Guo and Wenhu Chen and Yuntian Deng},
+  author={Rivard, Luke and Sun, Sun and Guo, Hongyu and Chen, Wenhu and Deng, Yuntian},
+  journal={arXiv preprint arXiv:2507.08800},
   year={2025}
 }
+
 ```

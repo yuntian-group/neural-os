@@ -10,6 +10,14 @@ import re
 import argparse
 #torch.set_float32_matmul_precision('highest')
 torch.set_float32_matmul_precision('high')
+import os, torch
+print("CUDA_VISIBLE_DEVICES =", os.getenv("CUDA_VISIBLE_DEVICES"))
+print("torch.cuda.device_count() =", torch.cuda.device_count())
+print("SLURM_NTASKS =", os.getenv("SLURM_NTASKS"))
+print("SLURM_TASKS_PER_NODE =", os.getenv("SLURM_TASKS_PER_NODE"))
+print("LOCAL_RANK =", os.getenv("LOCAL_RANK"))
+print("WORLD_SIZE =", os.getenv("WORLD_SIZE"))
+
 
 #save_path = 'test_15_no_deltas_1000_paths'
 
@@ -126,6 +134,10 @@ if __name__ == "__main__":
             ckpt_folder = save_path[:-len('2')]
         if save_path.endswith('7'):
             ckpt_folder = save_path[:-len('7')]
+        if save_path.endswith('n'):
+            ckpt_folder = save_path[:-len('n')]
+        if save_path.endswith('l'):
+            ckpt_folder = save_path[:-len('l')]
 
         #ckpt_folder = 'sb_computecanada_fsdp_noema_challengingandsample_pretrainrnn_balanced_lr5e6_contbest_samplercover_newd_contfreezernn_newnewd_origunet_nospatial2'
         ckpt_files = [f for f in os.listdir(ckpt_folder) if f.startswith('model-step=') and f.endswith('.ckpt')]

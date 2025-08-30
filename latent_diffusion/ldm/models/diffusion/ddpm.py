@@ -531,6 +531,11 @@ class LatentDiffusion(DDPM):
         self.distill_loss_weight_x0 = float(self.distill_params.get('loss_weight_x0', 1.0))
         self.distill_loss_weight_step = float(self.distill_params.get('loss_weight_step', 1.0))
         self.distill_only = bool(self.distill_params.get('distill_only', True))
+        # Debug saving options
+        self.distill_debug = bool(self.distill_params.get('debug_save', False))
+        self.distill_debug_dir = str(self.distill_params.get('debug_dir', 'distill_debug'))
+        self.distill_debug_every = int(self.distill_params.get('debug_every', 500))
+        self.distill_debug_n = int(self.distill_params.get('debug_n', 4))
         assert self.num_timesteps_cond <= kwargs['timesteps']
         # for backwards compatibility after implementation of DiffusionWrapper
         if conditioning_key is None:
@@ -708,6 +713,44 @@ class LatentDiffusion(DDPM):
             'train/distill_loss_step': loss_step.detach(),
             'train/distill_loss': loss.detach()
         }
+
+        # Optional debug image saving
+        if self.distill_debug and (getattr(self, 'global_step', 0) % max(self.distill_debug_every, 1) == 0):
+            try:
+                # rank guard
+                is_rank0 = True
+                try:
+                    is_rank0 = (self.global_rank == 0)
+                except Exception:
+                    pass
+                if is_rank0:
+                    os.makedirs(self.distill_debug_dir, exist_ok=True)
+                    n = min(self.distill_debug_n, b)
+                    with torch.no_grad():
+                        # decode a subset to images in [-1,1]
+                        def decode_to_img(z):
+                            x_dec = self.decode_first_stage(z)
+                            x_dec = torch.clamp((x_dec + 1.0) / 2.0, 0.0, 1.0)
+                            return x_dec
+                        # pick subset
+                        idx = slice(0, n)
+                        imgs = {
+                            'gt_x0': decode_to_img(x0[idx]),
+                            'student_pred_x0': decode_to_img(student_pred_x0[idx]),
+                            'teacher_pred_x0': decode_to_img(teacher_pred_x0[idx]),
+                            'student_x_prev': decode_to_img(x_prev_student[idx]),
+                            'teacher_two_step': decode_to_img(x_teacher_two[idx]),
+                        }
+                        # save grids
+                        from torchvision.utils import save_image, make_grid as _make_grid
+                        step = int(getattr(self, 'global_step', 0))
+                        for name, tensor in imgs.items():
+                            grid = _make_grid(tensor, nrow=min(n, 4))
+                            save_path = os.path.join(self.distill_debug_dir, f"step_{step}_{name}.png")
+                            save_image(grid, save_path)
+            except Exception as e:
+                print(f"[distill_debug] failed to save images: {e}")
+
         return loss, loss_dict
 
     def make_cond_schedule(self, ):

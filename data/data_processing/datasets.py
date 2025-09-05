@@ -31,6 +31,13 @@ from collections import OrderedDict
 import os.path
 import time
 
+SCREEN_WIDTH = 512
+SCREEN_HEIGHT = 384
+
+print ('-'*10)
+print ('screen resolution:')
+print (SCREEN_WIDTH, SCREEN_HEIGHT)
+print ('-'*10)
 #device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
 def parse_action_string(action_str):
@@ -471,6 +478,23 @@ class ActionsData(Dataset):
                 #actions.append('N N N N N N : N N N N N')
             else:
                 # Use actual image and look up action
+                while (record_num, frame_num) not in mapping_dict:
+                    print(f"No action found for record {record_num} and frame {frame_num}")
+                    mapping_dict_path = os.path.join(base_dir, f'image_action_mapping_with_key_states.pkl')
+                    print(f"Reloading mapping dict for {mapping_dict_path}")
+                    while True:
+                        try:
+                            with open(mapping_dict_path, 'rb') as f:
+                                print (f"Updating instance-specific lists for {mapping_dict_path}")
+                                print (f"size before: {len(self.mapping_dicts[data_partition])}")
+                                self.mapping_dicts[data_partition] = pickle.load(f)
+                                mapping_dict = self.mapping_dicts[data_partition]
+                                print (f"size after: {len(self.mapping_dicts[data_partition])}")
+                            break
+                        except Exception as e:
+                            print(f"Error loading {mapping_dict_path}: {e}")
+                            time.sleep(10)
+                    time.sleep(10)
                 assert (record_num, frame_num) in mapping_dict, f"No action found for record {record_num} and frame {frame_num}"
                 x, y, left_click, right_click, key_events = mapping_dict.get((record_num, frame_num))
                 #actions.append(self.mapping_dict.get((record_num, frame_num), 'N N N N N N : N N N N N'))
@@ -573,6 +597,8 @@ class ActionsData(Dataset):
             #position_map, leftclick_map = create_position_and_click_map((x,y), action_type)
             #example[f"position_map_{j}"] = position_map
             #example[f"leftclick_map_{j}"] = leftclick_map
+            x = min(max(0, x), SCREEN_WIDTH - 1) if x is not None else 0
+            y = min(max(0, y), SCREEN_HEIGHT - 1) if y is not None else 0
             example[f"x_{j}"] = torch.LongTensor([x if x is not None else 0])
             example[f"y_{j}"] = torch.LongTensor([y if y is not None else 0])
             example[f"is_leftclick_{j}"] = torch.BoolTensor([left_click])
@@ -585,6 +611,8 @@ class ActionsData(Dataset):
 
         for j in range(-1, -(self.context_length + 1), -1):
             x, y, left_click, right_click, key_events = actions[j+self.context_length]
+            x = min(max(0, x), SCREEN_WIDTH - 1) if x is not None else 0
+            y = min(max(0, y), SCREEN_HEIGHT - 1) if y is not None else 0
             #position_map, leftclick_map = create_position_and_click_map((x,y), action_type)
             #example[f"position_map_{j}"] = position_map
             #example[f"leftclick_map_{j}"] = leftclick_map

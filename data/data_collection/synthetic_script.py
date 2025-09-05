@@ -1,7 +1,7 @@
 import subprocess
 import os
 import time
-from synthetic_mouse_path import generate_multiple_trajectories
+from .synthetic_mouse_path import generate_multiple_trajectories
 import numpy as np
 import multiprocessing
 from functools import partial

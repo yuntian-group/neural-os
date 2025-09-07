@@ -527,7 +527,6 @@ class LatentDiffusion(DDPM):
         self.distill_params = distill_params or {}
         self.distill_teacher_steps = int(self.distill_params.get('teacher_steps', 16))
         self.distill_student_steps = int(self.distill_params.get('student_steps', 8))
-        self.distill_eta = float(self.distill_params.get('eta', 0.0))
         self.distill_loss_weight_x0 = float(self.distill_params.get('loss_weight_x0', 1.0))
         self.distill_loss_weight_step = float(self.distill_params.get('loss_weight_step', 1.0))
         self.distill_only = bool(self.distill_params.get('distill_only', True))
@@ -633,76 +632,77 @@ class LatentDiffusion(DDPM):
     # === Progressive distillation loss (teacher DDIM S=teacher_steps → student S=student_steps) ===
     def compute_progressive_distill_loss(self, x0, c):
         """
-        Trains the student (current model) to match a 16-step DDIM teacher at the coarser 8-step schedule.
+        Trains the student (current model) to match a 16-step DDIM teacher at a coarser schedule, per-example.
         Uses x0 parameterization: match pred_x0 at the coarse step and one-step update to teacher's two-step result.
         """
         assert self.parameterization == 'x0', "Progressive distillation currently implemented for x0 parametrization"
         b = x0.shape[0]
         device = x0.device
 
-        # Build schedules
+        # Build schedules from a fixed base (progressivedistillation_64)
         teacher_sampler = DDIMSampler(self)
-        teacher_sampler.make_schedule(ddim_num_steps=self.distill_teacher_steps, ddim_eta=self.distill_eta, verbose=False)
+        teacher_sampler.make_schedule(ddim_num_steps=self.distill_teacher_steps, ddim_discretize="progressivedistillation_64", ddim_eta=0.0, verbose=False)
         student_sampler = DDIMSampler(self)
-        student_sampler.make_schedule(ddim_num_steps=self.distill_student_steps, ddim_eta=self.distill_eta, verbose=False)
+        student_sampler.make_schedule(ddim_num_steps=self.distill_student_steps, ddim_discretize="progressivedistillation_64", ddim_eta=0.0, verbose=False)
 
         total_student = int(student_sampler.ddim_timesteps.shape[0])
-        # choose a valid student step index i >= 1 (has a previous step)
-        i = int(torch.randint(low=1, high=total_student, size=(1,), device=device).item())
+        # choose a valid student step index per example, i_e >= 1 (has a previous step)
+        i_vec = torch.randint(low=1, high=total_student, size=(b,), device=device)
 
-        # Map student step to actual ddpm timestep
-        t_ddpm_student = int(student_sampler.ddim_timesteps[i].item())
-        ts = torch.full((b,), t_ddpm_student, device=device, dtype=torch.long)
+        # Map student step to actual ddpm timestep per example
+        t_student_vec = student_sampler.ddim_timesteps[i_vec].to(device)
+        ts = t_student_vec.long()  # [b]
 
         # Construct x_t via forward process
         with torch.no_grad():
             noise = torch.randn_like(x0)
             x_t = self.q_sample(x_start=x0, t=ts, noise=noise)
 
-        # Teacher predictions at this step and two teacher steps update
-        with self.ema_scope("Teacher EMA for distillation"):
-            with torch.no_grad():
-                # teacher pred_x0 at coarse step (x0 parameterization)
-                teacher_pred_x0 = self.apply_model(x_t, ts, c).detach()
-                teacher_ddim_timesteps = teacher_sampler.ddim_timesteps
-                # find teacher index j corresponding to t_ddpm_student
-                matches = (teacher_ddim_timesteps == t_ddpm_student).nonzero(as_tuple=False)
-                if matches.numel() == 0:
-                    diffs = (teacher_ddim_timesteps - t_ddpm_student).abs()
-                    j = int(torch.argmin(diffs).item())
-                else:
-                    j = int(matches[0].item())
-                # j -> j-1
-                x_tmp, _ = teacher_sampler.p_sample_ddim(
-                    x_t, c, ts, index=j, use_original_steps=False,
-                    quantize_denoised=False, temperature=1.0, noise_dropout=0.0,
-                    unconditional_guidance_scale=1.0, unconditional_conditioning=None
-                )
-                # j-1 -> j-2 (guard lower bound)
-                j_minus_1 = max(j - 1, 0)
-                ts2 = torch.full((b,), int(teacher_ddim_timesteps[j_minus_1].item()), device=device, dtype=torch.long)
-                x_teacher_two, _ = teacher_sampler.p_sample_ddim(
-                    x_tmp, c, ts2, index=j_minus_1, use_original_steps=False,
-                    quantize_denoised=False, temperature=1.0, noise_dropout=0.0,
-                    unconditional_guidance_scale=1.0, unconditional_conditioning=None
-                )
-                x_teacher_two = x_teacher_two.detach()
+        # Teacher predictions at this step and two teacher steps update (vectorized)
+        #with self.ema_scope("Teacher EMA for distillation"):
+        with torch.no_grad():
+            # teacher pred_x0 at coarse step (x0 parameterization)
+            teacher_pred_x0 = self.apply_model(x_t, ts, c).detach()
 
-        # Student pred_x0 at same coarse step
+            # find exact teacher index j per example (schedules share the same base; must match exactly)
+            teacher_ts = teacher_sampler.ddim_timesteps.to(device)  # [S_teacher]
+            eq = (teacher_ts.view(1, -1) == ts.view(-1, 1))
+            assert eq.any(dim=1).all(), "Each student timestep must exactly match a teacher timestep"
+            assert (eq.sum(dim=1) == 1).all(), "Student timestep should match exactly one teacher timestep"
+            j_idx = torch.argmax(eq.to(torch.int64), dim=1)  # [b]
+            assert (j_idx >= 1).all(), "j_idx must be >= 1 to allow two teacher steps"
+            j_prev = j_idx - 1
+
+            # gather schedule values per example for j
+            a_t_teacher = teacher_sampler.ddim_alphas[j_idx].view(b, 1, 1, 1)
+            a_prev_teacher = teacher_sampler.ddim_alphas_prev[j_idx].view(b, 1, 1, 1)
+            sqrt_one_minus_a_t_teacher = teacher_sampler.ddim_sqrt_one_minus_alphas[j_idx].view(b, 1, 1, 1)
+
+            # first teacher step: j -> j-1
+            e_t1 = (x_t - a_t_teacher.sqrt() * teacher_pred_x0) / sqrt_one_minus_a_t_teacher
+            dir_xt1 = (1. - a_prev_teacher).sqrt() * e_t1
+            x_tmp = a_prev_teacher.sqrt() * teacher_pred_x0 + dir_xt1
+
+            # second teacher step: (j-1) -> (j-2)
+            ts2 = teacher_ts[j_prev].long()
+            pred_x0_second = self.apply_model(x_tmp, ts2, c).detach()
+            a_t2 = teacher_sampler.ddim_alphas[j_prev].view(b, 1, 1, 1)
+            a_prev2 = teacher_sampler.ddim_alphas_prev[j_prev].view(b, 1, 1, 1)
+            sqrt_one_minus_a_t2 = teacher_sampler.ddim_sqrt_one_minus_alphas[j_prev].view(b, 1, 1, 1)
+            e_t2 = (x_tmp - a_t2.sqrt() * pred_x0_second) / sqrt_one_minus_a_t2
+            dir_xt2 = (1. - a_prev2).sqrt() * e_t2
+            x_teacher_two = a_prev2.sqrt() * pred_x0_second + dir_xt2
+
+        # Student pred_x0 at same per-example coarse steps
         student_pred_x0 = self.apply_model(x_t, ts, c)
 
-        # Compute one-step student update using student schedule (DDIM update)
-        alphas = student_sampler.ddim_alphas
-        alphas_prev = student_sampler.ddim_alphas_prev
-        sqrt_one_minus_alphas = student_sampler.ddim_sqrt_one_minus_alphas
-        sigmas = student_sampler.ddim_sigmas
-        a_t = torch.full((b, 1, 1, 1), float(alphas[i].item()), device=device)
-        a_prev = torch.full((b, 1, 1, 1), float(alphas_prev[i].item()), device=device)
-        sqrt_one_minus_at = torch.full((b, 1, 1, 1), float(sqrt_one_minus_alphas[i].item()), device=device)
-        sigma_t = torch.full((b, 1, 1, 1), float(sigmas[i].item()), device=device)
-        e_t_student = (x_t - a_t.sqrt() * student_pred_x0) / sqrt_one_minus_at
-        dir_xt = (1. - a_prev - sigma_t ** 2).sqrt() * e_t_student
-        x_prev_student = a_prev.sqrt() * student_pred_x0 + dir_xt
+        # One-step student update per example
+        a_t_student = student_sampler.ddim_alphas[i_vec].view(b, 1, 1, 1)
+        a_prev_student = student_sampler.ddim_alphas_prev[i_vec].view(b, 1, 1, 1)
+        sqrt_one_minus_a_t_student = student_sampler.ddim_sqrt_one_minus_alphas[i_vec].view(b, 1, 1, 1)
+        e_student = (x_t - a_t_student.sqrt() * student_pred_x0) / sqrt_one_minus_a_t_student
+        dir_student = (1. - a_prev_student).sqrt() * e_student
+        x_prev_student = a_prev_student.sqrt() * student_pred_x0 + dir_student
 
         # Losses
         loss_x0 = F.mse_loss(student_pred_x0, teacher_pred_x0)

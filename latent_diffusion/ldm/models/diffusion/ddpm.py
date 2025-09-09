@@ -527,8 +527,7 @@ class LatentDiffusion(DDPM):
         self.distill_params = distill_params or {}
         self.distill_teacher_steps = int(self.distill_params.get('teacher_steps', 16))
         self.distill_student_steps = int(self.distill_params.get('student_steps', 8))
-        self.distill_loss_weight_x0 = float(self.distill_params.get('loss_weight_x0', 1.0))
-        self.distill_loss_weight_step = float(self.distill_params.get('loss_weight_step', 1.0))
+        self.distill_loss_weight_x0 = float(self.distill_params.get('loss_weight_x0', 0.0))
         self.distill_only = bool(self.distill_params.get('distill_only', True))
         # Debug saving options
         self.distill_debug = bool(self.distill_params.get('debug_save', False))
@@ -707,7 +706,7 @@ class LatentDiffusion(DDPM):
         # Losses
         loss_x0 = F.mse_loss(student_pred_x0, teacher_pred_x0)
         loss_step = F.mse_loss(x_prev_student, x_teacher_two)
-        loss = self.distill_loss_weight_x0 * loss_x0 + self.distill_loss_weight_step * loss_step
+        loss = self.distill_loss_weight_x0 * loss_x0 + loss_step
         loss_dict = {
             'train/distill_loss_x0': loss_x0.detach(),
             'train/distill_loss_step': loss_step.detach(),

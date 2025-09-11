@@ -49,6 +49,16 @@ def make_ddim_timesteps(ddim_discr_method, num_ddim_timesteps, num_ddpm_timestep
         ddim_timesteps = np.asarray(list(range(0, num_ddpm_timesteps, c)))
     elif ddim_discr_method == 'quad':
         ddim_timesteps = ((np.linspace(0, np.sqrt(num_ddpm_timesteps * .8), num_ddim_timesteps)) ** 2).astype(int)
+    elif isinstance(ddim_discr_method, str) and ddim_discr_method.startswith('progressivedistillation_'):
+        # Base off a fixed 64-step schedule, then downsample to the desired num_ddim_timesteps by uniform subsampling.
+        base_n = int(ddim_discr_method.split('_')[-1])
+        # Compute base 64-step indices using uniform discretization and then +1 offset at the end
+        base_steps = make_ddim_timesteps('uniform', base_n, num_ddpm_timesteps, verbose=False)
+        # Downsample base_steps to requested length
+        assert num_ddim_timesteps <= base_steps.shape[0]
+        # pick uniformly spaced indices over base
+        indices = np.linspace(0, base_steps.shape[0]-1, num_ddim_timesteps).round().astype(int)
+        ddim_timesteps = base_steps[indices] - 1  # convert back to 0-based before +1 below
     else:
         raise NotImplementedError(f'There is no ddim discretization method called "{ddim_discr_method}"')
 

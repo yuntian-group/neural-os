@@ -508,6 +508,9 @@ class LatentDiffusion(DDPM):
                  scale_factor=1.0,
                  scale_by_std=False,
                  hybrid_key=None, #for csllm
+                 # === Progressive distillation params ===
+                 distill_progressive=False,
+                 distill_params=None,
                  *args, **kwargs):
         self.pretrain = pretrain
         self.run_eval = run_eval
@@ -519,6 +522,18 @@ class LatentDiffusion(DDPM):
         self.scheduled_sampling_length = scheduled_sampling_length
         self.scheduled_sampling_ddim_steps = scheduled_sampling_ddim_steps
         self.scale_by_std = scale_by_std
+        # Distillation flags
+        self.distill_progressive = distill_progressive
+        self.distill_params = distill_params or {}
+        self.distill_teacher_steps = int(self.distill_params.get('teacher_steps', 16))
+        self.distill_student_steps = int(self.distill_params.get('student_steps', 8))
+        self.distill_loss_weight_x0 = float(self.distill_params.get('loss_weight_x0', 0.0))
+        self.distill_only = bool(self.distill_params.get('distill_only', True))
+        # Debug saving options
+        self.distill_debug = bool(self.distill_params.get('debug_save', False))
+        self.distill_debug_dir = str(self.distill_params.get('debug_dir', 'distill_debug'))
+        self.distill_debug_every = int(self.distill_params.get('debug_every', 500))
+        self.distill_debug_n = int(self.distill_params.get('debug_n', 4))
         assert self.num_timesteps_cond <= kwargs['timesteps']
         # for backwards compatibility after implementation of DiffusionWrapper
         if conditioning_key is None:
@@ -556,6 +571,11 @@ class LatentDiffusion(DDPM):
         if ckpt_path is not None:
             self.init_from_ckpt(ckpt_path, ignore_keys)
             self.restarted_from_ckpt = True
+
+        # Ensure x0 parameterization when distilling
+        if self.distill_progressive and self.parameterization != 'x0':
+            print('Warning: distill_progressive=True but parameterization!=x0; switching to x0 for distillation')
+            self.parameterization = 'x0'
 
         self.temporal_encoder = None
         if temporal_encoder_config is not None:
@@ -607,6 +627,130 @@ class LatentDiffusion(DDPM):
             print (cluster_centers)
             self.cluster_centers = cluster_centers
             self.cluster_ids = cluster_ids
+
+    # === Progressive distillation loss (teacher DDIM S=teacher_steps → student S=student_steps) ===
+    def compute_progressive_distill_loss(self, x0, c):
+        """
+        Trains the student (current model) to match a 16-step DDIM teacher at a coarser schedule, per-example.
+        Uses x0 parameterization: match pred_x0 at the coarse step and one-step update to teacher's two-step result.
+        """
+        assert self.parameterization == 'x0', "Progressive distillation currently implemented for x0 parametrization"
+        b = x0.shape[0]
+        device = x0.device
+
+        # Build schedules from a fixed base (progressivedistillation_64)
+        teacher_sampler = DDIMSampler(self)
+        teacher_sampler.make_schedule(ddim_num_steps=self.distill_teacher_steps, ddim_discretize="progressivedistillation_64", ddim_eta=0.0, verbose=False)
+        student_sampler = DDIMSampler(self)
+        student_sampler.make_schedule(ddim_num_steps=self.distill_student_steps, ddim_discretize="progressivedistillation_64", ddim_eta=0.0, verbose=False)
+
+        total_student = int(student_sampler.ddim_timesteps.shape[0])
+        # choose a valid student step index per example, i_e >= 1 (has a previous step)
+        i_vec = torch.randint(low=1, high=total_student, size=(b,), device=device)
+
+        # Map student step to actual ddpm timestep per example
+        t_student_vec = student_sampler.ddim_timesteps[i_vec].to(device)
+        ts = t_student_vec.long()  # [b]
+
+        # Construct x_t via forward process
+        with torch.no_grad():
+            noise = torch.randn_like(x0)
+            x_t = self.q_sample(x_start=x0, t=ts, noise=noise)
+
+        # Teacher predictions at this step and two teacher steps update (vectorized)
+        #with self.ema_scope("Teacher EMA for distillation"):
+        with torch.no_grad():
+            # teacher pred_x0 at coarse step (x0 parameterization)
+            teacher_pred_x0 = self.apply_model(x_t, ts, c).detach()
+
+            # find exact teacher index j per example (schedules share the same base; must match exactly)
+            teacher_ts = teacher_sampler.ddim_timesteps.to(device)  # [S_teacher]
+            eq = (teacher_ts.view(1, -1) == ts.view(-1, 1))
+            assert eq.any(dim=1).all(), "Each student timestep must exactly match a teacher timestep"
+            assert (eq.sum(dim=1) == 1).all(), "Student timestep should match exactly one teacher timestep"
+            j_idx = torch.argmax(eq.to(torch.int64), dim=1)  # [b]
+            assert (j_idx >= 1).all(), "j_idx must be >= 1 to allow two teacher steps"
+            j_prev = j_idx - 1
+
+            # gather schedule values per example for j
+            a_t_teacher = teacher_sampler.ddim_alphas[j_idx].view(b, 1, 1, 1)
+            a_prev_teacher = teacher_sampler.ddim_alphas_prev[j_idx].view(b, 1, 1, 1)
+            sqrt_one_minus_a_t_teacher = teacher_sampler.ddim_sqrt_one_minus_alphas[j_idx].view(b, 1, 1, 1)
+
+            # first teacher step: j -> j-1
+            e_t1 = (x_t - a_t_teacher.sqrt() * teacher_pred_x0) / sqrt_one_minus_a_t_teacher
+            dir_xt1 = (1. - a_prev_teacher).sqrt() * e_t1
+            x_tmp = a_prev_teacher.sqrt() * teacher_pred_x0 + dir_xt1
+
+            # second teacher step: (j-1) -> (j-2)
+            ts2 = teacher_ts[j_prev].long()
+            pred_x0_second = self.apply_model(x_tmp, ts2, c).detach()
+            a_t2 = teacher_sampler.ddim_alphas[j_prev].view(b, 1, 1, 1)
+            a_prev2 = teacher_sampler.ddim_alphas_prev[j_prev].view(b, 1, 1, 1)
+            sqrt_one_minus_a_t2 = teacher_sampler.ddim_sqrt_one_minus_alphas[j_prev].view(b, 1, 1, 1)
+            e_t2 = (x_tmp - a_t2.sqrt() * pred_x0_second) / sqrt_one_minus_a_t2
+            dir_xt2 = (1. - a_prev2).sqrt() * e_t2
+            x_teacher_two = a_prev2.sqrt() * pred_x0_second + dir_xt2
+
+        # Student pred_x0 at same per-example coarse steps
+        student_pred_x0 = self.apply_model(x_t, ts, c)
+
+        # One-step student update per example
+        a_t_student = student_sampler.ddim_alphas[i_vec].view(b, 1, 1, 1)
+        a_prev_student = student_sampler.ddim_alphas_prev[i_vec].view(b, 1, 1, 1)
+        sqrt_one_minus_a_t_student = student_sampler.ddim_sqrt_one_minus_alphas[i_vec].view(b, 1, 1, 1)
+        e_student = (x_t - a_t_student.sqrt() * student_pred_x0) / sqrt_one_minus_a_t_student
+        dir_student = (1. - a_prev_student).sqrt() * e_student
+        x_prev_student = a_prev_student.sqrt() * student_pred_x0 + dir_student
+
+        # Losses
+        loss_x0 = F.mse_loss(student_pred_x0, teacher_pred_x0)
+        loss_step = F.mse_loss(x_prev_student, x_teacher_two)
+        loss = self.distill_loss_weight_x0 * loss_x0 + loss_step
+        loss_dict = {
+            'train/distill_loss_x0': loss_x0.detach(),
+            'train/distill_loss_step': loss_step.detach(),
+            'train/distill_loss': loss.detach()
+        }
+
+        # Optional debug image saving
+        if self.distill_debug and (getattr(self, 'global_step', 0) % max(self.distill_debug_every, 1) == 0):
+            try:
+                # rank guard
+                is_rank0 = True
+                try:
+                    is_rank0 = (self.global_rank == 0)
+                except Exception:
+                    pass
+                if is_rank0:
+                    os.makedirs(self.distill_debug_dir, exist_ok=True)
+                    n = min(self.distill_debug_n, b)
+                    with torch.no_grad():
+                        # decode a subset to images in [-1,1]
+                        def decode_to_img(z):
+                            x_dec = self.decode_first_stage(z)
+                            x_dec = torch.clamp((x_dec + 1.0) / 2.0, 0.0, 1.0)
+                            return x_dec
+                        # pick subset
+                        idx = slice(0, n)
+                        imgs = {
+                            'gt_x0': decode_to_img(x0[idx]),
+                            'student_pred_x0': decode_to_img(student_pred_x0[idx]),
+                            'teacher_pred_x0': decode_to_img(teacher_pred_x0[idx]),
+                            'student_x_prev': decode_to_img(x_prev_student[idx]),
+                            'teacher_two_step': decode_to_img(x_teacher_two[idx]),
+                        }
+                        # save grids
+                        from torchvision.utils import save_image, make_grid as _make_grid
+                        step = int(getattr(self, 'global_step', 0))
+                        for name, tensor in imgs.items():
+                            grid = _make_grid(tensor, nrow=min(n, 4))
+                            save_path = os.path.join(self.distill_debug_dir, f"step_{step}_{name}.png")
+                            save_image(grid, save_path)
+            except Exception as e:
+                print(f"[distill_debug] failed to save images: {e}")
+
+        return loss, loss_dict
 
     def make_cond_schedule(self, ):
         self.cond_ids = torch.full(size=(self.num_timesteps,), fill_value=self.num_timesteps - 1, dtype=torch.long)
@@ -1765,7 +1909,19 @@ class LatentDiffusion(DDPM):
                 loss_step = F.mse_loss(x, c['c_concat'][:, -x.shape[1]:])
                 loss = loss_step, {'train/loss': loss_step.item()}
         else:
-            loss = self(x, c)
+            if self.distill_progressive:
+                # Progressive distillation path
+                if self.distill_only:
+                    loss = self.compute_progressive_distill_loss(x, c)
+                else:
+                    base_loss, base_dict = self(x, c)
+                    distill_loss, distill_dict = self.compute_progressive_distill_loss(x, c)
+                    combined = base_loss + distill_loss
+                    base_dict.update({k: v for k, v in distill_dict.items()})
+                    base_dict['train/loss'] = combined
+                    loss = combined, base_dict
+            else:
+                loss = self(x, c)
         return loss
 
     def forward(self, x, c, *args, **kwargs):

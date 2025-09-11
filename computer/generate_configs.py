@@ -165,7 +165,9 @@ def generate_configs(base_config_path, output_dir, num_configs=10, random_sampli
         # If too many combinations, sample a subset
         if len(valid_combinations) > num_configs:
             valid_combinations = random.sample(valid_combinations, num_configs)
-        valid_combinations.append((1024, [2,4,8], [1,2,3,5], 192, 4, 8))
+        #valid_combinations.append((1024, [2,4,8], [1,2,3,5], 192, 4, 8))
+        #valid_combinations = [(1024, [2,4,8], [1,2,3,5], 192, 4, 8)]
+        valid_combinations = [(4096, [2,4,8], [1,2,3,5], 192, 32, 48)]
         
         for i, param_values in enumerate(valid_combinations):
             config = copy.deepcopy(base_config)
@@ -242,9 +244,9 @@ def create_descriptive_filename(base_name, params, param_labels):
 
 def main():
     parser = argparse.ArgumentParser(description='Generate model configuration variants')
-    parser.add_argument('--base-config', default='computer/configs/a.yaml', 
+    parser.add_argument('--base-config', default='configs/a.yaml', 
                         help='Path to the base configuration file')
-    parser.add_argument('--output-dir', default='computer/configs',
+    parser.add_argument('--output-dir', default='configs',
                         help='Directory to save generated configurations')
     parser.add_argument('--num-configs', type=int, default=10000,
                         help='Number of configurations to generate')

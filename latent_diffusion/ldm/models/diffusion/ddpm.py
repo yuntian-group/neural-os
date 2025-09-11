@@ -666,8 +666,7 @@ class LatentDiffusion(DDPM):
 
         # Construct x_t via forward process
         with torch.no_grad():
-            noise = torch.randn_like(x0)
-            x_t = self.q_sample(x_start=x0, t=ts, noise=noise)
+            x_t = self.q_sample(x_start=x0, t=ts)
 
         # Teacher predictions at this step and two teacher steps update (vectorized)
         #with self.ema_scope("Teacher EMA for distillation"):
@@ -698,9 +697,9 @@ class LatentDiffusion(DDPM):
             j_prev = j_idx - 1
 
             # gather schedule values per example for j
-            a_t_teacher = teacher_sampler.ddim_alphas[j_idx].view(b, 1, 1, 1)
-            a_prev_teacher = teacher_sampler.ddim_alphas_prev[j_idx].view(b, 1, 1, 1)
-            sqrt_one_minus_a_t_teacher = teacher_sampler.ddim_sqrt_one_minus_alphas[j_idx].view(b, 1, 1, 1)
+            a_t_teacher = torch.as_tensor(teacher_sampler.ddim_alphas, device=device)[j_idx].view(b, 1, 1, 1)
+            a_prev_teacher = torch.as_tensor(teacher_sampler.ddim_alphas_prev, device=device)[j_idx].view(b, 1, 1, 1)
+            sqrt_one_minus_a_t_teacher = torch.as_tensor(teacher_sampler.ddim_sqrt_one_minus_alphas, device=device)[j_idx].view(b, 1, 1, 1)
 
             # first teacher step: j -> j-1
             e_t1 = (x_t - a_t_teacher.sqrt() * teacher_pred_x0) / sqrt_one_minus_a_t_teacher
@@ -710,9 +709,9 @@ class LatentDiffusion(DDPM):
             # second teacher step: (j-1) -> (j-2)
             ts2 = teacher_ts[j_prev].long()
             pred_x0_second = teacher_apply(x_tmp, ts2, c).detach()
-            a_t2 = teacher_sampler.ddim_alphas[j_prev].view(b, 1, 1, 1)
-            a_prev2 = teacher_sampler.ddim_alphas_prev[j_prev].view(b, 1, 1, 1)
-            sqrt_one_minus_a_t2 = teacher_sampler.ddim_sqrt_one_minus_alphas[j_prev].view(b, 1, 1, 1)
+            a_t2 = torch.as_tensor(teacher_sampler.ddim_alphas, device=device)[j_prev].view(b, 1, 1, 1)
+            a_prev2 = torch.as_tensor(teacher_sampler.ddim_alphas_prev, device=device)[j_prev].view(b, 1, 1, 1)
+            sqrt_one_minus_a_t2 = torch.as_tensor(teacher_sampler.ddim_sqrt_one_minus_alphas, device=device)[j_prev].view(b, 1, 1, 1)
             e_t2 = (x_tmp - a_t2.sqrt() * pred_x0_second) / sqrt_one_minus_a_t2
             dir_xt2 = (1. - a_prev2).sqrt() * e_t2
             x_teacher_two = a_prev2.sqrt() * pred_x0_second + dir_xt2
@@ -721,9 +720,9 @@ class LatentDiffusion(DDPM):
         student_pred_x0 = self.apply_model(x_t, ts, c)
 
         # One-step student update per example
-        a_t_student = student_sampler.ddim_alphas[i_vec].view(b, 1, 1, 1)
-        a_prev_student = student_sampler.ddim_alphas_prev[i_vec].view(b, 1, 1, 1)
-        sqrt_one_minus_a_t_student = student_sampler.ddim_sqrt_one_minus_alphas[i_vec].view(b, 1, 1, 1)
+        a_t_student = torch.as_tensor(student_sampler.ddim_alphas, device=device)[i_vec].view(b, 1, 1, 1)
+        a_prev_student = torch.as_tensor(student_sampler.ddim_alphas_prev, device=device)[i_vec].view(b, 1, 1, 1)
+        sqrt_one_minus_a_t_student = torch.as_tensor(student_sampler.ddim_sqrt_one_minus_alphas, device=device)[i_vec].view(b, 1, 1, 1)
         e_student = (x_t - a_t_student.sqrt() * student_pred_x0) / sqrt_one_minus_a_t_student
         dir_student = (1. - a_prev_student).sqrt() * e_student
         x_prev_student = a_prev_student.sqrt() * student_pred_x0 + dir_student

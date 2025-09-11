@@ -690,17 +690,7 @@ class LatentDiffusion(DDPM):
             # find exact teacher index j per example (schedules share the same base; must match exactly)
             teacher_ts = torch.as_tensor(teacher_sampler.ddim_timesteps, device=device)  # [S_teacher]
             eq = (teacher_ts.view(1, -1) == ts.view(-1, 1))
-            if not eq.any(dim=1).all():
-                print (f'WARNING: Each student timestep must exactly match a teacher timestep')
-                print (f'WARNING: teacher_ts: {teacher_ts}')
-                print (f'WARNING: ts: {ts}')
-                print (f'WARNING: eq: {eq}')
-                import pdb; pdb.set_trace()
             assert eq.any(dim=1).all(), "Each student timestep must exactly match a teacher timestep"
-            if not (eq.sum(dim=1) == 1).all():
-                print (f'WARNING: Student timestep should match exactly one teacher timestep')
-                print (f'WARNING: eq.sum(dim=1): {eq.sum(dim=1)}')
-                import pdb; pdb.set_trace()
             assert (eq.sum(dim=1) == 1).all(), "Student timestep should match exactly one teacher timestep"
             j_idx = torch.argmax(eq.to(torch.int64), dim=1)  # [b]
             assert (j_idx >= 1).all(), "j_idx must be >= 1 to allow two teacher steps"

@@ -50,15 +50,24 @@ def make_ddim_timesteps(ddim_discr_method, num_ddim_timesteps, num_ddpm_timestep
     elif ddim_discr_method == 'quad':
         ddim_timesteps = ((np.linspace(0, np.sqrt(num_ddpm_timesteps * .8), num_ddim_timesteps)) ** 2).astype(int)
     elif isinstance(ddim_discr_method, str) and ddim_discr_method.startswith('progressivedistillation_'):
-        # Base off a fixed 64-step schedule, then downsample to the desired num_ddim_timesteps by uniform subsampling.
+        # Base off a fixed 64-step schedule, then downsample to the desired num_ddim_timesteps.
+        # Ensure nested schedules: if K divides base_n (e.g., 64->32->16->8), pick every (base_n//K)-th step.
         base_n = int(ddim_discr_method.split('_')[-1])
-        # Compute base 64-step indices using uniform discretization and then +1 offset at the end
+        # Compute base schedule using uniform, which may yield >base_n entries due to integer step size.
+        import pdb; pdb.set_trace()
         base_steps = make_ddim_timesteps('uniform', base_n, num_ddpm_timesteps, verbose=False)
-        # Downsample base_steps to requested length
-        assert num_ddim_timesteps <= base_steps.shape[0]
-        # pick uniformly spaced indices over base
-        indices = np.linspace(0, base_steps.shape[0]-1, num_ddim_timesteps).round().astype(int)
-        ddim_timesteps = base_steps[indices] - 1  # convert back to 0-based before +1 below
+        assert base_steps.shape[0] == base_n, f'Base schedule has {base_steps.shape[0]} steps, expected {base_n}'
+        # Truncate to exactly base_n entries to form the canonical base
+        if num_ddim_timesteps == base_n:
+            steps = base_steps
+        elif base_n % num_ddim_timesteps == 0:
+            stride = base_n // num_ddim_timesteps
+            steps = base_steps[::stride]
+        else:
+            # Fallback: uniform subsample over the canonical base
+            assert False, f'Base schedule has {base_steps.shape[0]} steps, expected {base_n}'
+        # Convert back to 0-based before +1 below
+        ddim_timesteps = steps - 1
     else:
         raise NotImplementedError(f'There is no ddim discretization method called "{ddim_discr_method}"')
 

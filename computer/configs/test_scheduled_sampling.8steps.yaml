@@ -13,7 +13,7 @@ model:
     pretrain3: false
     scheduled_sampling_rate: 0.05
     scheduled_sampling_length: 8
-    scheduled_sampling_ddim_steps: 32
+    scheduled_sampling_ddim_steps: 16
     linear_start: 0.0015
     linear_end: 0.0195
     num_timesteps_cond: 1

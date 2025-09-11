@@ -23,4 +23,4 @@ export NCCL_ASYNC_ERROR_HANDLING=1
 export NCCL_IB_TIMEOUT=22
 export TORCH_NCCL_BLOCKING_WAIT=0
 
-srun python main.py --config configs/test_scheduled_sampling.16steps.yaml > log.test_scheduled_sampling.16steps 2>&&1
+srun python main.py --config configs/test_scheduled_sampling.16steps.yaml > log.test_scheduled_sampling.16steps 2>&1

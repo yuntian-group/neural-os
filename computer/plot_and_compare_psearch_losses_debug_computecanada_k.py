@@ -87,7 +87,7 @@ def extract_losses_from_log(log_file_path):
     losses = [math.log(float(loss)) for loss in loss_pattern.findall(log_content)]
     if len(losses) == 0:
         loss_pattern = re.compile(r'loss_step=([\d\.eE+-]+)')
-        losses = [math.log(float(loss)) for loss in loss_pattern.findall(log_content)]
+        losses = [math.log(max(1e-9,float(loss))) for loss in loss_pattern.findall(log_content)]
     if len(losses) == 0:
         loss_pattern = re.compile(r'loss_part1_step=([\d\.eE+-]+)')
         losses = [math.log(float(loss)) for loss in loss_pattern.findall(log_content)]
@@ -251,6 +251,7 @@ if __name__ == "__main__":
         ('joint_onlineonly_eps222232aip222', 'log.fb.computecanada.challengingandsample.pretrainrnn.balanced.lr5e6.contbest.samplercover.newd.contfreezernn.newnewd.origunet.nospatial2.ONLINE.online.online.x0.joint_onlineonly.2.2.2.2.3.2.7.2.2.2.aip.2.2.2'),
         ('joint_onlineonly_eps222232aip2222', 'log.fb.computecanada.challengingandsample.pretrainrnn.balanced.lr5e6.contbest.samplercover.newd.contfreezernn.newnewd.origunet.nospatial2.ONLINE.online.online.x0.joint_onlineonly.2.2.2.2.3.2.7.2.2.2.aip.2.2.2.2.3days'),
         ('joint_onlineonly_eps222232aip22222', 'log.fb.computecanada.challengingandsample.pretrainrnn.balanced.lr5e6.contbest.samplercover.newd.contfreezernn.newnewd.origunet.nospatial2.ONLINE.online.online.x0.joint_onlineonly.2.2.2.2.3.2.7.2.2.2.aip.2.2.2.2.3days.2'),
+        ('sep', 'log.test_scheduled_sampling.1steps'),
         #('joint_onlineonly_eps222232aip22', 'log.fb.computecanada.challengingandsample.pretrainrnn.balanced.lr5e6.contbest.samplercover.newd.contfreezernn.newnewd.origunet.nospatial2.ONLINE.online.online.x0.joint_onlineonly.2.2.2.2.3.2.7.2.2.2.aip.2.2'),
     ]
     

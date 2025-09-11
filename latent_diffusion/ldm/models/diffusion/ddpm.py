@@ -584,6 +584,16 @@ class LatentDiffusion(DDPM):
             print ('FREEZING RNN')
             for p in self.temporal_encoder.parameters():
                 p.requires_grad = False
+
+        # Initialize static teacher if using progressive distillation without EMA
+        self.teacher_model = None
+        if self.distill_progressive and (not self.use_ema):
+            import copy
+            print('Initializing static teacher model (copy of student UNet); teacher will remain frozen.')
+            self.teacher_model = copy.deepcopy(self.model)
+            self.teacher_model.eval()
+            for p in self.teacher_model.parameters():
+                p.requires_grad = False
         DEBUG = True
         DEBUG = False
         if DEBUG:
@@ -661,8 +671,21 @@ class LatentDiffusion(DDPM):
         # Teacher predictions at this step and two teacher steps update (vectorized)
         #with self.ema_scope("Teacher EMA for distillation"):
         with torch.no_grad():
+            # Helper to apply teacher forward either via EMA weights or static teacher copy
+            def teacher_apply(x_in, t_in, c_in):
+                if self.teacher_model is not None:
+                    original_model = self.model
+                    self.model = self.teacher_model
+                    try:
+                        return self.apply_model(x_in, t_in, c_in)
+                    finally:
+                        self.model = original_model
+                else:
+                    with self.ema_scope("Teacher EMA for distillation"):
+                        return self.apply_model(x_in, t_in, c_in)
+
             # teacher pred_x0 at coarse step (x0 parameterization)
-            teacher_pred_x0 = self.apply_model(x_t, ts, c).detach()
+            teacher_pred_x0 = teacher_apply(x_t, ts, c).detach()
 
             # find exact teacher index j per example (schedules share the same base; must match exactly)
             teacher_ts = teacher_sampler.ddim_timesteps.to(device)  # [S_teacher]
@@ -685,7 +708,7 @@ class LatentDiffusion(DDPM):
 
             # second teacher step: (j-1) -> (j-2)
             ts2 = teacher_ts[j_prev].long()
-            pred_x0_second = self.apply_model(x_tmp, ts2, c).detach()
+            pred_x0_second = teacher_apply(x_tmp, ts2, c).detach()
             a_t2 = teacher_sampler.ddim_alphas[j_prev].view(b, 1, 1, 1)
             a_prev2 = teacher_sampler.ddim_alphas_prev[j_prev].view(b, 1, 1, 1)
             sqrt_one_minus_a_t2 = teacher_sampler.ddim_sqrt_one_minus_alphas[j_prev].view(b, 1, 1, 1)

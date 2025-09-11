@@ -50,14 +50,26 @@ def make_ddim_timesteps(ddim_discr_method, num_ddim_timesteps, num_ddpm_timestep
     elif ddim_discr_method == 'quad':
         ddim_timesteps = ((np.linspace(0, np.sqrt(num_ddpm_timesteps * .8), num_ddim_timesteps)) ** 2).astype(int)
     elif isinstance(ddim_discr_method, str) and ddim_discr_method.startswith('progressivedistillation_'):
-        # Base off a fixed 64-step schedule, then downsample to the desired num_ddim_timesteps.
+        # Base off a fixed base_n-step schedule, then downsample to the desired num_ddim_timesteps.
         # Ensure nested schedules: if K divides base_n (e.g., 64->32->16->8), pick every (base_n//K)-th step.
         base_n = int(ddim_discr_method.split('_')[-1])
-        # Compute base schedule using uniform, which may yield >base_n entries due to integer step size.
         import pdb; pdb.set_trace()
-        base_steps = make_ddim_timesteps('uniform', base_n, num_ddpm_timesteps, verbose=False)
-        assert base_steps.shape[0] == base_n, f'Base schedule has {base_steps.shape[0]} steps, expected {base_n}'
-        # Truncate to exactly base_n entries to form the canonical base
+        # Build a canonical base schedule with exactly base_n steps using rounded linspace in [1, num_ddpm_timesteps]
+        steps = np.round(np.linspace(1, num_ddpm_timesteps, base_n, endpoint=True)).astype(int)
+        # Make strictly increasing and clipped to valid range
+        steps = np.clip(steps, 1, num_ddpm_timesteps)
+        steps = np.maximum.accumulate(steps)
+        # Remove any accidental duplicates while preserving order
+        steps_unique = np.array(sorted(set(steps), key=list(steps).index))
+        if steps_unique.shape[0] != base_n:
+            assert False, f'Base schedule has {steps_unique.shape[0]} steps, expected {base_n}'
+            # If dedup shrank the list (unlikely with current spacing), regenerate with jittered rounding
+            frac = (num_ddpm_timesteps - 1) / (base_n - 1)
+            steps = np.array([int(round(1 + i * frac)) for i in range(base_n)])
+            steps = np.clip(steps, 1, num_ddpm_timesteps)
+        else:
+            steps = steps_unique
+        base_steps = steps
         if num_ddim_timesteps == base_n:
             steps = base_steps
         elif base_n % num_ddim_timesteps == 0:

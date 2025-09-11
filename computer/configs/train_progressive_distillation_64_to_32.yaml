@@ -1,4 +1,4 @@
-save_path: ./test_scheduled_samplingk
+save_path: ./distill_64_to_32
 
 model:
   base_learning_rate: 5e-06
@@ -11,6 +11,22 @@ model:
     run_eval: false
     pretrain2: false
     pretrain3: false
+
+    # Progressive distillation (teacher 64 → student 32)
+    distill_progressive: true
+    distill_params:
+      teacher_steps: 64
+      student_steps: 32
+      # step loss is weight=1 by design; expose x0 weight only
+      loss_weight_x0: 0.0        # try 0.5 or 1.0 to strengthen x0 matching
+      # debug saving (optional)
+      debug_save: true
+      debug_dir: distill_debug_64_to_32
+      debug_every: 1000
+      debug_n: 4
+      distill_only: true         # set false to add base denoising loss
+
+    # training/schedule
     scheduled_sampling_rate: 0.05
     scheduled_sampling_length: 1
     scheduled_sampling_ddim_steps: 32

@@ -1,8 +1,8 @@
 #!/bin/bash
 #SBATCH --account=aip-yuntian
-#SBATCH --job-name=train_ds
-#SBATCH --output=logs/train_%j.out
-#SBATCH --error=logs/train_%j.err
+#SBATCH --job-name=distill_64_to_32
+#SBATCH --output=logs/distill_64_to_32_%j.out
+#SBATCH --error=logs/distill_64_to_32_%j.err
 #SBATCH --nodes=1
 #SBATCH --tasks-per-node=8
 #SBATCH --cpus-per-task=6
@@ -23,4 +23,4 @@ export NCCL_ASYNC_ERROR_HANDLING=1
 export NCCL_IB_TIMEOUT=22
 export TORCH_NCCL_BLOCKING_WAIT=0
 
-srun python main.py --config configs/test_scheduled_sampling.1steps.yaml > log.test_scheduled_sampling.1steps 2>&1
+srun python main.py --config configs/train_progressive_distillation_64_to_32.yaml > log.train_progressive_distillation_64_to_32.txt 2>&1

@@ -126,7 +126,7 @@ data:
       params:
         debug_mode: false
         data_csv_paths:
-          - ../../neuralos-demo/train_dataset_encoded_online/train_dataset.target_frames.csv
+          - ../../neuralos-demo-pd/train_dataset_encoded_online/train_dataset.target_frames.csv
         normalization: standard
         context_length: 64
 

@@ -660,7 +660,8 @@ class LatentDiffusion(DDPM):
         i_vec = torch.randint(low=1, high=total_student, size=(b,), device=device)
 
         # Map student step to actual ddpm timestep per example
-        t_student_vec = student_sampler.ddim_timesteps[i_vec].to(device)
+        student_ts = torch.as_tensor(student_sampler.ddim_timesteps, device=device)
+        t_student_vec = student_ts[i_vec]
         ts = t_student_vec.long()  # [b]
 
         # Construct x_t via forward process
@@ -688,7 +689,7 @@ class LatentDiffusion(DDPM):
             teacher_pred_x0 = teacher_apply(x_t, ts, c).detach()
 
             # find exact teacher index j per example (schedules share the same base; must match exactly)
-            teacher_ts = teacher_sampler.ddim_timesteps.to(device)  # [S_teacher]
+            teacher_ts = torch.as_tensor(teacher_sampler.ddim_timesteps, device=device)  # [S_teacher]
             eq = (teacher_ts.view(1, -1) == ts.view(-1, 1))
             assert eq.any(dim=1).all(), "Each student timestep must exactly match a teacher timestep"
             assert (eq.sum(dim=1) == 1).all(), "Student timestep should match exactly one teacher timestep"

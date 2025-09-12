@@ -23,4 +23,5 @@ export NCCL_ASYNC_ERROR_HANDLING=1
 export NCCL_IB_TIMEOUT=22
 export TORCH_NCCL_BLOCKING_WAIT=0
 
-CUDA_VISIBLE_DEVICES=1 python main.py --config configs/train_progressive_distillation_64_to_32.yaml > log.train_progressive_distillation_64_to_32.txt 2>&1
+CUDA_VISIBLE_DEVICES=1 python -u main.py --config configs/train_progressive_distillation_64_to_32.yaml > log.train_progressive_distillation_64_to_32.bsz63.txt.freezernn 2>&1
+CUDA_VISIBLE_DEVICES=1 python -u main.py --config configs/train_progressive_distillation_32_to_16.yaml > log.train_progressive_distillation_32_to_16.bsz63.txt.freezernn 2>&1

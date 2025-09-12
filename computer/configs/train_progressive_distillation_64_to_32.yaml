@@ -1,13 +1,13 @@
 save_path: ./distill_64_to_32
 
 model:
-  base_learning_rate: 5e-06
+  base_learning_rate: 2.5e-06
   target: latent_diffusion.ldm.models.diffusion.ddpm.LatentDiffusion
   params:
     parameterization: x0
     use_ema: false
     pretrain: false
-    freezernn: false
+    freezernn: true
     run_eval: false
     pretrain2: false
     pretrain3: false
@@ -112,7 +112,7 @@ model:
 data:
   target: data.data_processing.datasets.DataModule
   params:
-    batch_size: 8
+    batch_size: 128
     num_workers: 4
     wrap: false
     shuffle: True

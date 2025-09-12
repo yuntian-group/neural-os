@@ -140,6 +140,9 @@ if __name__ == "__main__":
             ckpt_folder = save_path[:-len('l')]
         if save_path.endswith('k'):
             ckpt_folder = save_path[:-len('k')]
+        m = re.match(r'.*_to(\d+)$', save_path)
+        if m:
+            ckpt_folder = save_path[:-len(m.group(1))]
 
         #ckpt_folder = 'sb_computecanada_fsdp_noema_challengingandsample_pretrainrnn_balanced_lr5e6_contbest_samplercover_newd_contfreezernn_newnewd_origunet_nospatial2'
         ckpt_files = [f for f in os.listdir(ckpt_folder) if f.startswith('model-step=') and f.endswith('.ckpt')]

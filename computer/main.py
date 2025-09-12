@@ -140,7 +140,7 @@ if __name__ == "__main__":
             ckpt_folder = save_path[:-len('l')]
         if save_path.endswith('k'):
             ckpt_folder = save_path[:-len('k')]
-        m = re.match(r'.*?_to_(\d+)$', save_path)
+        m = re.match(r'.*?(_to_\d+)$', save_path)
         if m:
             ckpt_folder = save_path[:-len(m.group(1))]
 

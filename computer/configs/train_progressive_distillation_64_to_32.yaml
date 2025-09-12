@@ -20,7 +20,7 @@ model:
       # step loss is weight=1 by design; expose x0 weight only
       loss_weight_x0: 0.0        # try 0.5 or 1.0 to strengthen x0 matching
       # debug saving (optional)
-      debug_save: true
+      debug_save: false
       debug_dir: distill_debug_64_to_32
       debug_every: 1000
       debug_n: 4
@@ -112,7 +112,7 @@ model:
 data:
   target: data.data_processing.datasets.DataModule
   params:
-    batch_size: 14
+    batch_size: 8
     num_workers: 4
     wrap: false
     shuffle: True

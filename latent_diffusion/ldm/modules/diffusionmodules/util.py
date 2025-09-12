@@ -53,7 +53,7 @@ def make_ddim_timesteps(ddim_discr_method, num_ddim_timesteps, num_ddpm_timestep
         # Base off a fixed base_n-step schedule, then downsample to the desired num_ddim_timesteps.
         # Ensure nested schedules: if K divides base_n (e.g., 64->32->16->8), pick every (base_n//K)-th step.
         base_n = int(ddim_discr_method.split('_')[-1])
-        import pdb; pdb.set_trace()
+        #import pdb; pdb.set_trace()
         # Build a canonical base schedule with exactly base_n steps using rounded linspace in [1, num_ddpm_timesteps]
         steps = np.round(np.linspace(1, num_ddpm_timesteps - 1, base_n, endpoint=True)).astype(int)
         # Make strictly increasing and clipped to valid range (avoid T to prevent OOB)

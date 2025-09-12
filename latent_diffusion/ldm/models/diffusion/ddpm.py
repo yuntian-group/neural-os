@@ -649,7 +649,7 @@ class LatentDiffusion(DDPM):
         device = x0.device
 
         # Build schedules from a fixed base (progressivedistillation_64)
-        import pdb; pdb.set_trace()
+        #import pdb; pdb.set_trace()
         teacher_sampler = DDIMSampler(self)
         teacher_sampler.make_schedule(ddim_num_steps=self.distill_teacher_steps, ddim_discretize="progressivedistillation_64", ddim_eta=0.0, verbose=False)
         student_sampler = DDIMSampler(self)

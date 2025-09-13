@@ -651,9 +651,9 @@ class LatentDiffusion(DDPM):
         # Build schedules from a fixed base (progressivedistillation_64)
         #import pdb; pdb.set_trace()
         teacher_sampler = DDIMSampler(self)
-        teacher_sampler.make_schedule(ddim_num_steps=self.distill_teacher_steps, ddim_discretize="progressivedistillation_64", ddim_eta=0.0, verbose=False)
+        teacher_sampler.make_schedule(ddim_num_steps=self.distill_teacher_steps, ddim_discretize="progressivedistillation_32", ddim_eta=0.0, verbose=False)
         student_sampler = DDIMSampler(self)
-        student_sampler.make_schedule(ddim_num_steps=self.distill_student_steps, ddim_discretize="progressivedistillation_64", ddim_eta=0.0, verbose=False)
+        student_sampler.make_schedule(ddim_num_steps=self.distill_student_steps, ddim_discretize="progressivedistillation_32", ddim_eta=0.0, verbose=False)
 
         total_student = int(student_sampler.ddim_timesteps.shape[0])
         # choose a valid student step index per example, i_e >= 1 (has a previous step)

@@ -107,7 +107,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--substring",
-        default="sb_",
+        default="d",
         help="Substring to search for in folder names (default: 'saved_standard_challenging_context')"
     )
     args = parser.parse_args()

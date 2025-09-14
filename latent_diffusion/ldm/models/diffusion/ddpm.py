@@ -658,6 +658,10 @@ class LatentDiffusion(DDPM):
         student_sampler.make_schedule(ddim_num_steps=self.distill_student_steps, ddim_discretize="progressivedistillation_32", ddim_eta=0.0, verbose=False)
 
         total_student = int(student_sampler.ddim_timesteps.shape[0])
+        teacher_count = int(teacher_sampler.ddim_timesteps.shape[0])
+        student_count = int(student_sampler.ddim_timesteps.shape[0])
+        assert teacher_count % student_count == 0, "teacher_steps must be divisible by student_steps for grouped distillation"
+        group_size = teacher_count // student_count
 
         # Trace-style debug: replicate one example and sweep steps for detailed visualization
         import pdb; pdb.set_trace()
@@ -692,9 +696,11 @@ class LatentDiffusion(DDPM):
                         return v[idx0:idx0+1].repeat(trace_len, *([1] * (v.ndim - 1)))
                     return cond_in
             c_rep = replicate_cond(c)
-            # sequential steps 1..trace_len
+            # sequential steps starting at group_size-1 to ensure enough teacher steps
             student_ts_all = torch.as_tensor(student_sampler.ddim_timesteps, device=device)
-            i_vec = torch.arange(1, trace_len + 1, device=device)
+            i_start = max(group_size - 1, 0)
+            trace_len = min(trace_len, max(total_student - i_start, 1))
+            i_vec = torch.arange(i_start, i_start + trace_len, device=device)
             ts = student_ts_all[i_vec]
             # construct x_t for replicated batch
             with torch.no_grad():
@@ -719,22 +725,31 @@ class LatentDiffusion(DDPM):
                 eq = (teacher_ts_all.view(1, -1) == ts.view(-1, 1))
                 # enforce exact match and j_prev>=1
                 j_idx = torch.argmax(eq.to(torch.int64), dim=1)
-                j_prev = j_idx - 1
-                # gather schedules
+                # collect group_size teacher steps per row
+                # First step from current j to j-1
                 a_t_teacher = torch.as_tensor(teacher_sampler.ddim_alphas, device=device, dtype=x_t.dtype)[j_idx].view(trace_len, 1, 1, 1)
                 a_prev_teacher = torch.as_tensor(teacher_sampler.ddim_alphas_prev, device=device, dtype=x_t.dtype)[j_idx].view(trace_len, 1, 1, 1)
                 sqrt_one_minus_a_t_teacher = torch.as_tensor(teacher_sampler.ddim_sqrt_one_minus_alphas, device=device, dtype=x_t.dtype)[j_idx].view(trace_len, 1, 1, 1)
-                # first step
                 e_t1 = (x_t - a_t_teacher.sqrt() * teacher_pred_x0) / sqrt_one_minus_a_t_teacher
-                x_tmp = a_prev_teacher.sqrt() * teacher_pred_x0 + (1. - a_prev_teacher).sqrt() * e_t1
-                # second step
-                ts2 = teacher_ts_all[j_prev].long()
-                pred_x0_second = teacher_apply(x_tmp, ts2, c_rep).detach()
-                a_t2 = torch.as_tensor(teacher_sampler.ddim_alphas, device=device, dtype=x_t.dtype)[j_prev].view(trace_len, 1, 1, 1)
-                a_prev2 = torch.as_tensor(teacher_sampler.ddim_alphas_prev, device=device, dtype=x_t.dtype)[j_prev].view(trace_len, 1, 1, 1)
-                sqrt_one_minus_a_t2 = torch.as_tensor(teacher_sampler.ddim_sqrt_one_minus_alphas, device=device, dtype=x_t.dtype)[j_prev].view(trace_len, 1, 1, 1)
-                e_t2 = (x_tmp - a_t2.sqrt() * pred_x0_second) / sqrt_one_minus_a_t2
-                x_teacher_two = a_prev2.sqrt() * pred_x0_second + (1. - a_prev2).sqrt() * e_t2
+                x_prev = a_prev_teacher.sqrt() * teacher_pred_x0 + (1. - a_prev_teacher).sqrt() * e_t1
+                # accumulate per-group predictions
+                teacher_x0_list = [teacher_pred_x0]
+                teacher_xprev_list = [x_prev]
+                # perform remaining group_size-1 steps
+                j_cur = j_idx - 1
+                for g in range(1, group_size):
+                    ts_cur = teacher_ts_all[j_cur].long()
+                    pred_x0_cur = teacher_apply(x_prev, ts_cur, c_rep).detach()
+                    a_t_cur = torch.as_tensor(teacher_sampler.ddim_alphas, device=device, dtype=x_t.dtype)[j_cur].view(trace_len, 1, 1, 1)
+                    a_prev_cur = torch.as_tensor(teacher_sampler.ddim_alphas_prev, device=device, dtype=x_t.dtype)[j_cur].view(trace_len, 1, 1, 1)
+                    sqrt_one_minus_a_t_cur = torch.as_tensor(teacher_sampler.ddim_sqrt_one_minus_alphas, device=device, dtype=x_t.dtype)[j_cur].view(trace_len, 1, 1, 1)
+                    e_cur = (x_prev - a_t_cur.sqrt() * pred_x0_cur) / sqrt_one_minus_a_t_cur
+                    x_prev = a_prev_cur.sqrt() * pred_x0_cur + (1. - a_prev_cur).sqrt() * e_cur
+                    teacher_x0_list.append(pred_x0_cur)
+                    teacher_xprev_list.append(x_prev)
+                    j_cur = j_cur - 1
+                # final two-step equivalent target is the last x_prev
+                x_teacher_group = x_prev
 
             # student predictions
             student_pred_x0 = self.apply_model(x_t, ts, c_rep)
@@ -743,17 +758,6 @@ class LatentDiffusion(DDPM):
             sqrt_one_minus_a_t_student = torch.as_tensor(student_sampler.ddim_sqrt_one_minus_alphas, device=device, dtype=x_t.dtype)[i_vec].view(trace_len, 1, 1, 1)
             e_student = (x_t - a_t_student.sqrt() * student_pred_x0) / sqrt_one_minus_a_t_student
             x_prev_student = a_prev_student.sqrt() * student_pred_x0 + (1. - a_prev_student).sqrt() * e_student
-
-            # optional student two steps for comparison
-            with torch.no_grad():
-                i_prev = i_vec - 1
-                ts_prev = student_ts_all[i_prev]
-                student_pred_x0_second = self.apply_model(x_prev_student, ts_prev, c_rep)
-                a_t_s2 = torch.as_tensor(student_sampler.ddim_alphas, device=device, dtype=x_t.dtype)[i_prev].view(trace_len, 1, 1, 1)
-                a_prev_s2 = torch.as_tensor(student_sampler.ddim_alphas_prev, device=device, dtype=x_t.dtype)[i_prev].view(trace_len, 1, 1, 1)
-                sqrt_one_minus_a_t_s2 = torch.as_tensor(student_sampler.ddim_sqrt_one_minus_alphas, device=device, dtype=x_t.dtype)[i_prev].view(trace_len, 1, 1, 1)
-                e_s2 = (x_prev_student - a_t_s2.sqrt() * student_pred_x0_second) / sqrt_one_minus_a_t_s2
-                x_student_two = a_prev_s2.sqrt() * student_pred_x0_second + (1. - a_prev_s2).sqrt() * e_s2
 
             # save per-step images
             try:
@@ -766,25 +770,24 @@ class LatentDiffusion(DDPM):
                         x_dec = torch.clamp((x_dec + 1.0) / 2.0, 0.0, 1.0)
                         return x_dec
                 for k in range(trace_len):
-                    # decode all needed tensors
                     img_noised = dec(x_t[k:k+1])[0].permute(1, 2, 0).cpu().numpy()
                     img_gt = dec(x0_rep[k:k+1])[0].permute(1, 2, 0).cpu().numpy()
-                    img_t_x0_1 = dec(teacher_pred_x0[k:k+1])[0].permute(1, 2, 0).cpu().numpy()
-                    img_t_xprev_1 = dec(x_tmp[k:k+1])[0].permute(1, 2, 0).cpu().numpy()
-                    img_t_x0_2 = dec(pred_x0_second[k:k+1])[0].permute(1, 2, 0).cpu().numpy()
-                    img_t_xprev_2 = dec(x_teacher_two[k:k+1])[0].permute(1, 2, 0).cpu().numpy()
-                    img_s_x0 = dec(student_pred_x0[k:k+1])[0].permute(1, 2, 0).cpu().numpy()
-                    img_s_xprev = dec(x_prev_student[k:k+1])[0].permute(1, 2, 0).cpu().numpy()
-                    # compose figure 4x2
-                    fig, axs = plt.subplots(4, 2, figsize=(10, 16))
+                    # dynamic rows: 2 (header) + group_size (teacher rows) + 1 (student row)
+                    rows = 2 + group_size + 1
+                    fig, axs = plt.subplots(rows, 2, figsize=(10, 4*rows))
                     axs[0,0].imshow(img_noised); axs[0,0].set_title('noised x_t'); axs[0,0].axis('off')
                     axs[0,1].imshow(img_gt); axs[0,1].set_title('ground truth x0'); axs[0,1].axis('off')
-                    axs[1,0].imshow(img_t_x0_1); axs[1,0].set_title('teacher pred x0 (1)'); axs[1,0].axis('off')
-                    axs[1,1].imshow(img_t_xprev_1); axs[1,1].set_title('teacher pred x_prev (1)'); axs[1,1].axis('off')
-                    axs[2,0].imshow(img_t_x0_2); axs[2,0].set_title('teacher pred x0 (2)'); axs[2,0].axis('off')
-                    axs[2,1].imshow(img_t_xprev_2); axs[2,1].set_title('teacher pred x_prev (2)'); axs[2,1].axis('off')
-                    axs[3,0].imshow(img_s_x0); axs[3,0].set_title('student pred x0'); axs[3,0].axis('off')
-                    axs[3,1].imshow(img_s_xprev); axs[3,1].set_title('student pred x_prev'); axs[3,1].axis('off')
+                    # teacher rows
+                    for g in range(group_size):
+                        img_t_x0 = dec(teacher_x0_list[g][k:k+1])[0].permute(1,2,0).cpu().numpy()
+                        img_t_xprev = dec(teacher_xprev_list[g][k:k+1])[0].permute(1,2,0).cpu().numpy()
+                        axs[1+g,0].imshow(img_t_x0); axs[1+g,0].set_title(f'teacher pred x0 ({g+1})'); axs[1+g,0].axis('off')
+                        axs[1+g,1].imshow(img_t_xprev); axs[1+g,1].set_title(f'teacher pred x_prev ({g+1})'); axs[1+g,1].axis('off')
+                    # student row
+                    img_s_x0 = dec(student_pred_x0[k:k+1])[0].permute(1,2,0).cpu().numpy()
+                    img_s_xprev = dec(x_prev_student[k:k+1])[0].permute(1,2,0).cpu().numpy()
+                    axs[1+group_size,0].imshow(img_s_x0); axs[1+group_size,0].set_title('student pred x0'); axs[1+group_size,0].axis('off')
+                    axs[1+group_size,1].imshow(img_s_xprev); axs[1+group_size,1].set_title('student pred x_prev'); axs[1+group_size,1].axis('off')
                     fig.tight_layout()
                     out_path = os.path.join(self.distill_debug_dir, 'trace', f'step_{int(i_vec[k].item())}.png')
                     fig.savefig(out_path)
@@ -798,8 +801,9 @@ class LatentDiffusion(DDPM):
             # reuse outputs to compute losses below; overwrite variables for consistency
             i_vec_full = i_vec
         else:
-            # choose a valid student step index per example, i_e >= 1 (has a previous step)
-            i_vec = torch.randint(low=1, high=total_student, size=(b,), device=device)
+            # choose a valid student step index per example, i_e >= group_size-1 (enough teacher history)
+            low = max(group_size - 1, 0)
+            i_vec = torch.randint(low=low, high=total_student, size=(b,), device=device)
             i_vec_full = i_vec
             student_ts_all = torch.as_tensor(student_sampler.ddim_timesteps, device=device)
             ts = student_ts_all[i_vec]
@@ -831,28 +835,23 @@ class LatentDiffusion(DDPM):
                 assert eq.any(dim=1).all(), "Each student timestep must exactly match a teacher timestep"
                 assert (eq.sum(dim=1) == 1).all(), "Student timestep should match exactly one teacher timestep"
                 j_idx = torch.argmax(eq.to(torch.int64), dim=1)  # [b]
-                assert (j_idx >= 1).all(), "j_idx must be >= 1 to allow two teacher steps"
-                j_prev = j_idx - 1
-
-                # gather schedule values per example for j
+                # perform group_size teacher steps
                 a_t_teacher = torch.as_tensor(teacher_sampler.ddim_alphas, device=device, dtype=x_t.dtype)[j_idx].view(b, 1, 1, 1)
                 a_prev_teacher = torch.as_tensor(teacher_sampler.ddim_alphas_prev, device=device, dtype=x_t.dtype)[j_idx].view(b, 1, 1, 1)
                 sqrt_one_minus_a_t_teacher = torch.as_tensor(teacher_sampler.ddim_sqrt_one_minus_alphas, device=device, dtype=x_t.dtype)[j_idx].view(b, 1, 1, 1)
-
-                # first teacher step: j -> j-1
                 e_t1 = (x_t - a_t_teacher.sqrt() * teacher_pred_x0) / sqrt_one_minus_a_t_teacher
-                dir_xt1 = (1. - a_prev_teacher).sqrt() * e_t1
-                x_tmp = a_prev_teacher.sqrt() * teacher_pred_x0 + dir_xt1
-
-                # second teacher step: (j-1) -> (j-2)
-                ts2 = teacher_ts[j_prev].long()
-                pred_x0_second = teacher_apply(x_tmp, ts2, c).detach()
-                a_t2 = torch.as_tensor(teacher_sampler.ddim_alphas, device=device, dtype=x_t.dtype)[j_prev].view(b, 1, 1, 1)
-                a_prev2 = torch.as_tensor(teacher_sampler.ddim_alphas_prev, device=device, dtype=x_t.dtype)[j_prev].view(b, 1, 1, 1)
-                sqrt_one_minus_a_t2 = torch.as_tensor(teacher_sampler.ddim_sqrt_one_minus_alphas, device=device, dtype=x_t.dtype)[j_prev].view(b, 1, 1, 1)
-                e_t2 = (x_tmp - a_t2.sqrt() * pred_x0_second) / sqrt_one_minus_a_t2
-                dir_xt2 = (1. - a_prev2).sqrt() * e_t2
-                x_teacher_two = a_prev2.sqrt() * pred_x0_second + dir_xt2
+                x_prev = a_prev_teacher.sqrt() * teacher_pred_x0 + (1. - a_prev_teacher).sqrt() * e_t1
+                j_cur = j_idx - 1
+                for g in range(1, group_size):
+                    ts_cur = teacher_ts[j_cur].long()
+                    pred_x0_cur = teacher_apply(x_prev, ts_cur, c).detach()
+                    a_t_cur = torch.as_tensor(teacher_sampler.ddim_alphas, device=device, dtype=x_t.dtype)[j_cur].view(b, 1, 1, 1)
+                    a_prev_cur = torch.as_tensor(teacher_sampler.ddim_alphas_prev, device=device, dtype=x_t.dtype)[j_cur].view(b, 1, 1, 1)
+                    sqrt_one_minus_a_t_cur = torch.as_tensor(teacher_sampler.ddim_sqrt_one_minus_alphas, device=device, dtype=x_t.dtype)[j_cur].view(b, 1, 1, 1)
+                    e_cur = (x_prev - a_t_cur.sqrt() * pred_x0_cur) / sqrt_one_minus_a_t_cur
+                    x_prev = a_prev_cur.sqrt() * pred_x0_cur + (1. - a_prev_cur).sqrt() * e_cur
+                    j_cur = j_cur - 1
+                x_teacher_group = x_prev
 
             # Student pred_x0 at same per-example coarse steps
             student_pred_x0 = self.apply_model(x_t, ts, c)
@@ -867,7 +866,7 @@ class LatentDiffusion(DDPM):
 
         # Losses
         loss_x0 = F.mse_loss(student_pred_x0, teacher_pred_x0)
-        loss_step = F.mse_loss(x_prev_student, x_teacher_two)
+        loss_step = F.mse_loss(x_prev_student, x_teacher_group)
         loss = self.distill_loss_weight_x0 * loss_x0 + loss_step
         loss_dict = {
             'train/distill_loss_x0': loss_x0.detach(),
@@ -898,7 +897,7 @@ class LatentDiffusion(DDPM):
                             'student_pred_x0': decode_to_img(student_pred_x0[idx]),
                             'teacher_pred_x0': decode_to_img(teacher_pred_x0[idx]),
                             'student_x_prev': decode_to_img(x_prev_student[idx]),
-                            'teacher_two_step': decode_to_img(x_teacher_two[idx]),
+                            'teacher_two_step': decode_to_img(x_teacher_group[idx]),
                         }
                         from torchvision.utils import save_image, make_grid as _make_grid
                         step = int(getattr(self, 'global_step', 0))

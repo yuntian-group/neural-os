@@ -698,7 +698,7 @@ class LatentDiffusion(DDPM):
             c_rep = replicate_cond(c)
             # sequential steps starting at group_size-1 to ensure enough teacher steps
             student_ts_all = torch.as_tensor(student_sampler.ddim_timesteps, device=device)
-            i_start = max(group_size - 1, 0)
+            i_start = 1 if group_size > 1 else 0
             trace_len = min(trace_len, max(total_student - i_start, 1))
             i_vec = torch.arange(i_start, i_start + trace_len, device=device)
             ts = student_ts_all[i_vec]
@@ -802,7 +802,7 @@ class LatentDiffusion(DDPM):
             i_vec_full = i_vec
         else:
             # choose a valid student step index per example, i_e >= group_size-1 (enough teacher history)
-            low = max(group_size - 1, 0)
+            low = 1 if group_size > 1 else 0
             i_vec = torch.randint(low=low, high=total_student, size=(b,), device=device)
             i_vec_full = i_vec
             student_ts_all = torch.as_tensor(student_sampler.ddim_timesteps, device=device)

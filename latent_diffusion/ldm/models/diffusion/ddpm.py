@@ -773,7 +773,7 @@ class LatentDiffusion(DDPM):
                     img_noised = dec(x_t[k:k+1])[0].permute(1, 2, 0).cpu().numpy()
                     img_gt = dec(x0_rep[k:k+1])[0].permute(1, 2, 0).cpu().numpy()
                     # dynamic rows: 2 (header) + group_size (teacher rows) + 1 (student row)
-                    rows = 2 + group_size + 1
+                    rows = 1 + group_size + 1
                     fig, axs = plt.subplots(rows, 2, figsize=(10, 4*rows))
                     axs[0,0].imshow(img_noised); axs[0,0].set_title('noised x_t'); axs[0,0].axis('off')
                     axs[0,1].imshow(img_gt); axs[0,1].set_title('ground truth x0'); axs[0,1].axis('off')

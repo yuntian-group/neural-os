@@ -660,6 +660,7 @@ class LatentDiffusion(DDPM):
         total_student = int(student_sampler.ddim_timesteps.shape[0])
 
         # Trace-style debug: replicate one example and sweep steps for detailed visualization
+        import pdb; pdb.set_trace()
         if self.distill_debug and self.distill_debug_trace:
             # pick index 0 and replicate
             idx0 = 0

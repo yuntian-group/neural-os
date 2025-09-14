@@ -534,6 +534,7 @@ class LatentDiffusion(DDPM):
         self.distill_debug_dir = str(self.distill_params.get('debug_dir', 'distill_debug'))
         self.distill_debug_every = int(self.distill_params.get('debug_every', 500))
         self.distill_debug_n = int(self.distill_params.get('debug_n', 4))
+        self.distill_debug_trace = bool(self.distill_params.get('debug_trace', False))
         assert self.num_timesteps_cond <= kwargs['timesteps']
         # for backwards compatibility after implementation of DiffusionWrapper
         if conditioning_key is None:
@@ -643,6 +644,7 @@ class LatentDiffusion(DDPM):
         """
         Trains the student (current model) to match a 16-step DDIM teacher at a coarser schedule, per-example.
         Uses x0 parameterization: match pred_x0 at the coarse step and one-step update to teacher's two-step result.
+        If self.distill_debug_trace is True, runs a per-step visualization by replicating one example and sweeping steps.
         """
         assert self.parameterization == 'x0', "Progressive distillation currently implemented for x0 parametrization"
         b = x0.shape[0]
@@ -656,24 +658,50 @@ class LatentDiffusion(DDPM):
         student_sampler.make_schedule(ddim_num_steps=self.distill_student_steps, ddim_discretize="progressivedistillation_32", ddim_eta=0.0, verbose=False)
 
         total_student = int(student_sampler.ddim_timesteps.shape[0])
-        # choose a valid student step index per example, i_e >= 1 (has a previous step)
-        i_vec = torch.randint(low=1, high=total_student, size=(b,), device=device)
 
-        # Map student step to actual ddpm timestep per example
-        student_ts = torch.as_tensor(student_sampler.ddim_timesteps, device=device)
-        t_student_vec = student_ts[i_vec]
-        ts = t_student_vec.long()  # [b]
+        # Trace-style debug: replicate one example and sweep steps for detailed visualization
+        if self.distill_debug and self.distill_debug_trace:
+            # pick index 0 and replicate
+            idx0 = 0
+            # define number of steps to trace (exclude 0 to allow two-step teacher)
+            trace_len = min(32, max(total_student - 1, 1))
+            # prepare replicated batch
+            x0_rep = x0[idx0:idx0+1].repeat(trace_len, 1, 1, 1)
+            # replicate cond
+            def replicate_cond(cond_in):
+                if cond_in is None:
+                    return None
+                if isinstance(cond_in, dict):
+                    cond_out = {}
+                    for k, v in cond_in.items():
+                        if isinstance(v, list):
+                            cond_out[k] = v
+                        elif torch.is_tensor(v):
+                            if v.shape[0] == b:
+                                cond_out[k] = v[idx0:idx0+1].repeat(trace_len, *([1] * (v.ndim - 1)))
+                            else:
+                                cond_out[k] = v
+                        else:
+                            cond_out[k] = v
+                    return cond_out
+                else:
+                    # single tensor cond
+                    v = cond_in
+                    if torch.is_tensor(v) and v.shape[0] == b:
+                        return v[idx0:idx0+1].repeat(trace_len, *([1] * (v.ndim - 1)))
+                    return cond_in
+            c_rep = replicate_cond(c)
+            # sequential steps 1..trace_len
+            student_ts_all = torch.as_tensor(student_sampler.ddim_timesteps, device=device)
+            i_vec = torch.arange(1, trace_len + 1, device=device)
+            ts = student_ts_all[i_vec]
+            # construct x_t for replicated batch
+            with torch.no_grad():
+                x_t = self.q_sample(x_start=x0_rep, t=ts)
 
-        # Construct x_t via forward process
-        with torch.no_grad():
-            x_t = self.q_sample(x_start=x0, t=ts)
-
-        # Teacher predictions at this step and two teacher steps update (vectorized)
-        #with self.ema_scope("Teacher EMA for distillation"):
-        with torch.no_grad():
-            # Helper to apply teacher forward either via EMA weights or static teacher copy
+            # teacher forward helper
             def teacher_apply(x_in, t_in, c_in):
-                if self.teacher_model is not None:
+                if getattr(self, 'teacher_model', None) is not None:
                     original_model = self.model
                     self.model = self.teacher_model
                     try:
@@ -681,51 +709,148 @@ class LatentDiffusion(DDPM):
                     finally:
                         self.model = original_model
                 else:
-                    with self.ema_scope("Teacher EMA for distillation"):
-                        return self.apply_model(x_in, t_in, c_in)
+                    assert False, "Teacher model not found"
 
-            # teacher pred_x0 at coarse step (x0 parameterization)
-            teacher_pred_x0 = teacher_apply(x_t, ts, c).detach()
+            # teacher predictions
+            with torch.no_grad():
+                teacher_pred_x0 = teacher_apply(x_t, ts, c_rep).detach()
+                teacher_ts_all = torch.as_tensor(teacher_sampler.ddim_timesteps, device=device)
+                eq = (teacher_ts_all.view(1, -1) == ts.view(-1, 1))
+                # enforce exact match and j_prev>=1
+                j_idx = torch.argmax(eq.to(torch.int64), dim=1)
+                j_prev = j_idx - 1
+                # gather schedules
+                a_t_teacher = torch.as_tensor(teacher_sampler.ddim_alphas, device=device, dtype=x_t.dtype)[j_idx].view(trace_len, 1, 1, 1)
+                a_prev_teacher = torch.as_tensor(teacher_sampler.ddim_alphas_prev, device=device, dtype=x_t.dtype)[j_idx].view(trace_len, 1, 1, 1)
+                sqrt_one_minus_a_t_teacher = torch.as_tensor(teacher_sampler.ddim_sqrt_one_minus_alphas, device=device, dtype=x_t.dtype)[j_idx].view(trace_len, 1, 1, 1)
+                # first step
+                e_t1 = (x_t - a_t_teacher.sqrt() * teacher_pred_x0) / sqrt_one_minus_a_t_teacher
+                x_tmp = a_prev_teacher.sqrt() * teacher_pred_x0 + (1. - a_prev_teacher).sqrt() * e_t1
+                # second step
+                ts2 = teacher_ts_all[j_prev].long()
+                pred_x0_second = teacher_apply(x_tmp, ts2, c_rep).detach()
+                a_t2 = torch.as_tensor(teacher_sampler.ddim_alphas, device=device, dtype=x_t.dtype)[j_prev].view(trace_len, 1, 1, 1)
+                a_prev2 = torch.as_tensor(teacher_sampler.ddim_alphas_prev, device=device, dtype=x_t.dtype)[j_prev].view(trace_len, 1, 1, 1)
+                sqrt_one_minus_a_t2 = torch.as_tensor(teacher_sampler.ddim_sqrt_one_minus_alphas, device=device, dtype=x_t.dtype)[j_prev].view(trace_len, 1, 1, 1)
+                e_t2 = (x_tmp - a_t2.sqrt() * pred_x0_second) / sqrt_one_minus_a_t2
+                x_teacher_two = a_prev2.sqrt() * pred_x0_second + (1. - a_prev2).sqrt() * e_t2
 
-            # find exact teacher index j per example (schedules share the same base; must match exactly)
-            teacher_ts = torch.as_tensor(teacher_sampler.ddim_timesteps, device=device)  # [S_teacher]
-            eq = (teacher_ts.view(1, -1) == ts.view(-1, 1))
-            assert eq.any(dim=1).all(), "Each student timestep must exactly match a teacher timestep"
-            assert (eq.sum(dim=1) == 1).all(), "Student timestep should match exactly one teacher timestep"
-            j_idx = torch.argmax(eq.to(torch.int64), dim=1)  # [b]
-            assert (j_idx >= 1).all(), "j_idx must be >= 1 to allow two teacher steps"
-            j_prev = j_idx - 1
+            # student predictions
+            student_pred_x0 = self.apply_model(x_t, ts, c_rep)
+            a_t_student = torch.as_tensor(student_sampler.ddim_alphas, device=device, dtype=x_t.dtype)[i_vec].view(trace_len, 1, 1, 1)
+            a_prev_student = torch.as_tensor(student_sampler.ddim_alphas_prev, device=device, dtype=x_t.dtype)[i_vec].view(trace_len, 1, 1, 1)
+            sqrt_one_minus_a_t_student = torch.as_tensor(student_sampler.ddim_sqrt_one_minus_alphas, device=device, dtype=x_t.dtype)[i_vec].view(trace_len, 1, 1, 1)
+            e_student = (x_t - a_t_student.sqrt() * student_pred_x0) / sqrt_one_minus_a_t_student
+            x_prev_student = a_prev_student.sqrt() * student_pred_x0 + (1. - a_prev_student).sqrt() * e_student
 
-            # gather schedule values per example for j
-            a_t_teacher = torch.as_tensor(teacher_sampler.ddim_alphas, device=device, dtype=x_t.dtype)[j_idx].view(b, 1, 1, 1)
-            a_prev_teacher = torch.as_tensor(teacher_sampler.ddim_alphas_prev, device=device, dtype=x_t.dtype)[j_idx].view(b, 1, 1, 1)
-            sqrt_one_minus_a_t_teacher = torch.as_tensor(teacher_sampler.ddim_sqrt_one_minus_alphas, device=device, dtype=x_t.dtype)[j_idx].view(b, 1, 1, 1)
+            # optional student two steps for comparison
+            with torch.no_grad():
+                i_prev = i_vec - 1
+                ts_prev = student_ts_all[i_prev]
+                student_pred_x0_second = self.apply_model(x_prev_student, ts_prev, c_rep)
+                a_t_s2 = torch.as_tensor(student_sampler.ddim_alphas, device=device, dtype=x_t.dtype)[i_prev].view(trace_len, 1, 1, 1)
+                a_prev_s2 = torch.as_tensor(student_sampler.ddim_alphas_prev, device=device, dtype=x_t.dtype)[i_prev].view(trace_len, 1, 1, 1)
+                sqrt_one_minus_a_t_s2 = torch.as_tensor(student_sampler.ddim_sqrt_one_minus_alphas, device=device, dtype=x_t.dtype)[i_prev].view(trace_len, 1, 1, 1)
+                e_s2 = (x_prev_student - a_t_s2.sqrt() * student_pred_x0_second) / sqrt_one_minus_a_t_s2
+                x_student_two = a_prev_s2.sqrt() * student_pred_x0_second + (1. - a_prev_s2).sqrt() * e_s2
 
-            # first teacher step: j -> j-1
-            e_t1 = (x_t - a_t_teacher.sqrt() * teacher_pred_x0) / sqrt_one_minus_a_t_teacher
-            dir_xt1 = (1. - a_prev_teacher).sqrt() * e_t1
-            x_tmp = a_prev_teacher.sqrt() * teacher_pred_x0 + dir_xt1
+            # save per-step images
+            try:
+                import os
+                from torchvision.utils import save_image
+                os.makedirs(os.path.join(self.distill_debug_dir, 'trace'), exist_ok=True)
+                def dec(img):
+                    with torch.no_grad():
+                        x_dec = self.decode_first_stage(img)
+                        x_dec = torch.clamp((x_dec + 1.0) / 2.0, 0.0, 1.0)
+                        return x_dec
+                for k in range(trace_len):
+                    items = [
+                        ('00_noised_x', x_t[k:k+1]),
+                        ('01_teacher_pred_x0', teacher_pred_x0[k:k+1]),
+                        ('02_student_pred_x0', student_pred_x0[k:k+1]),
+                        ('03_student_one_step', x_prev_student[k:k+1]),
+                        ('04_teacher_pred_x0_second', pred_x0_second[k:k+1]),
+                        ('05_teacher_two_steps', x_teacher_two[k:k+1]),
+                    ]
+                    for name, tensor in items:
+                        img = dec(tensor)
+                        save_image(img, os.path.join(self.distill_debug_dir, 'trace', f'step_{int(i_vec[k].item())}_{name}.png'))
+            except Exception as e:
+                print(f"[distill_trace_debug] failed to save stepwise images: {e}")
+            # fall through to compute loss on the traced batch
+            x0 = x0_rep
+            c = c_rep
+            b = x0.shape[0]
+            # reuse outputs to compute losses below; overwrite variables for consistency
+            i_vec_full = i_vec
+        else:
+            # choose a valid student step index per example, i_e >= 1 (has a previous step)
+            i_vec = torch.randint(low=1, high=total_student, size=(b,), device=device)
+            i_vec_full = i_vec
+            student_ts_all = torch.as_tensor(student_sampler.ddim_timesteps, device=device)
+            ts = student_ts_all[i_vec]
+            # Construct x_t via forward process
+            with torch.no_grad():
+                x_t = self.q_sample(x_start=x0, t=ts)
 
-            # second teacher step: (j-1) -> (j-2)
-            ts2 = teacher_ts[j_prev].long()
-            pred_x0_second = teacher_apply(x_tmp, ts2, c).detach()
-            a_t2 = torch.as_tensor(teacher_sampler.ddim_alphas, device=device, dtype=x_t.dtype)[j_prev].view(b, 1, 1, 1)
-            a_prev2 = torch.as_tensor(teacher_sampler.ddim_alphas_prev, device=device, dtype=x_t.dtype)[j_prev].view(b, 1, 1, 1)
-            sqrt_one_minus_a_t2 = torch.as_tensor(teacher_sampler.ddim_sqrt_one_minus_alphas, device=device, dtype=x_t.dtype)[j_prev].view(b, 1, 1, 1)
-            e_t2 = (x_tmp - a_t2.sqrt() * pred_x0_second) / sqrt_one_minus_a_t2
-            dir_xt2 = (1. - a_prev2).sqrt() * e_t2
-            x_teacher_two = a_prev2.sqrt() * pred_x0_second + dir_xt2
+            # Teacher predictions at this step and two teacher steps update (vectorized)
+            with torch.no_grad():
+                # Helper to apply teacher forward either via EMA weights or static teacher copy
+                def teacher_apply(x_in, t_in, c_in):
+                    if getattr(self, 'teacher_model', None) is not None:
+                        original_model = self.model
+                        self.model = self.teacher_model
+                        try:
+                            return self.apply_model(x_in, t_in, c_in)
+                        finally:
+                            self.model = original_model
+                    else:
+                        with self.ema_scope("Teacher EMA for distillation"):
+                            return self.apply_model(x_in, t_in, c_in)
 
-        # Student pred_x0 at same per-example coarse steps
-        student_pred_x0 = self.apply_model(x_t, ts, c)
+                # teacher pred_x0 at coarse step (x0 parameterization)
+                teacher_pred_x0 = teacher_apply(x_t, ts, c).detach()
 
-        # One-step student update per example
-        a_t_student = torch.as_tensor(student_sampler.ddim_alphas, device=device, dtype=x_t.dtype)[i_vec].view(b, 1, 1, 1)
-        a_prev_student = torch.as_tensor(student_sampler.ddim_alphas_prev, device=device, dtype=x_t.dtype)[i_vec].view(b, 1, 1, 1)
-        sqrt_one_minus_a_t_student = torch.as_tensor(student_sampler.ddim_sqrt_one_minus_alphas, device=device, dtype=x_t.dtype)[i_vec].view(b, 1, 1, 1)
-        e_student = (x_t - a_t_student.sqrt() * student_pred_x0) / sqrt_one_minus_a_t_student
-        dir_student = (1. - a_prev_student).sqrt() * e_student
-        x_prev_student = a_prev_student.sqrt() * student_pred_x0 + dir_student
+                # find exact teacher index j per example (schedules share the same base; must match exactly)
+                teacher_ts = torch.as_tensor(teacher_sampler.ddim_timesteps, device=device)  # [S_teacher]
+                eq = (teacher_ts.view(1, -1) == ts.view(-1, 1))
+                assert eq.any(dim=1).all(), "Each student timestep must exactly match a teacher timestep"
+                assert (eq.sum(dim=1) == 1).all(), "Student timestep should match exactly one teacher timestep"
+                j_idx = torch.argmax(eq.to(torch.int64), dim=1)  # [b]
+                assert (j_idx >= 1).all(), "j_idx must be >= 1 to allow two teacher steps"
+                j_prev = j_idx - 1
+
+                # gather schedule values per example for j
+                a_t_teacher = torch.as_tensor(teacher_sampler.ddim_alphas, device=device, dtype=x_t.dtype)[j_idx].view(b, 1, 1, 1)
+                a_prev_teacher = torch.as_tensor(teacher_sampler.ddim_alphas_prev, device=device, dtype=x_t.dtype)[j_idx].view(b, 1, 1, 1)
+                sqrt_one_minus_a_t_teacher = torch.as_tensor(teacher_sampler.ddim_sqrt_one_minus_alphas, device=device, dtype=x_t.dtype)[j_idx].view(b, 1, 1, 1)
+
+                # first teacher step: j -> j-1
+                e_t1 = (x_t - a_t_teacher.sqrt() * teacher_pred_x0) / sqrt_one_minus_a_t_teacher
+                dir_xt1 = (1. - a_prev_teacher).sqrt() * e_t1
+                x_tmp = a_prev_teacher.sqrt() * teacher_pred_x0 + dir_xt1
+
+                # second teacher step: (j-1) -> (j-2)
+                ts2 = teacher_ts[j_prev].long()
+                pred_x0_second = teacher_apply(x_tmp, ts2, c).detach()
+                a_t2 = torch.as_tensor(teacher_sampler.ddim_alphas, device=device, dtype=x_t.dtype)[j_prev].view(b, 1, 1, 1)
+                a_prev2 = torch.as_tensor(teacher_sampler.ddim_alphas_prev, device=device, dtype=x_t.dtype)[j_prev].view(b, 1, 1, 1)
+                sqrt_one_minus_a_t2 = torch.as_tensor(teacher_sampler.ddim_sqrt_one_minus_alphas, device=device, dtype=x_t.dtype)[j_prev].view(b, 1, 1, 1)
+                e_t2 = (x_tmp - a_t2.sqrt() * pred_x0_second) / sqrt_one_minus_a_t2
+                dir_xt2 = (1. - a_prev2).sqrt() * e_t2
+                x_teacher_two = a_prev2.sqrt() * pred_x0_second + dir_xt2
+
+            # Student pred_x0 at same per-example coarse steps
+            student_pred_x0 = self.apply_model(x_t, ts, c)
+
+            # One-step student update per example
+            a_t_student = torch.as_tensor(student_sampler.ddim_alphas, device=device, dtype=x_t.dtype)[i_vec].view(b, 1, 1, 1)
+            a_prev_student = torch.as_tensor(student_sampler.ddim_alphas_prev, device=device, dtype=x_t.dtype)[i_vec].view(b, 1, 1, 1)
+            sqrt_one_minus_a_t_student = torch.as_tensor(student_sampler.ddim_sqrt_one_minus_alphas, device=device, dtype=x_t.dtype)[i_vec].view(b, 1, 1, 1)
+            e_student = (x_t - a_t_student.sqrt() * student_pred_x0) / sqrt_one_minus_a_t_student
+            dir_student = (1. - a_prev_student).sqrt() * e_student
+            x_prev_student = a_prev_student.sqrt() * student_pred_x0 + dir_student
 
         # Losses
         loss_x0 = F.mse_loss(student_pred_x0, teacher_pred_x0)
@@ -737,8 +862,8 @@ class LatentDiffusion(DDPM):
             'train/distill_loss': loss.detach()
         }
 
-        # Optional debug image saving
-        if self.distill_debug and (getattr(self, 'global_step', 0) % max(self.distill_debug_every, 1) == 0):
+        # Existing lightweight grid debug (unchanged)
+        if self.distill_debug and (getattr(self, 'global_step', 0) % max(self.distill_debug_every, 1) == 0) and (not self.distill_debug_trace):
             try:
                 # rank guard
                 is_rank0 = True
@@ -748,14 +873,12 @@ class LatentDiffusion(DDPM):
                     pass
                 if is_rank0:
                     os.makedirs(self.distill_debug_dir, exist_ok=True)
-                    n = min(self.distill_debug_n, b)
+                    n = min(self.distill_debug_n, x0.shape[0])
                     with torch.no_grad():
-                        # decode a subset to images in [-1,1]
                         def decode_to_img(z):
                             x_dec = self.decode_first_stage(z)
                             x_dec = torch.clamp((x_dec + 1.0) / 2.0, 0.0, 1.0)
                             return x_dec
-                        # pick subset
                         idx = slice(0, n)
                         imgs = {
                             'gt_x0': decode_to_img(x0[idx]),
@@ -764,7 +887,6 @@ class LatentDiffusion(DDPM):
                             'student_x_prev': decode_to_img(x_prev_student[idx]),
                             'teacher_two_step': decode_to_img(x_teacher_two[idx]),
                         }
-                        # save grids
                         from torchvision.utils import save_image, make_grid as _make_grid
                         step = int(getattr(self, 'global_step', 0))
                         for name, tensor in imgs.items():

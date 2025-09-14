@@ -758,7 +758,7 @@ class LatentDiffusion(DDPM):
             # save per-step images
             try:
                 import os
-                from torchvision.utils import save_image
+                import matplotlib.pyplot as plt
                 os.makedirs(os.path.join(self.distill_debug_dir, 'trace'), exist_ok=True)
                 def dec(img):
                     with torch.no_grad():
@@ -766,17 +766,26 @@ class LatentDiffusion(DDPM):
                         x_dec = torch.clamp((x_dec + 1.0) / 2.0, 0.0, 1.0)
                         return x_dec
                 for k in range(trace_len):
-                    items = [
-                        ('00_noised_x', x_t[k:k+1]),
-                        ('01_teacher_pred_x0', teacher_pred_x0[k:k+1]),
-                        ('02_student_pred_x0', student_pred_x0[k:k+1]),
-                        ('03_student_one_step', x_prev_student[k:k+1]),
-                        ('04_teacher_pred_x0_second', pred_x0_second[k:k+1]),
-                        ('05_teacher_two_steps', x_teacher_two[k:k+1]),
-                    ]
-                    for name, tensor in items:
-                        img = dec(tensor)
-                        save_image(img, os.path.join(self.distill_debug_dir, 'trace', f'step_{int(i_vec[k].item())}_{name}.png'))
+                    # decode all needed tensors
+                    noised = dec(x_t[k:k+1])[0].permute(1, 2, 0).cpu().numpy()
+                    t_pred_x0 = dec(teacher_pred_x0[k:k+1])[0].permute(1, 2, 0).cpu().numpy()
+                    s_pred_x0 = dec(student_pred_x0[k:k+1])[0].permute(1, 2, 0).cpu().numpy()
+                    s_one = dec(x_prev_student[k:k+1])[0].permute(1, 2, 0).cpu().numpy()
+                    t_pred_x0_second = dec(pred_x0_second[k:k+1])[0].permute(1, 2, 0).cpu().numpy()
+                    t_two = dec(x_teacher_two[k:k+1])[0].permute(1, 2, 0).cpu().numpy()
+                    # compose figure
+                    fig, axs = plt.subplots(2, 3, figsize=(12, 8))
+                    axs = axs.flatten()
+                    axs[0].imshow(noised); axs[0].set_title('noised x_t'); axs[0].axis('off')
+                    axs[1].imshow(t_pred_x0); axs[1].set_title('teacher pred x0'); axs[1].axis('off')
+                    axs[2].imshow(s_pred_x0); axs[2].set_title('student pred x0'); axs[2].axis('off')
+                    axs[3].imshow(s_one); axs[3].set_title('student one step'); axs[3].axis('off')
+                    axs[4].imshow(t_pred_x0_second); axs[4].set_title('teacher pred x0 (2nd)'); axs[4].axis('off')
+                    axs[5].imshow(t_two); axs[5].set_title('teacher two steps'); axs[5].axis('off')
+                    fig.tight_layout()
+                    out_path = os.path.join(self.distill_debug_dir, 'trace', f'step_{int(i_vec[k].item())}.png')
+                    fig.savefig(out_path)
+                    plt.close(fig)
             except Exception as e:
                 print(f"[distill_trace_debug] failed to save stepwise images: {e}")
             # fall through to compute loss on the traced batch

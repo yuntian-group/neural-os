@@ -138,6 +138,11 @@ if __name__ == "__main__":
             ckpt_folder = save_path[:-len('n')]
         if save_path.endswith('l'):
             ckpt_folder = save_path[:-len('l')]
+        if save_path.endswith('k'):
+            ckpt_folder = save_path[:-len('k')]
+        m = re.match(r'.*?(_to_\d+)$', save_path)
+        if m:
+            ckpt_folder = save_path[:-len(m.group(1))]
 
         #ckpt_folder = 'sb_computecanada_fsdp_noema_challengingandsample_pretrainrnn_balanced_lr5e6_contbest_samplercover_newd_contfreezernn_newnewd_origunet_nospatial2'
         ckpt_files = [f for f in os.listdir(ckpt_folder) if f.startswith('model-step=') and f.endswith('.ckpt')]
@@ -154,7 +159,24 @@ if __name__ == "__main__":
         #model = load_model_from_config(config, 'saved_bsz64_acc1_lr8e5_512_leftclick_histpos_512_384_cont2_ddd_difficult_only_withlstmencoder_without_standard_filtered/model-step=010000.ckpt')
         pass
         #model = load_model_from_config(config, 'saved_bsz64_acc1_lr8e5_512_leftclick_histpos_512_384_cont2_ddd_difficult_only_withlstmencoder_without_minmax/model-step=740000.ckpt')
-    # model = load_cond_from_config(model, "model_bert.ckpt")
+
+    # model = load_cond_from_config(model, 'model_bert.ckpt')
+
+    # After loading the model, if using progressive distillation without EMA, hard-sync the static teacher
+    try:
+        import copy
+        if getattr(model, 'distill_progressive', False) and not getattr(model, 'use_ema', False):
+            if getattr(model, 'teacher_model', None) is None:
+                print('Creating static teacher from student UNet (post-load).')
+                model.teacher_model = copy.deepcopy(model.model)
+            else:
+                print('Syncing static teacher weights from student UNet (post-load).')
+                model.teacher_model.load_state_dict(model.model.state_dict(), strict=True)
+            model.teacher_model.eval()
+            for p in model.teacher_model.parameters():
+                p.requires_grad = False
+    except Exception as e:
+        print(f'Warning: static teacher sync skipped due to error: {e}')
 
     #model = load_model_from_config(config, 'oct29_fixcursor_test_15_no_deltas_1000_paths/model_test_15_no_deltas_1000_paths.ckpt')
     #model = load_model_from_config(config, 'saved_fixcursor_lr2e5_debug_gpt_firstframe_posmap_debugidentity_256/model-step=010500.ckpt')

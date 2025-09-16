@@ -508,6 +508,9 @@ class LatentDiffusion(DDPM):
                  scale_factor=1.0,
                  scale_by_std=False,
                  hybrid_key=None, #for csllm
+                 # === Progressive distillation params ===
+                 distill_progressive=False,
+                 distill_params=None,
                  *args, **kwargs):
         self.pretrain = pretrain
         self.run_eval = run_eval
@@ -519,6 +522,19 @@ class LatentDiffusion(DDPM):
         self.scheduled_sampling_length = scheduled_sampling_length
         self.scheduled_sampling_ddim_steps = scheduled_sampling_ddim_steps
         self.scale_by_std = scale_by_std
+        # Distillation flags
+        self.distill_progressive = distill_progressive
+        self.distill_params = distill_params or {}
+        self.distill_teacher_steps = int(self.distill_params.get('teacher_steps', 16))
+        self.distill_student_steps = int(self.distill_params.get('student_steps', 8))
+        self.distill_loss_weight_x0 = float(self.distill_params.get('loss_weight_x0', 0.0))
+        self.distill_only = bool(self.distill_params.get('distill_only', True))
+        # Debug saving options
+        self.distill_debug = bool(self.distill_params.get('debug_save', False))
+        self.distill_debug_dir = str(self.distill_params.get('debug_dir', 'distill_debug'))
+        self.distill_debug_every = int(self.distill_params.get('debug_every', 500))
+        self.distill_debug_n = int(self.distill_params.get('debug_n', 4))
+        self.distill_debug_trace = bool(self.distill_params.get('debug_trace', False))
         assert self.num_timesteps_cond <= kwargs['timesteps']
         # for backwards compatibility after implementation of DiffusionWrapper
         if conditioning_key is None:
@@ -557,12 +573,27 @@ class LatentDiffusion(DDPM):
             self.init_from_ckpt(ckpt_path, ignore_keys)
             self.restarted_from_ckpt = True
 
+        # Ensure x0 parameterization when distilling
+        if self.distill_progressive and self.parameterization != 'x0':
+            print('Warning: distill_progressive=True but parameterization!=x0; switching to x0 for distillation')
+            self.parameterization = 'x0'
+
         self.temporal_encoder = None
         if temporal_encoder_config is not None:
             self.temporal_encoder = instantiate_from_config(temporal_encoder_config)
         if self.freezernn:
             print ('FREEZING RNN')
             for p in self.temporal_encoder.parameters():
+                p.requires_grad = False
+
+        # Initialize static teacher if using progressive distillation without EMA
+        self.teacher_model = None
+        if self.distill_progressive and (not self.use_ema):
+            import copy
+            print('Initializing static teacher model (copy of student UNet); teacher will remain frozen.')
+            self.teacher_model = copy.deepcopy(self.model)
+            self.teacher_model.eval()
+            for p in self.teacher_model.parameters():
                 p.requires_grad = False
         DEBUG = True
         DEBUG = False
@@ -607,6 +638,277 @@ class LatentDiffusion(DDPM):
             print (cluster_centers)
             self.cluster_centers = cluster_centers
             self.cluster_ids = cluster_ids
+
+    # === Progressive distillation loss (teacher DDIM S=teacher_steps → student S=student_steps) ===
+    def compute_progressive_distill_loss(self, x0, c):
+        """
+        Trains the student (current model) to match a 16-step DDIM teacher at a coarser schedule, per-example.
+        Uses x0 parameterization: match pred_x0 at the coarse step and one-step update to teacher's two-step result.
+        If self.distill_debug_trace is True, runs a per-step visualization by replicating one example and sweeping steps.
+        """
+        assert self.parameterization == 'x0', "Progressive distillation currently implemented for x0 parametrization"
+        b = x0.shape[0]
+        device = x0.device
+
+        # Build schedules from a fixed base (progressivedistillation_64)
+        #import pdb; pdb.set_trace()
+        teacher_sampler = DDIMSampler(self)
+        teacher_sampler.make_schedule(ddim_num_steps=self.distill_teacher_steps, ddim_discretize="progressivedistillation_32", ddim_eta=0.0, verbose=False)
+        student_sampler = DDIMSampler(self)
+        student_sampler.make_schedule(ddim_num_steps=self.distill_student_steps, ddim_discretize="progressivedistillation_32", ddim_eta=0.0, verbose=False)
+
+        total_student = int(student_sampler.ddim_timesteps.shape[0])
+        teacher_count = int(teacher_sampler.ddim_timesteps.shape[0])
+        student_count = int(student_sampler.ddim_timesteps.shape[0])
+        assert teacher_count % student_count == 0, "teacher_steps must be divisible by student_steps for grouped distillation"
+        group_size = teacher_count // student_count
+
+        # Trace-style debug: replicate one example and sweep steps for detailed visualization
+        import pdb; pdb.set_trace()
+        if self.distill_debug and self.distill_debug_trace:
+            # pick index 0 and replicate
+            idx0 = 0
+            # define number of steps to trace (exclude 0 to allow two-step teacher)
+            trace_len = min(32, max(total_student - 1, 1))
+            # prepare replicated batch
+            x0_rep = x0[idx0:idx0+1].repeat(trace_len, 1, 1, 1)
+            # replicate cond
+            def replicate_cond(cond_in):
+                if cond_in is None:
+                    return None
+                if isinstance(cond_in, dict):
+                    cond_out = {}
+                    for k, v in cond_in.items():
+                        if isinstance(v, list):
+                            cond_out[k] = v
+                        elif torch.is_tensor(v):
+                            if v.shape[0] == b:
+                                cond_out[k] = v[idx0:idx0+1].repeat(trace_len, *([1] * (v.ndim - 1)))
+                            else:
+                                cond_out[k] = v
+                        else:
+                            cond_out[k] = v
+                    return cond_out
+                else:
+                    # single tensor cond
+                    v = cond_in
+                    if torch.is_tensor(v) and v.shape[0] == b:
+                        return v[idx0:idx0+1].repeat(trace_len, *([1] * (v.ndim - 1)))
+                    return cond_in
+            c_rep = replicate_cond(c)
+            # sequential steps starting at group_size-1 to ensure enough teacher steps
+            student_ts_all = torch.as_tensor(student_sampler.ddim_timesteps, device=device)
+            i_start = 1 if group_size > 1 else 0
+            trace_len = min(trace_len, max(total_student - i_start, 1))
+            i_vec = torch.arange(i_start, i_start + trace_len, device=device)
+            ts = student_ts_all[i_vec]
+            # construct x_t for replicated batch
+            with torch.no_grad():
+                x_t = self.q_sample(x_start=x0_rep, t=ts)
+
+            # teacher forward helper
+            def teacher_apply(x_in, t_in, c_in):
+                if getattr(self, 'teacher_model', None) is not None:
+                    original_model = self.model
+                    self.model = self.teacher_model
+                    try:
+                        return self.apply_model(x_in, t_in, c_in)
+                    finally:
+                        self.model = original_model
+                else:
+                    assert False, "Teacher model not found"
+
+            # teacher predictions
+            with torch.no_grad():
+                teacher_pred_x0 = teacher_apply(x_t, ts, c_rep).detach()
+                teacher_ts_all = torch.as_tensor(teacher_sampler.ddim_timesteps, device=device)
+                eq = (teacher_ts_all.view(1, -1) == ts.view(-1, 1))
+                # enforce exact match and j_prev>=1
+                j_idx = torch.argmax(eq.to(torch.int64), dim=1)
+                # collect group_size teacher steps per row
+                # First step from current j to j-1
+                a_t_teacher = torch.as_tensor(teacher_sampler.ddim_alphas, device=device, dtype=x_t.dtype)[j_idx].view(trace_len, 1, 1, 1)
+                a_prev_teacher = torch.as_tensor(teacher_sampler.ddim_alphas_prev, device=device, dtype=x_t.dtype)[j_idx].view(trace_len, 1, 1, 1)
+                sqrt_one_minus_a_t_teacher = torch.as_tensor(teacher_sampler.ddim_sqrt_one_minus_alphas, device=device, dtype=x_t.dtype)[j_idx].view(trace_len, 1, 1, 1)
+                e_t1 = (x_t - a_t_teacher.sqrt() * teacher_pred_x0) / sqrt_one_minus_a_t_teacher
+                x_prev = a_prev_teacher.sqrt() * teacher_pred_x0 + (1. - a_prev_teacher).sqrt() * e_t1
+                # accumulate per-group predictions
+                teacher_x0_list = [teacher_pred_x0]
+                teacher_xprev_list = [x_prev]
+                # perform remaining group_size-1 steps
+                j_cur = j_idx - 1
+                for g in range(1, group_size):
+                    ts_cur = teacher_ts_all[j_cur].long()
+                    pred_x0_cur = teacher_apply(x_prev, ts_cur, c_rep).detach()
+                    a_t_cur = torch.as_tensor(teacher_sampler.ddim_alphas, device=device, dtype=x_t.dtype)[j_cur].view(trace_len, 1, 1, 1)
+                    a_prev_cur = torch.as_tensor(teacher_sampler.ddim_alphas_prev, device=device, dtype=x_t.dtype)[j_cur].view(trace_len, 1, 1, 1)
+                    sqrt_one_minus_a_t_cur = torch.as_tensor(teacher_sampler.ddim_sqrt_one_minus_alphas, device=device, dtype=x_t.dtype)[j_cur].view(trace_len, 1, 1, 1)
+                    e_cur = (x_prev - a_t_cur.sqrt() * pred_x0_cur) / sqrt_one_minus_a_t_cur
+                    x_prev = a_prev_cur.sqrt() * pred_x0_cur + (1. - a_prev_cur).sqrt() * e_cur
+                    teacher_x0_list.append(pred_x0_cur)
+                    teacher_xprev_list.append(x_prev)
+                    j_cur = j_cur - 1
+                # final two-step equivalent target is the last x_prev
+                x_teacher_group = x_prev
+
+            # student predictions
+            student_pred_x0 = self.apply_model(x_t, ts, c_rep)
+            a_t_student = torch.as_tensor(student_sampler.ddim_alphas, device=device, dtype=x_t.dtype)[i_vec].view(trace_len, 1, 1, 1)
+            a_prev_student = torch.as_tensor(student_sampler.ddim_alphas_prev, device=device, dtype=x_t.dtype)[i_vec].view(trace_len, 1, 1, 1)
+            sqrt_one_minus_a_t_student = torch.as_tensor(student_sampler.ddim_sqrt_one_minus_alphas, device=device, dtype=x_t.dtype)[i_vec].view(trace_len, 1, 1, 1)
+            e_student = (x_t - a_t_student.sqrt() * student_pred_x0) / sqrt_one_minus_a_t_student
+            x_prev_student = a_prev_student.sqrt() * student_pred_x0 + (1. - a_prev_student).sqrt() * e_student
+
+            # save per-step images
+            try:
+                import os
+                import matplotlib.pyplot as plt
+                os.makedirs(os.path.join(self.distill_debug_dir, 'trace'), exist_ok=True)
+                def dec(img):
+                    with torch.no_grad():
+                        x_dec = self.decode_first_stage(img)
+                        x_dec = torch.clamp((x_dec + 1.0) / 2.0, 0.0, 1.0)
+                        return x_dec
+                for k in range(trace_len):
+                    img_noised = dec(x_t[k:k+1])[0].permute(1, 2, 0).cpu().numpy()
+                    img_gt = dec(x0_rep[k:k+1])[0].permute(1, 2, 0).cpu().numpy()
+                    # dynamic rows: 2 (header) + group_size (teacher rows) + 1 (student row)
+                    rows = 1 + group_size + 1
+                    fig, axs = plt.subplots(rows, 2, figsize=(10, 4*rows))
+                    axs[0,0].imshow(img_noised); axs[0,0].set_title('noised x_t'); axs[0,0].axis('off')
+                    axs[0,1].imshow(img_gt); axs[0,1].set_title('ground truth x0'); axs[0,1].axis('off')
+                    # teacher rows
+                    for g in range(group_size):
+                        img_t_x0 = dec(teacher_x0_list[g][k:k+1])[0].permute(1,2,0).cpu().numpy()
+                        img_t_xprev = dec(teacher_xprev_list[g][k:k+1])[0].permute(1,2,0).cpu().numpy()
+                        axs[1+g,0].imshow(img_t_x0); axs[1+g,0].set_title(f'teacher pred x0 ({g+1})'); axs[1+g,0].axis('off')
+                        axs[1+g,1].imshow(img_t_xprev); axs[1+g,1].set_title(f'teacher pred x_prev ({g+1})'); axs[1+g,1].axis('off')
+                    # student row
+                    img_s_x0 = dec(student_pred_x0[k:k+1])[0].permute(1,2,0).cpu().numpy()
+                    img_s_xprev = dec(x_prev_student[k:k+1])[0].permute(1,2,0).cpu().numpy()
+                    axs[1+group_size,0].imshow(img_s_x0); axs[1+group_size,0].set_title('student pred x0'); axs[1+group_size,0].axis('off')
+                    axs[1+group_size,1].imshow(img_s_xprev); axs[1+group_size,1].set_title('student pred x_prev'); axs[1+group_size,1].axis('off')
+                    fig.tight_layout()
+                    out_path = os.path.join(self.distill_debug_dir, 'trace', f'step_{int(i_vec[k].item())}.png')
+                    fig.savefig(out_path)
+                    plt.close(fig)
+            except Exception as e:
+                print(f"[distill_trace_debug] failed to save stepwise images: {e}")
+            # fall through to compute loss on the traced batch
+            x0 = x0_rep
+            c = c_rep
+            b = x0.shape[0]
+            # reuse outputs to compute losses below; overwrite variables for consistency
+            i_vec_full = i_vec
+        else:
+            # choose a valid student step index per example, i_e >= group_size-1 (enough teacher history)
+            low = 1 if group_size > 1 else 0
+            i_vec = torch.randint(low=low, high=total_student, size=(b,), device=device)
+            i_vec_full = i_vec
+            student_ts_all = torch.as_tensor(student_sampler.ddim_timesteps, device=device)
+            ts = student_ts_all[i_vec]
+            # Construct x_t via forward process
+            with torch.no_grad():
+                x_t = self.q_sample(x_start=x0, t=ts)
+
+            # Teacher predictions at this step and two teacher steps update (vectorized)
+            with torch.no_grad():
+                # Helper to apply teacher forward either via EMA weights or static teacher copy
+                def teacher_apply(x_in, t_in, c_in):
+                    if getattr(self, 'teacher_model', None) is not None:
+                        original_model = self.model
+                        self.model = self.teacher_model
+                        try:
+                            return self.apply_model(x_in, t_in, c_in)
+                        finally:
+                            self.model = original_model
+                    else:
+                        with self.ema_scope("Teacher EMA for distillation"):
+                            return self.apply_model(x_in, t_in, c_in)
+
+                # teacher pred_x0 at coarse step (x0 parameterization)
+                teacher_pred_x0 = teacher_apply(x_t, ts, c).detach()
+
+                # find exact teacher index j per example (schedules share the same base; must match exactly)
+                teacher_ts = torch.as_tensor(teacher_sampler.ddim_timesteps, device=device)  # [S_teacher]
+                eq = (teacher_ts.view(1, -1) == ts.view(-1, 1))
+                assert eq.any(dim=1).all(), "Each student timestep must exactly match a teacher timestep"
+                assert (eq.sum(dim=1) == 1).all(), "Student timestep should match exactly one teacher timestep"
+                j_idx = torch.argmax(eq.to(torch.int64), dim=1)  # [b]
+                # perform group_size teacher steps
+                a_t_teacher = torch.as_tensor(teacher_sampler.ddim_alphas, device=device, dtype=x_t.dtype)[j_idx].view(b, 1, 1, 1)
+                a_prev_teacher = torch.as_tensor(teacher_sampler.ddim_alphas_prev, device=device, dtype=x_t.dtype)[j_idx].view(b, 1, 1, 1)
+                sqrt_one_minus_a_t_teacher = torch.as_tensor(teacher_sampler.ddim_sqrt_one_minus_alphas, device=device, dtype=x_t.dtype)[j_idx].view(b, 1, 1, 1)
+                e_t1 = (x_t - a_t_teacher.sqrt() * teacher_pred_x0) / sqrt_one_minus_a_t_teacher
+                x_prev = a_prev_teacher.sqrt() * teacher_pred_x0 + (1. - a_prev_teacher).sqrt() * e_t1
+                j_cur = j_idx - 1
+                for g in range(1, group_size):
+                    ts_cur = teacher_ts[j_cur].long()
+                    pred_x0_cur = teacher_apply(x_prev, ts_cur, c).detach()
+                    a_t_cur = torch.as_tensor(teacher_sampler.ddim_alphas, device=device, dtype=x_t.dtype)[j_cur].view(b, 1, 1, 1)
+                    a_prev_cur = torch.as_tensor(teacher_sampler.ddim_alphas_prev, device=device, dtype=x_t.dtype)[j_cur].view(b, 1, 1, 1)
+                    sqrt_one_minus_a_t_cur = torch.as_tensor(teacher_sampler.ddim_sqrt_one_minus_alphas, device=device, dtype=x_t.dtype)[j_cur].view(b, 1, 1, 1)
+                    e_cur = (x_prev - a_t_cur.sqrt() * pred_x0_cur) / sqrt_one_minus_a_t_cur
+                    x_prev = a_prev_cur.sqrt() * pred_x0_cur + (1. - a_prev_cur).sqrt() * e_cur
+                    j_cur = j_cur - 1
+                x_teacher_group = x_prev
+
+            # Student pred_x0 at same per-example coarse steps
+            student_pred_x0 = self.apply_model(x_t, ts, c)
+
+            # One-step student update per example
+            a_t_student = torch.as_tensor(student_sampler.ddim_alphas, device=device, dtype=x_t.dtype)[i_vec].view(b, 1, 1, 1)
+            a_prev_student = torch.as_tensor(student_sampler.ddim_alphas_prev, device=device, dtype=x_t.dtype)[i_vec].view(b, 1, 1, 1)
+            sqrt_one_minus_a_t_student = torch.as_tensor(student_sampler.ddim_sqrt_one_minus_alphas, device=device, dtype=x_t.dtype)[i_vec].view(b, 1, 1, 1)
+            e_student = (x_t - a_t_student.sqrt() * student_pred_x0) / sqrt_one_minus_a_t_student
+            dir_student = (1. - a_prev_student).sqrt() * e_student
+            x_prev_student = a_prev_student.sqrt() * student_pred_x0 + dir_student
+
+        # Losses
+        loss_x0 = F.mse_loss(student_pred_x0, teacher_pred_x0)
+        loss_step = F.mse_loss(x_prev_student, x_teacher_group)
+        loss = self.distill_loss_weight_x0 * loss_x0 + loss_step
+        loss_dict = {
+            'train/distill_loss_x0': loss_x0.detach(),
+            'train/distill_loss_step': loss_step.detach(),
+            'train/distill_loss': loss.detach()
+        }
+
+        # Existing lightweight grid debug (unchanged)
+        if self.distill_debug and (getattr(self, 'global_step', 0) % max(self.distill_debug_every, 1) == 0) and (not self.distill_debug_trace):
+            try:
+                # rank guard
+                is_rank0 = True
+                try:
+                    is_rank0 = (self.global_rank == 0)
+                except Exception:
+                    pass
+                if is_rank0:
+                    os.makedirs(self.distill_debug_dir, exist_ok=True)
+                    n = min(self.distill_debug_n, x0.shape[0])
+                    with torch.no_grad():
+                        def decode_to_img(z):
+                            x_dec = self.decode_first_stage(z)
+                            x_dec = torch.clamp((x_dec + 1.0) / 2.0, 0.0, 1.0)
+                            return x_dec
+                        idx = slice(0, n)
+                        imgs = {
+                            'gt_x0': decode_to_img(x0[idx]),
+                            'student_pred_x0': decode_to_img(student_pred_x0[idx]),
+                            'teacher_pred_x0': decode_to_img(teacher_pred_x0[idx]),
+                            'student_x_prev': decode_to_img(x_prev_student[idx]),
+                            'teacher_two_step': decode_to_img(x_teacher_group[idx]),
+                        }
+                        from torchvision.utils import save_image, make_grid as _make_grid
+                        step = int(getattr(self, 'global_step', 0))
+                        for name, tensor in imgs.items():
+                            grid = _make_grid(tensor, nrow=min(n, 4))
+                            save_path = os.path.join(self.distill_debug_dir, f"step_{step}_{name}.png")
+                            save_image(grid, save_path)
+            except Exception as e:
+                print(f"[distill_debug] failed to save images: {e}")
+
+        return loss, loss_dict
 
     def make_cond_schedule(self, ):
         self.cond_ids = torch.full(size=(self.num_timesteps,), fill_value=self.num_timesteps - 1, dtype=torch.long)
@@ -1765,7 +2067,19 @@ class LatentDiffusion(DDPM):
                 loss_step = F.mse_loss(x, c['c_concat'][:, -x.shape[1]:])
                 loss = loss_step, {'train/loss': loss_step.item()}
         else:
-            loss = self(x, c)
+            if self.distill_progressive:
+                # Progressive distillation path
+                if self.distill_only:
+                    loss = self.compute_progressive_distill_loss(x, c)
+                else:
+                    base_loss, base_dict = self(x, c)
+                    distill_loss, distill_dict = self.compute_progressive_distill_loss(x, c)
+                    combined = base_loss + distill_loss
+                    base_dict.update({k: v for k, v in distill_dict.items()})
+                    base_dict['train/loss'] = combined
+                    loss = combined, base_dict
+            else:
+                loss = self(x, c)
         return loss
 
     def forward(self, x, c, *args, **kwargs):

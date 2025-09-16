@@ -1,4 +1,4 @@
-save_path: ./sb_computecanada_fsdp_noema_challengingandsample_pretrainrnn_balanced_lr5e6_contbest_samplercover_newd_contfreezernn_newnewd_origunet_nospatial2_ONLINE_online_online_x0_joint_onlineonly222222k722222222n22222
+save_path: ./test_scheduled_samplingk2
 
 model:
   base_learning_rate: 5e-06
@@ -13,7 +13,7 @@ model:
     pretrain3: false
     scheduled_sampling_rate: 0.05
     scheduled_sampling_length: 1
-    scheduled_sampling_ddim_steps: 32
+    scheduled_sampling_ddim_steps: 16
     linear_start: 0.0015
     linear_end: 0.0195
     num_timesteps_cond: 1
@@ -97,11 +97,11 @@ data:
   target: data.data_processing.datasets.DataModule
   params:
     batch_size: 14
-    num_workers: 4
+    num_workers: 2
     wrap: false
     shuffle: True
     drop_last: True
-    pin_memory: True
+    pin_memory: false
     prefetch_factor: 1
     use_balanced_sampling: True
     persistent_workers: True

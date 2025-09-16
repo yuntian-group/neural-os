@@ -22,8 +22,30 @@ class DDIMSampler(object):
         setattr(self, name, attr)
 
     def make_schedule(self, ddim_num_steps, ddim_discretize="uniform", ddim_eta=0., verbose=True):
-        self.ddim_timesteps = make_ddim_timesteps(ddim_discr_method=ddim_discretize, num_ddim_timesteps=ddim_num_steps,
-                                                  num_ddpm_timesteps=self.ddpm_num_timesteps,verbose=verbose)
+        if isinstance(ddim_discretize, str) and ddim_discretize.lower() == 'logsnr_uniform':
+            # Build K+1 endpoints uniformly in log-SNR space, then use right endpoints (exclude 0, include T-1)
+            alphas_cumprod = self.model.alphas_cumprod.detach().cpu().numpy()
+            eps = 1e-12
+            ac = np.clip(alphas_cumprod, eps, 1.0 - eps)
+            logsnr = np.log(ac) - np.log(1.0 - ac)
+            # endpoints in [0..T-1]
+            Tm1 = int(self.ddpm_num_timesteps - 1)
+            target = np.linspace(logsnr[0], logsnr[Tm1], ddim_num_steps + 1)
+            idxs = np.array([int(np.argmin(np.abs(logsnr - v))) for v in target], dtype=int)
+            # enforce strict monotonicity and exact endpoints
+            idxs[0] = 0
+            idxs[-1] = Tm1
+            idxs = np.maximum.accumulate(idxs)
+            # ensure strictly increasing (step at least 1)
+            for i in range(1, idxs.shape[0]):
+                if idxs[i] <= idxs[i-1]:
+                    idxs[i] = min(idxs[i-1] + 1, Tm1)
+            # use right endpoints as 0-based timesteps
+            self.ddim_timesteps = idxs[1:]
+            print (f"DDIM timesteps: {self.ddim_timesteps}")
+        else:
+            self.ddim_timesteps = make_ddim_timesteps(ddim_discr_method=ddim_discretize, num_ddim_timesteps=ddim_num_steps,
+                                                      num_ddpm_timesteps=self.ddpm_num_timesteps,verbose=verbose)
         alphas_cumprod = self.model.alphas_cumprod
         assert alphas_cumprod.shape[0] == self.ddpm_num_timesteps, 'alphas have to be defined for each timestep'
         to_torch = lambda x: x.clone().detach().to(torch.float32).to(self.model.device)

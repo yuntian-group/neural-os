@@ -44,48 +44,38 @@ def make_beta_schedule(schedule, n_timestep, linear_start=1e-4, linear_end=2e-2,
 
 
 def make_ddim_timesteps(ddim_discr_method, num_ddim_timesteps, num_ddpm_timesteps, verbose=True):
+    """Return 1-based DDIM timesteps.
+
+    Truncate from the LEFT (use right endpoints):
+    - Build K+1 endpoints over [0, T-1] and return endpoints[1:] (exclude 0, include T-1).
+    - Progressive schedules downsample the canonical base endpoints and also use [1:].
+    """
+    Tm1 = int(num_ddpm_timesteps - 1)  # e.g., 999 for T=1000
+
     if ddim_discr_method == 'uniform':
-        c = num_ddpm_timesteps // num_ddim_timesteps
-        ddim_timesteps = np.asarray(list(range(0, num_ddpm_timesteps, c)))
+        endpoints = np.round(np.linspace(0, Tm1, num_ddim_timesteps + 1, endpoint=True)).astype(int)
+        timesteps_0based = endpoints[1:]
+
     elif ddim_discr_method == 'quad':
-        ddim_timesteps = ((np.linspace(0, np.sqrt(num_ddpm_timesteps * .8), num_ddim_timesteps)) ** 2).astype(int)
+        timesteps_0based = ((np.linspace(0, np.sqrt(num_ddpm_timesteps * .8), num_ddim_timesteps)) ** 2).astype(int)
+
     elif isinstance(ddim_discr_method, str) and ddim_discr_method.startswith('progressivedistillation_'):
-        # Base off a fixed base_n-step schedule, then downsample to the desired num_ddim_timesteps.
-        # Ensure nested schedules: if K divides base_n (e.g., 64->32->16->8), pick every (base_n//K)-th step.
         base_n = int(ddim_discr_method.split('_')[-1])
-        #import pdb; pdb.set_trace()
-        # Build a canonical base schedule with exactly base_n steps using rounded linspace in [1, num_ddpm_timesteps]
-        steps = np.round(np.linspace(1, num_ddpm_timesteps - 1, base_n, endpoint=True)).astype(int)
-        # Make strictly increasing and clipped to valid range (avoid T to prevent OOB)
-        steps = np.clip(steps, 1, num_ddpm_timesteps - 1)
-        steps = np.maximum.accumulate(steps)
-        # Remove any accidental duplicates while preserving order
-        steps_unique = np.array(sorted(set(steps), key=list(steps).index))
-        if steps_unique.shape[0] != base_n:
-            assert False, f'Base schedule has {steps_unique.shape[0]} steps, expected {base_n}'
-            # If dedup shrank the list (unlikely), regenerate by distributing strictly within [1, T-1]
-            frac = (num_ddpm_timesteps - 1 - 1) / (base_n - 1)
-            steps = np.array([int(round(1 + i * frac)) for i in range(base_n)])
-            steps = np.clip(steps, 1, num_ddpm_timesteps - 1)
-        else:
-            steps = steps_unique
-        base_steps = steps
+        base_endpoints = np.round(np.linspace(0, Tm1, base_n + 1, endpoint=True)).astype(int)
         if num_ddim_timesteps == base_n:
-            steps = base_steps
+            timesteps_0based = base_endpoints[1:]
         elif base_n % num_ddim_timesteps == 0:
             stride = base_n // num_ddim_timesteps
-            steps = base_steps[::stride]
+            student_endpoints = base_endpoints[::stride]
+            timesteps_0based = student_endpoints[1:]
         else:
-            # Fallback: uniform subsample over the canonical base
-            assert False, f'Base schedule has {base_steps.shape[0]} steps, expected {base_n}'
-        # Convert back to 0-based before +1 below
-        ddim_timesteps = steps - 1
+            assert False, "Not implemented"
+
     else:
         raise NotImplementedError(f'There is no ddim discretization method called "{ddim_discr_method}"')
 
-    # assert ddim_timesteps.shape[0] == num_ddim_timesteps
-    # add one to get the final alpha values right (the ones from first scale to data during sampling)
-    steps_out = ddim_timesteps + 1
+    #steps_out = timesteps_0based + 1
+    steps_out = timesteps_0based
     if verbose:
         print(f'Selected timesteps for ddim sampler: {steps_out}')
     return steps_out

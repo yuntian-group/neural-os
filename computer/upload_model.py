@@ -69,6 +69,7 @@ MODEL_NAME = "yuntian-deng/computer-model-s-origunet-nospatial-online-x0-joint-o
 MODEL_NAME = "yuntian-deng/computer-model-s-origunet-nospatial-online-x0-joint-onlineonly-222222k722n22nnn-046k"
 MODEL_NAME = "yuntian-deng/computer-model-distill-8"
 MODEL_NAME = "yuntian-deng/computer-model-distill-16"
+MODEL_NAME = "yuntian-deng/computer-model-test_scheduled_samplingk2-052k"
 
 # latest
 
@@ -177,6 +178,7 @@ LOCAL_CHECKPOINT_PATH = "./sb_computecanada_fsdp_noema_challengingandsample_pret
 LOCAL_CHECKPOINT_PATH = "./sb_computecanada_fsdp_noema_challengingandsample_pretrainrnn_balanced_lr5e6_contbest_samplercover_newd_contfreezernn_newnewd_origunet_nospatial2_ONLINE_online_online_x0_joint_onlineonly222222k722222222n22nnn/model-step=046000.ckpt"
 LOCAL_CHECKPOINT_PATH = "./distill_64_to_32_to_16_to_8/model-step=004000.ckpt"
 LOCAL_CHECKPOINT_PATH = "./distill_64_to_32_to_16/model-step=004000.ckpt"
+LOCAL_CHECKPOINT_PATH = "./test_scheduled_samplingk2/model-step=052000.ckpt"
 CONFIG_PATH = "config_csllm.yaml"
 CONFIG_PATH = "configs/2e5_debug_gpt_firstframe.yaml"
 CONFIG_PATH = "configs/2e5_debug_gpt_firstframe_identity.yaml"

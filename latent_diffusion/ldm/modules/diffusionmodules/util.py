@@ -59,7 +59,7 @@ def make_beta_schedule(schedule, n_timestep, linear_start=1e-4, linear_end=2e-2,
         prev = alphacum_rescaled[0]
         for t in range(1, n_timestep):
             curr = alphacum_rescaled[t]
-            alphas_rescaled[t] = curr / prev #max(prev, eps)
+            alphas_rescaled[t] = curr / prev
             prev = curr
         betas = 1.0 - alphas_rescaled
         #betas = np.clip(betas, a_min=1e-12, a_max=0.999)

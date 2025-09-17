@@ -46,12 +46,12 @@ def make_beta_schedule(schedule, n_timestep, linear_start=1e-4, linear_end=2e-2,
         alphas = 1.0 - betas0
         alphacum = np.cumprod(alphas, axis=0)
         # Rescale sqrt(alpha_cumprod) so that terminal value is 0 and initial is 1
-        eps = 1e-12
+        #eps = 1e-12
         sqrt_ac = np.sqrt(alphacum)
         sT = float(sqrt_ac[-1])
-        denom = 1.0 - sT
-        sqrt_ac_rescaled = (sqrt_ac - sT) / denom
-        sqrt_ac_rescaled = np.clip(sqrt_ac_rescaled, 0.0, 1.0)
+        s0 = float(sqrt_ac[0])
+        denom = s0 - sT
+        sqrt_ac_rescaled = (sqrt_ac - sT) * s0 / denom
         alphacum_rescaled = sqrt_ac_rescaled ** 2
         # Reconstruct per-step alphas/betas from cumulative alphas
         alphas_rescaled = np.empty_like(alphacum_rescaled)
@@ -59,10 +59,10 @@ def make_beta_schedule(schedule, n_timestep, linear_start=1e-4, linear_end=2e-2,
         prev = alphacum_rescaled[0]
         for t in range(1, n_timestep):
             curr = alphacum_rescaled[t]
-            alphas_rescaled[t] = curr / max(prev, eps)
+            alphas_rescaled[t] = curr / prev #max(prev, eps)
             prev = curr
         betas = 1.0 - alphas_rescaled
-        betas = np.clip(betas, a_min=1e-12, a_max=0.999)
+        #betas = np.clip(betas, a_min=1e-12, a_max=0.999)
         return betas
     else:
         raise ValueError(f"schedule '{schedule}' unknown.")

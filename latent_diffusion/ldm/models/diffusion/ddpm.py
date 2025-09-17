@@ -2078,8 +2078,8 @@ class LatentDiffusion(DDPM):
                     base_dict.update({k: v for k, v in distill_dict.items()})
                     base_dict['train/loss'] = combined
                     loss = combined, base_dict
-        else:
-            loss = self(x, c)
+            else:
+                loss = self(x, c)
         return loss
 
     def forward(self, x, c, *args, **kwargs):

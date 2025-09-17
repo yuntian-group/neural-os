@@ -62,7 +62,7 @@ def make_beta_schedule(schedule, n_timestep, linear_start=1e-4, linear_end=2e-2,
             alphas_rescaled[t] = curr / prev
             prev = curr
         betas = 1.0 - alphas_rescaled
-        betas = np.clip(betas, a_min=1e-12, a_max=0.999)
+        #betas = np.clip(betas, a_min=1e-12, a_max=0.999)
         return betas
     else:
         raise ValueError(f"schedule '{schedule}' unknown.")

@@ -29,4 +29,4 @@ CUDA_VISIBLE_DEVICES=1 python -u main.py --config configs/train_progressive_dist
 CUDA_VISIBLE_DEVICES=1 python -u main.py --config configs/train_progressive_distillation_8_to_4.yaml > log.train_progressive_distillation_8_to_4.bsz63.txt.freezernn 2>&1
 
 
-CUDA_VISIBLE_DEVICES=1 python -u main.py --config configs/train_progressive_distillation_32_to_16_32.yaml > log.train_progressive_distillation_32_to_16_32.bsz63.txt.freezernn 2>&1
+CUDA_VISIBLE_DEVICES=1 python -u main.py --config configs/train_fixed_schedule_terminal0.yaml

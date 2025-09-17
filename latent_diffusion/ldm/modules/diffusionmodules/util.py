@@ -47,9 +47,9 @@ def make_beta_schedule(schedule, n_timestep, linear_start=1e-4, linear_end=2e-2,
         alphacum = np.cumprod(alphas, axis=0)
         # Rescale sqrt(alpha_cumprod) so that terminal value is 0 and initial is 1
         eps = 1e-12
-        sqrt_ac = np.sqrt(np.clip(alphacum, eps, 1.0))
+        sqrt_ac = np.sqrt(alphacum)
         sT = float(sqrt_ac[-1])
-        denom = max(1.0 - sT, eps)
+        denom = 1.0 - sT
         sqrt_ac_rescaled = (sqrt_ac - sT) / denom
         sqrt_ac_rescaled = np.clip(sqrt_ac_rescaled, 0.0, 1.0)
         alphacum_rescaled = sqrt_ac_rescaled ** 2

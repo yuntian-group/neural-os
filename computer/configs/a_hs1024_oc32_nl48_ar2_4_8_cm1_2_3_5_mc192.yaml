@@ -1,0 +1,110 @@
+data:
+  params:
+    batch_size: 64
+    drop_last: true
+    num_workers: 16
+    persistent_workers: true
+    pin_memory: true
+    prefetch_factor: 2
+    shuffle: true
+    train:
+      params:
+        context_length: 32
+        data_csv_path: train_dataset/train_dataset.target_frames.csv
+        normalization: standard
+      target: data.data_processing.datasets.ActionsData
+    wrap: false
+  target: data.data_processing.datasets.DataModule
+lightning:
+  trainer:
+    accelerator: gpu
+    accumulate_grad_batches: 1
+    benchmark: false
+    checkpoint_callback: true
+    gpus: 1
+    gradient_clip_val: 1
+    limit_val_batches: 0
+    max_epochs: 6400
+model:
+  base_learning_rate: 8.0e-05
+  params:
+    channels: 3
+    cond_stage_config: __is_unconditional__
+    cond_stage_key: action_
+    cond_stage_trainable: false
+    conditioning_key: hybrid
+    first_stage_config:
+      params:
+        ddconfig:
+          attn_resolutions: []
+          ch: 128
+          ch_mult:
+          - 1
+          - 2
+          - 4
+          - 4
+          double_z: true
+          dropout: 0.0
+          in_channels: 3
+          num_res_blocks: 2
+          out_ch: 3
+          resolution: 256
+          z_channels: 16
+        embed_dim: 16
+        lossconfig:
+          target: torch.nn.Identity
+        monitor: val/rec_loss
+      target: latent_diffusion.ldm.models.autoencoder.AutoencoderKL
+    first_stage_key: image
+    freezernn: false
+    hybrid_key: c_concat
+    image_size:
+    - 64
+    - 48
+    linear_end: 0.0195
+    linear_start: 0.0015
+    log_every_t: 200
+    monitor: val/loss_simple_ema
+    num_timesteps_cond: 1
+    pretrain: false
+    pretrain2: false
+    pretrain3: false
+    run_eval: false
+    scheduled_sampling_ddim_steps: 32
+    scheduled_sampling_length: 1
+    scheduled_sampling_rate: 0
+    temporal_encoder_config:
+      params:
+        dropout: 0.1
+        hidden_size: 1024
+        input_channels: 16
+        num_layers: 1
+        output_channels: 32
+        output_height: 48
+        output_width: 64
+      target: latent_diffusion.ldm.modules.encoders.temporal_encoder.TemporalEncoder
+    timesteps: 1000
+    unet_config:
+      params:
+        attention_resolutions:
+        - 2
+        - 4
+        - 8
+        channel_mult:
+        - 1
+        - 2
+        - 3
+        - 5
+        image_size:
+        - 64
+        - 48
+        in_channels: 48
+        model_channels: 192
+        num_head_channels: 32
+        num_res_blocks: 2
+        out_channels: 16
+        transformer_depth: 1
+        use_spatial_transformer: false
+      target: latent_diffusion.ldm.modules.diffusionmodules.openaimodel.UNetModel
+  target: latent_diffusion.ldm.models.diffusion.ddpm.LatentDiffusion
+save_path: saved_a_hs1024_oc32_nl48_ar2_4_8_cm1_2_3_5_mc192

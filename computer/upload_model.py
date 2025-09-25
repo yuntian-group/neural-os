@@ -78,6 +78,11 @@ MODEL_NAME = "yuntian-deng/computer-model-adddoom_play-02125"
 MODEL_NAME = "yuntian-deng/computer-model-adddoom_play-003625"
 MODEL_NAME = "yuntian-deng/computer-model-adddoom_play-004875"
 MODEL_NAME = "yuntian-deng/computer-model-adddoom_play-006250"
+MODEL_NAME = "yuntian-deng/computer-model-adddoom_play-8gpus-014000"
+MODEL_NAME = "yuntian-deng/computer-model-adddoom_play-8gpus-classic-012000"
+MODEL_NAME = "yuntian-deng/computer-model-adddoom_play-8gpus-classic-fix-010000"
+MODEL_NAME = "yuntian-deng/computer-model-adddoom_play-8gpus-classic-fix2-008000"
+MODEL_NAME = "yuntian-deng/computer-model-adddoom_play-8gpus-classic-fix2-014000"
 
 # latest
 
@@ -197,6 +202,11 @@ LOCAL_CHECKPOINT_PATH = "./test_scheduled_samplingk2777doom/model-step=003625.ck
 LOCAL_CHECKPOINT_PATH = "./test_scheduled_samplingk2777doom/model-step=004875.ckpt"
 LOCAL_CHECKPOINT_PATH = "./test_scheduled_samplingk2777doom/model-step=005375.ckpt"
 LOCAL_CHECKPOINT_PATH = "./test_scheduled_samplingk2777doom/model-step=006250.ckpt"
+LOCAL_CHECKPOINT_PATH = "./test_scheduled_samplingk2777doom2/model-step=014000.ckpt"
+LOCAL_CHECKPOINT_PATH = "./test_scheduled_samplingk2777doom22/model-step=012000.ckpt"
+LOCAL_CHECKPOINT_PATH = "./test_scheduled_samplingk2777doom2222/model-step=010000.ckpt"
+LOCAL_CHECKPOINT_PATH = "./test_scheduled_samplingk2777doom22222/model-step=008000.ckpt"
+LOCAL_CHECKPOINT_PATH = "./test_scheduled_samplingk2777doom22222/model-step=014000.ckpt"
 CONFIG_PATH = "config_csllm.yaml"
 CONFIG_PATH = "configs/2e5_debug_gpt_firstframe.yaml"
 CONFIG_PATH = "configs/2e5_debug_gpt_firstframe_identity.yaml"

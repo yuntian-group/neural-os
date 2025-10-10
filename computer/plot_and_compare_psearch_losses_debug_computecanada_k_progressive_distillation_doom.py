@@ -257,7 +257,7 @@ if __name__ == "__main__":
         #('32_to_16', 'log.train_progressive_distillation_32_to_16.bsz63.txt.freezernn'),
         #('16_to_8', 'log.train_progressive_distillation_16_to_8.bsz63.txt.freezernn'),
         #('32_to_16_32', 'log.train_progressive_distillation_32_to_16_32.bsz63.txt.freezernn'),
-        ('doom', 'log.train_after_fixddim_doom.rerun.rerun.rerun.play.7gpus.classicdoom.fixarrow.2.fix2'),
+        ('doom', 'log.train_after_fixddim_doom.rerun.rerun.rerun.play.7gpus.classicdoom.fixarrow.2.fix2.cont'),
         #('joint_onlineonly_eps222232aip22', 'log.fb.computecanada.challengingandsample.pretrainrnn.balanced.lr5e6.contbest.samplercover.newd.contfreezernn.newnewd.origunet.nospatial2.ONLINE.online.online.x0.joint_onlineonly.2.2.2.2.3.2.7.2.2.2.aip.2.2'),
     ]
     

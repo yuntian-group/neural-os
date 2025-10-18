@@ -105,6 +105,12 @@ MODEL_NAME = "yuntian-deng/computer-model-adddoom_play-8gpus-classic-fix2-cont-4
 MODEL_NAME = "yuntian-deng/computer-model-adddoom_play-8gpus-classic-fix2-cont-450000"
 MODEL_NAME = "yuntian-deng/computer-model-adddoom_play-8gpus-classic-fix2-cont-466000"
 MODEL_NAME = "yuntian-deng/computer-model-adddoom_play-8gpus-classic-fix2-cont-494000"
+MODEL_NAME = "yuntian-deng/computer-model-adddoom_play-8gpus-classic-fix2-cont-548000"
+MODEL_NAME = "yuntian-deng/computer-model-adddoom_play-8gpus-classic-fix2-cont-pretrainrnn-054000"
+MODEL_NAME = "yuntian-deng/computer-model-adddoom_play-8gpus-classic-fix2-cont-pretrainrnn22-012000"
+MODEL_NAME = "yuntian-deng/computer-model-adddoom_play-8gpus-classic-fix2-cont-pretrainrnn22-030000"
+MODEL_NAME = "yuntian-deng/computer-model-adddoom_play-8gpus-classic-fix2-cont-pretrainrnn22-048000"
+MODEL_NAME = "yuntian-deng/computer-model-adddoom_play-8gpus-classic-fix2-cont-pretrainrnn22-064000"
 
 # latest
 
@@ -251,6 +257,12 @@ LOCAL_CHECKPOINT_PATH = "./test_scheduled_samplingk2777doom222222/model-step=424
 LOCAL_CHECKPOINT_PATH = "./test_scheduled_samplingk2777doom222222/model-step=450000.ckpt"
 LOCAL_CHECKPOINT_PATH = "./test_scheduled_samplingk2777doom222222/model-step=466000.ckpt"
 LOCAL_CHECKPOINT_PATH = "./test_scheduled_samplingk2777doom222222/model-step=494000.ckpt"
+LOCAL_CHECKPOINT_PATH = "./test_scheduled_samplingk2777doom222222/model-step=548000.ckpt"
+LOCAL_CHECKPOINT_PATH = "./test_scheduled_samplingk2777doom222222_pretrainrnn/model-step=054000.ckpt"
+LOCAL_CHECKPOINT_PATH = "./test_scheduled_samplingk2777doom222222_pretrainrnn22/model-step=012000.ckpt"
+LOCAL_CHECKPOINT_PATH = "./test_scheduled_samplingk2777doom222222_pretrainrnn22/model-step=030000.ckpt"
+LOCAL_CHECKPOINT_PATH = "./test_scheduled_samplingk2777doom222222_pretrainrnn22/model-step=048000.ckpt"
+LOCAL_CHECKPOINT_PATH = "./test_scheduled_samplingk2777doom222222_pretrainrnn22/model-step=064000.ckpt"
 CONFIG_PATH = "config_csllm.yaml"
 CONFIG_PATH = "configs/2e5_debug_gpt_firstframe.yaml"
 CONFIG_PATH = "configs/2e5_debug_gpt_firstframe_identity.yaml"
@@ -274,7 +286,8 @@ def upload_model_to_hub():
     
     # Create or get the repo
     api = HfApi()
-    repo_url = create_repo(MODEL_NAME, private=True)
+    #repo_url = create_repo(MODEL_NAME, private=True)
+    repo_url = create_repo(MODEL_NAME, private=False)
     
     # Save the state_dict to a file
     torch.save(state_dict, "model.safetensors")

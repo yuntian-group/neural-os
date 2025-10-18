@@ -114,8 +114,6 @@ if __name__ == "__main__":
             ckpt_folder = save_path[:-len('_online')]
         if save_path.endswith('_online_x0'):
             ckpt_folder = save_path[:-len('_online_x0')]
-        if save_path.endswith('_pretrainrnn'):
-            ckpt_folder = save_path[:-len('_pretrainrnn')]
         if save_path.endswith('_unfreeze'):
             ckpt_folder = save_path[:-len('_unfreeze')]
         if save_path.endswith('_online_x0_unfreeze'):
@@ -142,6 +140,8 @@ if __name__ == "__main__":
             ckpt_folder = save_path[:-len('k')]
         if save_path.endswith('doom'):
             ckpt_folder = save_path[:-len('doom')]
+        if save_path.endswith('_pretrainrnn'):
+            ckpt_folder = save_path[:-len('_pretrainrnn')]
         m = re.match(r'.*?(_to_\d+)$', save_path)
         if m:
             ckpt_folder = save_path[:-len(m.group(1))]

@@ -142,6 +142,8 @@ if __name__ == "__main__":
             ckpt_folder = save_path[:-len('doom')]
         if save_path.endswith('_pretrainrnn'):
             ckpt_folder = save_path[:-len('_pretrainrnn')]
+        if save_path.endswith('_nibi'):
+            ckpt_folder = save_path[:-len('_nibi')]
         m = re.match(r'.*?(_to_\d+)$', save_path)
         if m:
             ckpt_folder = save_path[:-len(m.group(1))]

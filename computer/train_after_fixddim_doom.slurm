@@ -41,4 +41,4 @@ rm -f /dev/shm/torch_*
 #CUDA_VISIBLE_DEVICES=1,2,3,4,5,6,7 python main.py --config configs/train_after_fixddim_doom_play.7gpus.yaml > log.train_after_fixddim_doom.rerun.rerun.rerun.play.7gpus.classicdoom.fixarrow 2>&1
 #CUDA_VISIBLE_DEVICES=1,2,3,4,5,6,7 python main.py --config configs/train_after_fixddim_doom_play.7gpus.yaml > log.train_after_fixddim_doom.rerun.rerun.rerun.play.7gpus.classicdoom.fixarrow.2.fix2 2>&1
 #CUDA_VISIBLE_DEVICES=1,2,3,4,5,6,7 python main.py --config configs/train_after_fixddim_doom_play.7gpus.pretrainrnn.train.yaml >> log.train_after_fixddim_doom.rerun.rerun.rerun.play.7gpus.classicdoom.fixarrow.2.fix2.cont.pretrainrnn.train 2>&1 &
-srun python main.py --config configs/train_after_fixddim_doom_play.7gpus.pretrainrnn.train.nibi.yaml > log.tfixarrow.2.fix2.cont.pretrainrnn.train.nibi.rerun 2>&1
+srun python main.py --config configs/train_after_fixddim_doom_play.7gpus.pretrainrnn.train.nibi.yaml >> log.tfixarrow.2.fix2.cont.pretrainrnn.train.nibi.rerun 2>&1

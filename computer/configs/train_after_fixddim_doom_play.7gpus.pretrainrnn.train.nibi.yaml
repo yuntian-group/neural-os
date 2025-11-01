@@ -1,4 +1,4 @@
-save_path: ./test_scheduled_samplingk2777doom222222_pretrainrnn22_nibi
+save_path: ./test_scheduled_samplingk2777doom222222_pretrainrnn22_nibi2
 
 model:
   base_learning_rate: 5e-06

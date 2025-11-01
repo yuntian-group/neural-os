@@ -79,7 +79,7 @@ def extract_losses_from_log(log_file_path):
     #elif '.cont' in log_file_path:
     #    with open(log_file_path.replace('.cont', ''), 'r') as file:
     #        log_content += file.read()
-    with open(log_file_path, 'r') as file:
+    with open(log_file_path, 'r', errors='ignore') as file:
         log_content += file.read()
 
     # Extract losses using regex (e.g., loss=1.88e+03)
@@ -106,7 +106,7 @@ def smooth_losses(losses, window_size=100):
     #    window_size = max(1, len(losses) // 10)
     #return np.convolve(losses, np.ones(window_size)/window_size, mode='valid')
 
-def plot_and_compare_losses(losses_dict, output_png='loss_doom_7gpus.2.png'):
+def plot_and_compare_losses(losses_dict, output_png='loss_doom_7gpus.2.nibi.png'):
     """
     Plot and compare multiple loss curves on a single graph.
     
@@ -261,6 +261,7 @@ if __name__ == "__main__":
         #('doom_pretrainrnn', 'log.train_after_fixddim_doom.rerun.rerun.rerun.play.7gpus.classicdoom.fixarrow.2.fix2.cont.pretrainrnn'),
         ('doom_pretrainrnn_train', 'log.train_after_fixddim_doom.rerun.rerun.rerun.play.7gpus.classicdoom.fixarrow.2.fix2.cont.pretrainrnn.train'),
         ('doom_pretrainrnn_train_nibi', 'log.tfixarrow.2.fix2.cont.pretrainrnn.train.nibi.rerun'),
+        ('doom_pretrainrnn_train_nibi_def', 'log.tfixarrow.2.fix2.cont.pretrainrnn.train.nibi.rerun.3days.def'),
         #('joint_onlineonly_eps222232aip22', 'log.fb.computecanada.challengingandsample.pretrainrnn.balanced.lr5e6.contbest.samplercover.newd.contfreezernn.newnewd.origunet.nospatial2.ONLINE.online.online.x0.joint_onlineonly.2.2.2.2.3.2.7.2.2.2.aip.2.2'),
     ]
     

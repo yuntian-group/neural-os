@@ -30,6 +30,7 @@ import functools
 from collections import OrderedDict
 import os.path
 import time
+from moviepy.editor import VideoFileClip
 
 SCREEN_WIDTH = 512
 SCREEN_HEIGHT = 384
@@ -441,6 +442,8 @@ class ActionsData(Dataset):
         example = dict()
         # Local cache for tar files used in this call
         local_tar_cache = {}
+        # Local cache for video files used in this call
+        local_video_cache = {}
         
         # For balanced sampling, ignore the input index i and pick a random partition and record
         if self.balanced_sampling:  # Add this flag to __init__
@@ -557,9 +560,69 @@ class ActionsData(Dataset):
                 #padding_path = os.path.join(base_dir, 'padding.npy')
                 #return torch.from_numpy(np.load(padding_path))
         
+        # Helper function to load frame from video file
+        def load_frame_from_video(record_num, frame_num, is_padding=False):
+            # Handle padding - return a black image
+            if is_padding:
+                # Create a black image with dimensions matching SCREEN_WIDTH x SCREEN_HEIGHT
+                padding_image = np.zeros((SCREEN_HEIGHT, SCREEN_WIDTH, 3), dtype=np.uint8)
+                return normalize_image(Image.fromarray(padding_image))
+            
+            # Get video path
+            video_path = os.path.join(base_dir, f'{record_num}.mp4')
+            
+            # Wait for video file to exist
+            while not os.path.exists(video_path):
+                print(f"Waiting for video file: {video_path}")
+                time.sleep(10)
+            
+            # Load or get cached video
+            if video_path not in local_video_cache:
+                try:
+                    video = VideoFileClip(video_path)
+                    local_video_cache[video_path] = video
+                except Exception as e:
+                    print(f"Error loading video file {video_path}: {e}")
+                    # Return black image as fallback
+                    padding_image = np.zeros((SCREEN_HEIGHT, SCREEN_WIDTH, 3), dtype=np.uint8)
+                    return normalize_image(Image.fromarray(padding_image))
+            
+            video = local_video_cache[video_path]
+            
+            try:
+                # Get frame at the specified frame number
+                # Convert frame number to time in seconds
+                frame_time = frame_num / video.fps
+                
+                # Get frame as RGB
+                frame_rgb = video.get_frame(frame_time)
+                
+                # Resize if necessary to match expected dimensions
+                if frame_rgb.shape[:2] != (SCREEN_HEIGHT, SCREEN_WIDTH):
+                    frame_rgb = cv2.resize(frame_rgb, (SCREEN_WIDTH, SCREEN_HEIGHT))
+                
+                # Convert to PIL Image and normalize
+                pil_image = Image.fromarray(frame_rgb.astype(np.uint8))
+                return normalize_image(pil_image)
+                
+            except Exception as e:
+                print(f"Error loading frame {frame_num} from video {video_path}: {e}")
+                # Return black image as fallback
+                padding_image = np.zeros((SCREEN_HEIGHT, SCREEN_WIDTH, 3), dtype=np.uint8)
+                return normalize_image(Image.fromarray(padding_image))
+        
         if self.use_original_image:
-            assert False
-            example['image'] = normalize_image(f'../data/data_processing/train_dataset/record_{record_num}/image_{target_frame}.png')
+            # Load target image from video
+            example['image'] = load_frame_from_video(record_num, target_frame)
+            
+            ## Load context images from video
+            #context_frames = []
+            #for idx, frame_num in enumerate(frame_numbers):
+            #    is_padding = frame_num < 0
+            #    frame = load_frame_from_video(record_num, frame_num, is_padding=is_padding)
+            #    context_frames.append(frame)
+            
+            #example['c_concat'] = torch.stack(context_frames)
         else:
             # Load target image
             example["image_processed"] = self.normalize_features(
@@ -634,6 +697,13 @@ class ActionsData(Dataset):
         for tar in local_tar_cache.values():
             try:
                 tar.close()
+            except:
+                pass
+        
+        # Cleanup: close all video files
+        for video in local_video_cache.values():
+            try:
+                video.close()
             except:
                 pass
             

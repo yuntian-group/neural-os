@@ -28,7 +28,7 @@ model:
       - 4
       num_res_blocks: 2
       attn_resolutions:
-      - 16
+      - [16, 16]
       dropout: 0.0
 
 data:
@@ -46,7 +46,8 @@ data:
       target: data.data_processing.datasets.ActionsData
       params:
         use_original_image: true
-        data_csv_path: ../computer/train_dataset/train_dataset.target_frames.csv
+        data_csv_paths:
+          - ../../train_dataset_encoded_online/train_dataset.target_frames.csv
     # validation:
     #   target: data.data_processing.datasets.ActionsData
     #   params:

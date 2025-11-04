@@ -87,7 +87,6 @@ def load_model_from_config(config, ckpt, verbose=True):
     sd = pl_sd["state_dict"]
     model = instantiate_from_config(config.model)
     model_state = model.state_dict()
-    #import pdb; pdb.set_trace()
     sd = {
         k: v for k, v in sd.items()
         if k in model_state and v.shape == model_state[k].shape #and ('temporal_encoder' not in k)

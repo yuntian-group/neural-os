@@ -329,6 +329,7 @@ class AutoencoderKL(pl.LightningModule):
         self.quant_conv = torch.nn.Conv2d(2*ddconfig["z_channels"], 2*embed_dim, 1)
         self.post_quant_conv = torch.nn.Conv2d(embed_dim, ddconfig["z_channels"], 1)
         self.embed_dim = embed_dim
+        self.automatic_optimization = False
         if colorize_nlabels is not None:
             assert type(colorize_nlabels)==int
             self.register_buffer("colorize", torch.randn(3, colorize_nlabels, 1, 1))
@@ -380,7 +381,7 @@ class AutoencoderKL(pl.LightningModule):
         x = x.permute(0, 3, 1, 2).to(memory_format=torch.contiguous_format).float()
         return x
 
-    def training_step(self, batch, batch_idx, optimizer_idx):
+    def training_step(self, batch, batch_idx):
         #import pdb; pdb.set_trace()
         inputs = self.get_input(batch, self.image_key)
         reconstructions, posterior = self(inputs)
@@ -394,26 +395,38 @@ class AutoencoderKL(pl.LightningModule):
             self.trainer.save_checkpoint(f"{self.trainer.save_dir}/model-{self.global_step:06d}.ckpt")
             print ('saved checkpoint to', f"{self.trainer.save_dir}/model-{self.global_step:06d}.ckpt")
         
-        if optimizer_idx == 0:
-            # train encoder+decoder+logvar
-            aeloss, log_dict_ae = self.loss(inputs, reconstructions, posterior, optimizer_idx, self.global_step,
+        # train encoder+decoder+logvar
+        aeloss, log_dict_ae = self.loss(inputs, reconstructions, posterior, 0, self.global_step,
+                                        last_layer=self.get_last_layer(), split="train")
+        
+        opt_ae.zero_grad()  # Zero gradients for the autoencoder optimizer
+        self.manual_backward(aeloss)  # Backpropagate the autoencoder loss
+        torch.nn.utils.clip_grad_norm_(list(self.encoder.parameters()) +
+                      list(self.decoder.parameters()) +
+                      list(self.quant_conv.parameters()) +
+                      list(self.post_quant_conv.parameters()),
+                      1) #gradient clipping of 1
+        opt_ae.step()  # Step the autoencoder optimizer
+
+        # train the discriminator
+        discloss, log_dict_disc = self.loss(inputs, reconstructions, posterior, 1, self.global_step,
                                             last_layer=self.get_last_layer(), split="train")
-            self.log("aeloss", aeloss, prog_bar=True, logger=True, on_step=True, on_epoch=True, sync_dist=True)
-            #self.log("global_step_str", str(int(self.global_step)), prog_bar=True, logger=True, on_step=True, on_epoch=False)
-            
-            self.log_dict(log_dict_ae, prog_bar=False, logger=True, on_step=True, on_epoch=False, sync_dist=True)
-            
-            
-            return aeloss
-
-        if optimizer_idx == 1:
-            # train the discriminator
-            discloss, log_dict_disc = self.loss(inputs, reconstructions, posterior, optimizer_idx, self.global_step,
-                                                last_layer=self.get_last_layer(), split="train")
-
-            self.log("discloss", discloss, prog_bar=True, logger=True, on_step=True, on_epoch=True, sync_dist=True)
-            self.log_dict(log_dict_disc, prog_bar=False, logger=True, on_step=True, on_epoch=False, sync_dist=True)
-            return discloss
+        
+        opt_disc.zero_grad()  # Zero gradients for the discriminator optimizer
+        self.manual_backward(discloss)  # Backpropagate the discriminator loss
+        torch.nn.utils.clip_grad_norm_(self.loss.discriminator.parameters(), 1) #gradient clipping of 1
+        opt_disc.step()  # Step the discriminator optimizer
+        
+        # Merge all metrics into a single log_dict call
+        log_dict = {
+            "aeloss": aeloss,
+            "discloss": discloss,
+            **log_dict_ae,
+            **log_dict_disc
+        }
+        self.log_dict(log_dict, prog_bar=True, logger=True, on_step=True, on_epoch=True, sync_dist=True)
+        
+        return {'aeloss': aeloss, 'discloss': discloss}
 
     def validation_step(self, batch, batch_idx):
         inputs = self.get_input(batch, self.image_key)

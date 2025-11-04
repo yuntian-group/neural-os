@@ -34,7 +34,7 @@ model:
 data:
   target: data.data_processing.datasets.DataModule
   params:
-    batch_size: 10
+    batch_size: 16
     num_workers: 8
     wrap: false
     shuffle: true

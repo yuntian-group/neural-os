@@ -65,7 +65,14 @@ class LPIPSWithDiscriminator(nn.Module):
         nll_loss_new_style = torch.mean(nll_loss)
         weighted_nll_loss_new_style = torch.mean(weighted_nll_loss)
         kl_loss_new_style = posteriors.kl()
-        kl_loss_new_style = torch.mean(kl_loss_new_style)  # kl_loss is already summed over spatial dims, so mean over batch
+        # kl_loss is summed over spatial dims [1,2,3], giving shape [batch]
+        # To properly average over all dimensions, we need to divide by spatial size
+        # Get spatial size from the mean tensor shape
+        if kl_loss_new_style.numel() > 0:
+            spatial_size = posteriors.mean.shape[1] * posteriors.mean.shape[2] * posteriors.mean.shape[3]
+            kl_loss_new_style = torch.mean(kl_loss_new_style) / spatial_size
+        else:
+            kl_loss_new_style = torch.mean(kl_loss_new_style)
         
         # Use old-style for variable names to maintain backward compatibility
         nll_loss = nll_loss_old

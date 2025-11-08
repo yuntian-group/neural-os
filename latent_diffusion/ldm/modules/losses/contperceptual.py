@@ -92,7 +92,8 @@ class LPIPSWithDiscriminator(nn.Module):
 
             if self.disc_factor > 0.0:
                 try:
-                    d_weight = self.calculate_adaptive_weight(nll_loss, g_loss, last_layer=last_layer)
+                    # Use new-style loss for adaptive weight calculation to match the loss used for training
+                    d_weight = self.calculate_adaptive_weight(nll_loss_new_style, g_loss, last_layer=last_layer)
                 except RuntimeError:
                     assert not self.training
                     d_weight = torch.tensor(0.0)

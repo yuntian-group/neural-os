@@ -54,10 +54,11 @@ class LPIPSWithDiscriminator(nn.Module):
         weighted_nll_loss = nll_loss
         if weights is not None:
             weighted_nll_loss = weights*nll_loss
-        weighted_nll_loss = torch.sum(weighted_nll_loss) / weighted_nll_loss.shape[0]
-        nll_loss = torch.sum(nll_loss) / nll_loss.shape[0]
+        # Use mean() instead of sum()/shape[0] to properly average over all dimensions (batch, channels, height, width)
+        weighted_nll_loss = torch.mean(weighted_nll_loss)
+        nll_loss = torch.mean(nll_loss)
         kl_loss = posteriors.kl()
-        kl_loss = torch.sum(kl_loss) / kl_loss.shape[0]
+        kl_loss = torch.mean(kl_loss)  # kl_loss is already summed over spatial dims, so mean over batch
 
         # now the GAN part
         if optimizer_idx == 0:

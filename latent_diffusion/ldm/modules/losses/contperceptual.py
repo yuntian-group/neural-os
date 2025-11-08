@@ -54,11 +54,23 @@ class LPIPSWithDiscriminator(nn.Module):
         weighted_nll_loss = nll_loss
         if weights is not None:
             weighted_nll_loss = weights*nll_loss
-        # Use mean() instead of sum()/shape[0] to properly average over all dimensions (batch, channels, height, width)
-        weighted_nll_loss = torch.mean(weighted_nll_loss)
-        nll_loss = torch.mean(nll_loss)
-        kl_loss = posteriors.kl()
-        kl_loss = torch.mean(kl_loss)  # kl_loss is already summed over spatial dims, so mean over batch
+        
+        # Old-style loss computation (sums over spatial dims, only divides by batch) - keep for backward compatibility
+        nll_loss_old = torch.sum(nll_loss) / nll_loss.shape[0]
+        weighted_nll_loss_old = torch.sum(weighted_nll_loss) / weighted_nll_loss.shape[0]
+        kl_loss_old = posteriors.kl()
+        kl_loss_old = torch.sum(kl_loss_old) / kl_loss_old.shape[0]  # Old style
+        
+        # New-style loss computation: properly average over all dimensions (batch, channels, height, width)
+        nll_loss_new_style = torch.mean(nll_loss)
+        weighted_nll_loss_new_style = torch.mean(weighted_nll_loss)
+        kl_loss_new_style = posteriors.kl()
+        kl_loss_new_style = torch.mean(kl_loss_new_style)  # kl_loss is already summed over spatial dims, so mean over batch
+        
+        # Use old-style for variable names to maintain backward compatibility
+        nll_loss = nll_loss_old
+        weighted_nll_loss = weighted_nll_loss_old
+        kl_loss = kl_loss_old
 
         # now the GAN part
         if optimizer_idx == 0:
@@ -81,16 +93,31 @@ class LPIPSWithDiscriminator(nn.Module):
                 d_weight = torch.tensor(0.0)
 
             disc_factor = adopt_weight(self.disc_factor, global_step, threshold=self.discriminator_iter_start)
+            
+            # Old-style total loss (for backward compatibility with existing plots)
             loss = weighted_nll_loss + self.kl_weight * kl_loss + d_weight * disc_factor * g_loss
+            
+            # New-style total loss (properly averaged, used for actual training)
+            loss_new_style = weighted_nll_loss_new_style + self.kl_weight * kl_loss_new_style + d_weight * disc_factor * g_loss
 
-            log = {"{}/total_loss".format(split): loss.clone().detach().mean(), "{}/logvar".format(split): self.logvar.detach(),
-                   "{}/kl_loss".format(split): kl_loss.detach().mean(), "{}/nll_loss".format(split): nll_loss.detach().mean(),
-                   "{}/rec_loss".format(split): rec_loss.detach().mean(),
-                   "{}/d_weight".format(split): d_weight.detach(),
-                   "{}/disc_factor".format(split): torch.tensor(disc_factor),
-                   "{}/g_loss".format(split): g_loss.detach().mean(),
-                   }
-            return loss, log
+            log = {
+                # Old-style losses (keep original names for backward compatibility)
+                "{}/total_loss".format(split): loss.clone().detach().mean(),
+                "{}/kl_loss".format(split): kl_loss.detach().mean(),
+                "{}/nll_loss".format(split): nll_loss.detach().mean(),
+                # New-style losses (properly averaged)
+                "{}/total_loss_new_style".format(split): loss_new_style.clone().detach().mean(),
+                "{}/kl_loss_new_style".format(split): kl_loss_new_style.detach().mean(),
+                "{}/nll_loss_new_style".format(split): nll_loss_new_style.detach().mean(),
+                # Other metrics
+                "{}/logvar".format(split): self.logvar.detach(),
+                "{}/rec_loss".format(split): rec_loss.detach().mean(),
+                "{}/d_weight".format(split): d_weight.detach(),
+                "{}/disc_factor".format(split): torch.tensor(disc_factor),
+                "{}/g_loss".format(split): g_loss.detach().mean(),
+            }
+            # Return new-style loss for training (properly averaged)
+            return loss_new_style, log
 
         if optimizer_idx == 1:
             # second pass for discriminator update

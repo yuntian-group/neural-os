@@ -431,8 +431,16 @@ class AutoencoderKL(pl.LightningModule):
         opt_disc.step()  # Step the discriminator optimizer
         
         # Merge all metrics into a single log_dict call
+        # Extract new-style loss (aeloss is already new-style from the loss function return)
+        aeloss_new_style = aeloss  # This is already the new-style loss returned from loss function
+        # Extract old-style loss for backward compatibility with existing plots
+        aeloss_old_style = log_dict_ae.get("train/total_loss", torch.tensor(0.0))
+        if isinstance(aeloss_old_style, torch.Tensor):
+            aeloss_old_style = aeloss_old_style.item() if aeloss_old_style.numel() == 1 else aeloss_old_style
+        
         log_dict = {
-            "aeloss": aeloss,
+            "aeloss": aeloss_old_style,  # Old-style loss (for backward compatibility with existing plots)
+            "aeloss_new_style": aeloss_new_style,  # New-style loss (properly averaged, used for training)
             "discloss": discloss,
             "grad_norm/encoder": encoder_grad_norm,
             "grad_norm/decoder": decoder_grad_norm,

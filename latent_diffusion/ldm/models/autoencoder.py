@@ -401,7 +401,15 @@ class AutoencoderKL(pl.LightningModule):
         
         opt_ae.zero_grad()  # Zero gradients for the autoencoder optimizer
         self.manual_backward(aeloss)  # Backpropagate the autoencoder loss
-        torch.nn.utils.clip_grad_norm_(list(self.encoder.parameters()) +
+        
+        # Compute gradient norms before clipping
+        encoder_grad_norm = torch.nn.utils.clip_grad_norm_(self.encoder.parameters(), float('inf'))
+        decoder_grad_norm = torch.nn.utils.clip_grad_norm_(self.decoder.parameters(), float('inf'))
+        quant_conv_grad_norm = torch.nn.utils.clip_grad_norm_(self.quant_conv.parameters(), float('inf'))
+        post_quant_conv_grad_norm = torch.nn.utils.clip_grad_norm_(self.post_quant_conv.parameters(), float('inf'))
+        
+        # Clip gradients
+        total_ae_grad_norm = torch.nn.utils.clip_grad_norm_(list(self.encoder.parameters()) +
                       list(self.decoder.parameters()) +
                       list(self.quant_conv.parameters()) +
                       list(self.post_quant_conv.parameters()),
@@ -414,6 +422,11 @@ class AutoencoderKL(pl.LightningModule):
         
         opt_disc.zero_grad()  # Zero gradients for the discriminator optimizer
         self.manual_backward(discloss)  # Backpropagate the discriminator loss
+        
+        # Compute discriminator gradient norm before clipping
+        disc_grad_norm = torch.nn.utils.clip_grad_norm_(self.loss.discriminator.parameters(), float('inf'))
+        
+        # Clip discriminator gradients
         torch.nn.utils.clip_grad_norm_(self.loss.discriminator.parameters(), 1) #gradient clipping of 1
         opt_disc.step()  # Step the discriminator optimizer
         
@@ -421,6 +434,12 @@ class AutoencoderKL(pl.LightningModule):
         log_dict = {
             "aeloss": aeloss,
             "discloss": discloss,
+            "grad_norm/encoder": encoder_grad_norm,
+            "grad_norm/decoder": decoder_grad_norm,
+            "grad_norm/quant_conv": quant_conv_grad_norm,
+            "grad_norm/post_quant_conv": post_quant_conv_grad_norm,
+            "grad_norm/total_ae": total_ae_grad_norm,
+            "grad_norm/discriminator": disc_grad_norm,
             **log_dict_ae,
             **log_dict_disc
         }

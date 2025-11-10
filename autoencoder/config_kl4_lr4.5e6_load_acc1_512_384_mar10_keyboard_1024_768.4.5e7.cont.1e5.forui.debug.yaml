@@ -1,7 +1,7 @@
-save_path: saved_kl4_bsz8_acc8_lr4.5e6_load_acc1_512_384_mar10_keyboard_1024_768_4.5e7_cont_1e5_forui
+save_path: saved_kl4_bsz8_acc8_lr4.5e6_load_acc1_512_384_mar10_keyboard_1024_768_4.5e7_cont_1e5_forui_debug
 
 model:
-  base_learning_rate: 1e-05
+  base_learning_rate: 3e-04
   target: latent_diffusion.ldm.models.autoencoder.AutoencoderKL
   params:
     monitor: val/rec_loss
@@ -50,7 +50,7 @@ data:
       params:
         use_original_image: true
         data_csv_paths:
-          - ../../train_dataset_encoded_online/train_dataset.target_frames.csv
+          - ../../train_dataset_encoded_online/train_dataset.target_frames.debug.csv
     # validation:
     #   target: data.data_processing.datasets.ActionsData
     #   params:
@@ -63,4 +63,4 @@ lightning:
     limit_val_batches: 0
     accelerator: gpu
     devices: 1
-    accumulate_grad_batches: 4  # Effective batch size: 16 * 4 = 64 (common for autoencoder training)
+    accumulate_grad_batches: 1  # Effective batch size: 16 * 4 = 64 (common for autoencoder training)

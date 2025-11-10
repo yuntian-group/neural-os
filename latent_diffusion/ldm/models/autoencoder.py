@@ -464,6 +464,11 @@ class AutoencoderKL(pl.LightningModule):
             aeloss, log_dict_ae = self.loss(inputs, reconstructions, posterior, 0, self.global_step,
                                             last_layer=self.get_last_layer(), split="train")
             
+            # DEBUG: Log raw rec_loss to verify it's being computed correctly
+            raw_rec_loss = torch.abs(inputs - reconstructions).mean()
+            if self.global_step % 100 == 0:
+                print(f"DEBUG step {self.global_step}: raw_rec_loss={raw_rec_loss.item():.6f}, aeloss={aeloss.item():.6f}, kl_loss={log_dict_ae.get('train/kl_loss_new_style', torch.tensor(0.0)).item():.6f}")
+            
             # Skip discriminator training when disabled (for efficiency)
             discloss = torch.tensor(0.0, device=inputs.device)
             log_dict_disc = {

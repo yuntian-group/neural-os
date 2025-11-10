@@ -490,7 +490,7 @@ class AutoencoderKL(pl.LightningModule):
         """Hook called before optimizer step - used for gradient clipping and logging in automatic mode"""
         if not self.loss.use_discriminator:
             # DEBUG: Check learning rate to see if checkpoint loading overwrote it
-            if self.global_step % 100 == 0:
+            if False and self.global_step % 100 == 0:
                 current_lr = optimizer.param_groups[0]['lr']
                 expected_lr = self.learning_rate
                 print(f"DEBUG on_before_optimizer_step step {self.global_step}: optimizer.lr={current_lr:.2e}, self.learning_rate={expected_lr:.2e}, match={abs(current_lr - expected_lr) < 1e-10}")

@@ -329,7 +329,9 @@ class AutoencoderKL(pl.LightningModule):
         self.quant_conv = torch.nn.Conv2d(2*ddconfig["z_channels"], 2*embed_dim, 1)
         self.post_quant_conv = torch.nn.Conv2d(embed_dim, ddconfig["z_channels"], 1)
         self.embed_dim = embed_dim
-        self.automatic_optimization = False
+        # Use automatic optimization when discriminator is disabled (for gradient accumulation support)
+        # Use manual optimization when discriminator is enabled (need to handle two optimizers)
+        self.automatic_optimization = not self.loss.use_discriminator
         if colorize_nlabels is not None:
             assert type(colorize_nlabels)==int
             self.register_buffer("colorize", torch.randn(3, colorize_nlabels, 1, 1))
@@ -381,79 +383,144 @@ class AutoencoderKL(pl.LightningModule):
         x = x.permute(0, 3, 1, 2).to(memory_format=torch.contiguous_format).float()
         return x
 
-    def training_step(self, batch, batch_idx):
+    def training_step(self, batch, batch_idx, **kwargs):
         #import pdb; pdb.set_trace()
         inputs = self.get_input(batch, self.image_key)
         reconstructions, posterior = self(inputs)
         #import pdb; pdb.set_trace()
 
-        opt_ae, opt_disc = self.optimizers()
-        #print (str(int(self.global_step)))
         # Manual checkpoint every 10 steps
         if self.global_step % 12000 == 0:
             print ('saving checkpoint')
             self.trainer.save_checkpoint(f"{self.trainer.save_dir}/model-{self.global_step:06d}.ckpt")
             print ('saved checkpoint to', f"{self.trainer.save_dir}/model-{self.global_step:06d}.ckpt")
         
-        # train encoder+decoder+logvar
-        aeloss, log_dict_ae = self.loss(inputs, reconstructions, posterior, 0, self.global_step,
-                                        last_layer=self.get_last_layer(), split="train")
-        
-        opt_ae.zero_grad()  # Zero gradients for the autoencoder optimizer
-        self.manual_backward(aeloss)  # Backpropagate the autoencoder loss
-        
-        # Compute gradient norms before clipping
-        encoder_grad_norm = torch.nn.utils.clip_grad_norm_(self.encoder.parameters(), float('inf'))
-        decoder_grad_norm = torch.nn.utils.clip_grad_norm_(self.decoder.parameters(), float('inf'))
-        quant_conv_grad_norm = torch.nn.utils.clip_grad_norm_(self.quant_conv.parameters(), float('inf'))
-        post_quant_conv_grad_norm = torch.nn.utils.clip_grad_norm_(self.post_quant_conv.parameters(), float('inf'))
-        
-        # Clip gradients
-        total_ae_grad_norm = torch.nn.utils.clip_grad_norm_(list(self.encoder.parameters()) +
-                      list(self.decoder.parameters()) +
-                      list(self.quant_conv.parameters()) +
-                      list(self.post_quant_conv.parameters()),
-                      1) #gradient clipping of 1
-        opt_ae.step()  # Step the autoencoder optimizer
-
-        # train the discriminator
-        discloss, log_dict_disc = self.loss(inputs, reconstructions, posterior, 1, self.global_step,
+        if self.loss.use_discriminator:
+            # Manual optimization mode: handle both optimizers in a single step
+            opt_ae, opt_disc = self.optimizers()
+            
+            # Step 1: train encoder+decoder+logvar
+            aeloss, log_dict_ae = self.loss(inputs, reconstructions, posterior, 0, self.global_step,
                                             last_layer=self.get_last_layer(), split="train")
-        
-        opt_disc.zero_grad()  # Zero gradients for the discriminator optimizer
-        self.manual_backward(discloss)  # Backpropagate the discriminator loss
-        
-        # Compute discriminator gradient norm before clipping
-        disc_grad_norm = torch.nn.utils.clip_grad_norm_(self.loss.discriminator.parameters(), float('inf'))
-        
-        # Clip discriminator gradients
-        torch.nn.utils.clip_grad_norm_(self.loss.discriminator.parameters(), 1) #gradient clipping of 1
-        opt_disc.step()  # Step the discriminator optimizer
-        
-        # Merge all metrics into a single log_dict call
-        # Extract new-style loss (aeloss is already new-style from the loss function return)
-        aeloss_new_style = aeloss  # This is already the new-style loss returned from loss function
-        # Extract old-style loss for backward compatibility with existing plots
-        aeloss_old_style = log_dict_ae.get("train/total_loss", torch.tensor(0.0))
-        if isinstance(aeloss_old_style, torch.Tensor):
-            aeloss_old_style = aeloss_old_style.item() if aeloss_old_style.numel() == 1 else aeloss_old_style
-        
-        log_dict = {
-            "aeloss": aeloss_old_style,  # Old-style loss (for backward compatibility with existing plots)
-            "aeloss_new_style": aeloss_new_style,  # New-style loss (properly averaged, used for training)
-            "discloss": discloss,
-            "grad_norm/encoder": encoder_grad_norm,
-            "grad_norm/decoder": decoder_grad_norm,
-            "grad_norm/quant_conv": quant_conv_grad_norm,
-            "grad_norm/post_quant_conv": post_quant_conv_grad_norm,
-            "grad_norm/total_ae": total_ae_grad_norm,
-            "grad_norm/discriminator": disc_grad_norm,
-            **log_dict_ae,
-            **log_dict_disc
-        }
-        self.log_dict(log_dict, prog_bar=True, logger=True, on_step=True, on_epoch=True, sync_dist=True)
-        
-        return {'aeloss': aeloss, 'discloss': discloss}
+            
+            opt_ae.zero_grad()  # Zero gradients for the autoencoder optimizer
+            self.manual_backward(aeloss)  # Backpropagate the autoencoder loss
+            
+            # Compute gradient norms before clipping
+            encoder_grad_norm = torch.nn.utils.clip_grad_norm_(self.encoder.parameters(), float('inf'))
+            decoder_grad_norm = torch.nn.utils.clip_grad_norm_(self.decoder.parameters(), float('inf'))
+            quant_conv_grad_norm = torch.nn.utils.clip_grad_norm_(self.quant_conv.parameters(), float('inf'))
+            post_quant_conv_grad_norm = torch.nn.utils.clip_grad_norm_(self.post_quant_conv.parameters(), float('inf'))
+            
+            # Clip gradients
+            total_ae_grad_norm = torch.nn.utils.clip_grad_norm_(list(self.encoder.parameters()) +
+                          list(self.decoder.parameters()) +
+                          list(self.quant_conv.parameters()) +
+                          list(self.post_quant_conv.parameters()),
+                          1) #gradient clipping of 1
+            opt_ae.step()  # Step the autoencoder optimizer
+            
+            # Step 2: train the discriminator
+            discloss, log_dict_disc = self.loss(inputs, reconstructions, posterior, 1, self.global_step,
+                                                last_layer=self.get_last_layer(), split="train")
+            
+            opt_disc.zero_grad()  # Zero gradients for the discriminator optimizer
+            self.manual_backward(discloss)  # Backpropagate the discriminator loss
+            
+            # Compute discriminator gradient norm before clipping
+            disc_grad_norm = torch.nn.utils.clip_grad_norm_(self.loss.discriminator.parameters(), float('inf'))
+            
+            # Clip discriminator gradients
+            torch.nn.utils.clip_grad_norm_(self.loss.discriminator.parameters(), 1) #gradient clipping of 1
+            opt_disc.step()  # Step the discriminator optimizer
+            
+            # Merge all metrics into a single log_dict call
+            # Extract new-style loss (aeloss is already new-style from the loss function return)
+            aeloss_new_style = aeloss  # This is already the new-style loss returned from loss function
+            # Extract old-style loss for backward compatibility with existing plots
+            aeloss_old_style = log_dict_ae.get("train/total_loss", torch.tensor(0.0))
+            if isinstance(aeloss_old_style, torch.Tensor):
+                aeloss_old_style = aeloss_old_style.item() if aeloss_old_style.numel() == 1 else aeloss_old_style
+            
+            log_dict = {
+                "aeloss": aeloss_old_style,  # Old-style loss (for backward compatibility with existing plots)
+                "aeloss_new_style": aeloss_new_style,  # New-style loss (properly averaged, used for training)
+                "discloss": discloss,
+                "grad_norm/encoder": encoder_grad_norm,
+                "grad_norm/decoder": decoder_grad_norm,
+                "grad_norm/quant_conv": quant_conv_grad_norm,
+                "grad_norm/post_quant_conv": post_quant_conv_grad_norm,
+                "grad_norm/total_ae": total_ae_grad_norm,
+                "grad_norm/discriminator": disc_grad_norm,
+                **log_dict_ae,
+                **log_dict_disc
+            }
+            self.log_dict(log_dict, prog_bar=True, logger=True, on_step=True, on_epoch=True, sync_dist=True)
+            
+            return {'aeloss': aeloss, 'discloss': discloss}
+        else:
+            # Automatic optimization mode: single optimizer, Lightning handles accumulation
+            # train encoder+decoder+logvar
+            aeloss, log_dict_ae = self.loss(inputs, reconstructions, posterior, 0, self.global_step,
+                                            last_layer=self.get_last_layer(), split="train")
+            
+            # Skip discriminator training when disabled (for efficiency)
+            discloss = torch.tensor(0.0, device=inputs.device)
+            log_dict_disc = {
+                "train/disc_loss": torch.tensor(0.0, device=inputs.device),
+                "train/logits_real": torch.tensor(0.0, device=inputs.device),
+                "train/logits_fake": torch.tensor(0.0, device=inputs.device)
+            }
+            
+            # Store for logging in on_before_optimizer_step hook
+            self._current_log_dict_ae = log_dict_ae
+            self._current_log_dict_disc = log_dict_disc
+            self._current_aeloss = aeloss
+            self._current_discloss = discloss
+            
+            # Return loss for automatic optimization (Lightning handles backward/step)
+            return aeloss
+    
+    def on_before_optimizer_step(self, optimizer):
+        """Hook called before optimizer step - used for gradient clipping and logging in automatic mode"""
+        if not self.loss.use_discriminator:
+            # Automatic optimization mode: compute gradient norms and clip
+            # Compute gradient norms before clipping
+            encoder_grad_norm = torch.nn.utils.clip_grad_norm_(self.encoder.parameters(), float('inf'))
+            decoder_grad_norm = torch.nn.utils.clip_grad_norm_(self.decoder.parameters(), float('inf'))
+            quant_conv_grad_norm = torch.nn.utils.clip_grad_norm_(self.quant_conv.parameters(), float('inf'))
+            post_quant_conv_grad_norm = torch.nn.utils.clip_grad_norm_(self.post_quant_conv.parameters(), float('inf'))
+            
+            # Clip gradients
+            total_ae_grad_norm = torch.nn.utils.clip_grad_norm_(list(self.encoder.parameters()) +
+                          list(self.decoder.parameters()) +
+                          list(self.quant_conv.parameters()) +
+                          list(self.post_quant_conv.parameters()),
+                          1) #gradient clipping of 1
+            
+            disc_grad_norm = torch.tensor(0.0, device=self.device)
+            
+            # Extract losses for logging
+            aeloss_new_style = self._current_aeloss
+            aeloss_old_style = self._current_log_dict_ae.get("train/total_loss", torch.tensor(0.0))
+            if isinstance(aeloss_old_style, torch.Tensor):
+                aeloss_old_style = aeloss_old_style.item() if aeloss_old_style.numel() == 1 else aeloss_old_style
+            
+            # Log metrics
+            log_dict = {
+                "aeloss": aeloss_old_style,
+                "aeloss_new_style": aeloss_new_style,
+                "discloss": self._current_discloss,
+                "grad_norm/encoder": encoder_grad_norm,
+                "grad_norm/decoder": decoder_grad_norm,
+                "grad_norm/quant_conv": quant_conv_grad_norm,
+                "grad_norm/post_quant_conv": post_quant_conv_grad_norm,
+                "grad_norm/total_ae": total_ae_grad_norm,
+                "grad_norm/discriminator": disc_grad_norm,
+                **self._current_log_dict_ae,
+                **self._current_log_dict_disc
+            }
+            self.log_dict(log_dict, prog_bar=True, logger=True, on_step=True, on_epoch=True, sync_dist=True)
 
     def validation_step(self, batch, batch_idx):
         inputs = self.get_input(batch, self.image_key)
@@ -461,8 +528,16 @@ class AutoencoderKL(pl.LightningModule):
         aeloss, log_dict_ae = self.loss(inputs, reconstructions, posterior, 0, self.global_step,
                                         last_layer=self.get_last_layer(), split="val")
 
-        discloss, log_dict_disc = self.loss(inputs, reconstructions, posterior, 1, self.global_step,
-                                            last_layer=self.get_last_layer(), split="val")
+        if self.loss.use_discriminator:
+            discloss, log_dict_disc = self.loss(inputs, reconstructions, posterior, 1, self.global_step,
+                                                last_layer=self.get_last_layer(), split="val")
+        else:
+            discloss = torch.tensor(0.0, device=inputs.device)
+            log_dict_disc = {
+                "val/disc_loss": torch.tensor(0.0, device=inputs.device),
+                "val/logits_real": torch.tensor(0.0, device=inputs.device),
+                "val/logits_fake": torch.tensor(0.0, device=inputs.device)
+            }
 
         self.log("val/rec_loss", log_dict_ae["val/rec_loss"], sync_dist=True)
         self.log_dict(log_dict_ae, sync_dist=True)
@@ -477,9 +552,13 @@ class AutoencoderKL(pl.LightningModule):
                                   list(self.quant_conv.parameters())+
                                   list(self.post_quant_conv.parameters()),
                                   lr=lr, betas=(0.5, 0.9))
-        opt_disc = torch.optim.Adam(self.loss.discriminator.parameters(),
-                                    lr=lr, betas=(0.5, 0.9))
-        return [opt_ae, opt_disc], []
+        
+        if self.loss.use_discriminator:
+            opt_disc = torch.optim.Adam(self.loss.discriminator.parameters(),
+                                        lr=lr, betas=(0.5, 0.9))
+            return [opt_ae, opt_disc], []
+        else:
+            return opt_ae
 
     def get_last_layer(self):
         return self.decoder.conv_out.weight

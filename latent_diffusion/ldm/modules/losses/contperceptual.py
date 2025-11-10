@@ -45,7 +45,7 @@ class LPIPSWithDiscriminator(nn.Module):
     def forward(self, inputs, reconstructions, posteriors, optimizer_idx,
                 global_step, last_layer=None, cond=None, split="train",
                 weights=None):
-        rec_loss = torch.abs(inputs.contiguous() - reconstructions.contiguous())
+        rec_loss = self.pixel_weight * torch.abs(inputs.contiguous() - reconstructions.contiguous())
         if self.perceptual_weight > 0:
             p_loss = self.perceptual_loss(inputs.contiguous(), reconstructions.contiguous())
             rec_loss = rec_loss + self.perceptual_weight * p_loss

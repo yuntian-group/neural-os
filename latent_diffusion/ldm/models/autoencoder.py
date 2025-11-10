@@ -571,6 +571,35 @@ class AutoencoderKL(pl.LightningModule):
             return [opt_ae, opt_disc], []
         else:
             return opt_ae
+    
+    def on_load_checkpoint(self, checkpoint):
+        """Override learning rate from checkpoint with config value"""
+        # Update optimizer learning rates to match config (checkpoint may have old LR)
+        if 'optimizer_states' in checkpoint:
+            expected_lr = self.learning_rate
+            for opt_state in checkpoint['optimizer_states']:
+                if 'param_groups' in opt_state:
+                    for param_group in opt_state['param_groups']:
+                        old_lr = param_group.get('lr', None)
+                        if old_lr is not None and abs(old_lr - expected_lr) > 1e-10:
+                            print(f"Overriding checkpoint LR {old_lr:.2e} with config LR {expected_lr:.2e}")
+                            param_group['lr'] = expected_lr
+    
+    def on_train_start(self):
+        """Ensure optimizer learning rate matches config after checkpoint loading"""
+        expected_lr = self.learning_rate
+        optimizer = self.optimizers()
+        if isinstance(optimizer, (list, tuple)):
+            optimizers = optimizer
+        else:
+            optimizers = [optimizer]
+        
+        for opt in optimizers:
+            for param_group in opt.param_groups:
+                current_lr = param_group['lr']
+                if abs(current_lr - expected_lr) > 1e-10:
+                    print(f"Fixing optimizer LR from {current_lr:.2e} to {expected_lr:.2e}")
+                    param_group['lr'] = expected_lr
 
     def get_last_layer(self):
         return self.decoder.conv_out.weight

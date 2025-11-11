@@ -34,6 +34,8 @@ from moviepy.editor import VideoFileClip
 
 SCREEN_WIDTH = 512
 SCREEN_HEIGHT = 384
+SCREEN_WIDTH = 1024
+SCREEN_HEIGHT = 768
 
 print ('-'*10)
 print ('screen resolution:')

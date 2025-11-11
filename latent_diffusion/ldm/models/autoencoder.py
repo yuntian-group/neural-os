@@ -378,15 +378,27 @@ class AutoencoderKL(pl.LightningModule):
 
     def get_input(self, batch, k):
         x = batch[k]
+        if not hasattr(self, '_diagnostic_get_input_printed'):
+            print(f"DIAGNOSTIC get_input: Raw batch[{k}] shape: {x.shape}")
+            self._diagnostic_get_input_printed = True
         if len(x.shape) == 3:
             x = x[..., None]
         x = x.permute(0, 3, 1, 2).to(memory_format=torch.contiguous_format).float()
+        if not hasattr(self, '_diagnostic_get_input_permuted_printed'):
+            print(f"DIAGNOSTIC get_input: After permute, shape: {x.shape} (B, C, H, W)")
+            self._diagnostic_get_input_permuted_printed = True
         return x
 
     def training_step(self, batch, batch_idx, **kwargs):
         #import pdb; pdb.set_trace()
         inputs = self.get_input(batch, self.image_key)
+        if batch_idx == 0 and self.global_step == 0:
+            print(f"DIAGNOSTIC training_step: Input shape: {inputs.shape}, Expected resolution from config: {self.encoder.resolution}")
         reconstructions, posterior = self(inputs)
+        if batch_idx == 0 and self.global_step == 0:
+            print(f"DIAGNOSTIC training_step: Reconstruction shape: {reconstructions.shape}")
+            print(f"DIAGNOSTIC training_step: Posterior mean shape: {posterior.mean.shape}")
+            print(f"DIAGNOSTIC training_step: Bottleneck (latent) shape: {posterior.mean.shape} = {posterior.mean.numel()} values")
         #import pdb; pdb.set_trace()
 
         # Manual checkpoint every 10 steps

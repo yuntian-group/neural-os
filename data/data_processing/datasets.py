@@ -596,14 +596,26 @@ class ActionsData(Dataset):
                 
                 # Get frame as RGB
                 frame_rgb = video.get_frame(frame_time)
+                original_shape = frame_rgb.shape[:2]  # (height, width)
                 
                 # Resize if necessary to match expected dimensions
                 if frame_rgb.shape[:2] != (SCREEN_HEIGHT, SCREEN_WIDTH):
                     frame_rgb = cv2.resize(frame_rgb, (SCREEN_WIDTH, SCREEN_HEIGHT))
+                    if not hasattr(load_frame_from_video, '_diagnostic_printed'):
+                        print(f"DIAGNOSTIC load_frame_from_video: Resized image from {original_shape} to ({SCREEN_HEIGHT}, {SCREEN_WIDTH})")
+                        load_frame_from_video._diagnostic_printed = True
+                else:
+                    if not hasattr(load_frame_from_video, '_diagnostic_printed'):
+                        print(f"DIAGNOSTIC load_frame_from_video: Image already at target size ({SCREEN_HEIGHT}, {SCREEN_WIDTH}), original: {original_shape}")
+                        load_frame_from_video._diagnostic_printed = True
                 
                 # Convert to PIL Image and normalize
                 pil_image = Image.fromarray(frame_rgb.astype(np.uint8))
-                return normalize_image(pil_image)
+                normalized = normalize_image(pil_image)
+                if not hasattr(load_frame_from_video, '_diagnostic_tensor_printed'):
+                    print(f"DIAGNOSTIC load_frame_from_video: Normalized image tensor shape: {normalized.shape}")
+                    load_frame_from_video._diagnostic_tensor_printed = True
+                return normalized
                 
             except Exception as e:
                 print(f"Error loading frame {frame_num} from video {video_path}: {e}")

@@ -405,6 +405,17 @@ class Encoder(nn.Module):
         
         self.in_channels = in_channels
 
+        # DIAGNOSTIC: Print expected input resolution
+        print(f"DIAGNOSTIC Encoder.__init__: Expected input resolution: {self.resolution}")
+        print(f"DIAGNOSTIC Encoder.__init__: ch_mult={ch_mult}, num_resolutions={self.num_resolutions}")
+        if isinstance(self.resolution, (tuple, list)):
+            bottleneck_h = self.resolution_h // 2 ** (self.num_resolutions - 1)
+            bottleneck_w = self.resolution_w // 2 ** (self.num_resolutions - 1)
+        else:
+            bottleneck_h = bottleneck_w = self.resolution // 2 ** (self.num_resolutions - 1)
+        print(f"DIAGNOSTIC Encoder.__init__: Expected bottleneck resolution: ({bottleneck_h}, {bottleneck_w})")
+        print(f"DIAGNOSTIC Encoder.__init__: z_channels={z_channels}, bottleneck size={bottleneck_h * bottleneck_w * z_channels} values")
+
         # downsampling
         self.conv_in = torch.nn.Conv2d(in_channels,
                                        self.ch,
@@ -460,6 +471,21 @@ class Encoder(nn.Module):
                                         padding=1)
 
     def forward(self, x):
+        # DIAGNOSTIC: Print actual input shape
+        if not hasattr(self, '_diagnostic_printed'):
+            print(f"DIAGNOSTIC Encoder.forward: Actual input shape: {x.shape} (B, C, H, W)")
+            print(f"DIAGNOSTIC Encoder.forward: Expected resolution: {self.resolution}")
+            if isinstance(self.resolution, (tuple, list)):
+                expected_h, expected_w = self.resolution_h, self.resolution_w
+            else:
+                expected_h = expected_w = self.resolution
+            actual_h, actual_w = x.shape[2], x.shape[3]
+            if actual_h != expected_h or actual_w != expected_w:
+                print(f"DIAGNOSTIC Encoder.forward: ⚠️  MISMATCH! Expected ({expected_h}, {expected_w}), got ({actual_h}, {actual_w})")
+            else:
+                print(f"DIAGNOSTIC Encoder.forward: ✓ Resolution matches")
+            self._diagnostic_printed = True
+        
         # timestep embedding
         temb = None
 
@@ -484,6 +510,10 @@ class Encoder(nn.Module):
         h = self.norm_out(h)
         h = nonlinearity(h)
         h = self.conv_out(h)
+        if not hasattr(self, '_diagnostic_bottleneck_printed'):
+            print(f"DIAGNOSTIC Encoder.forward: Bottleneck output shape: {h.shape} (B, C, H, W)")
+            print(f"DIAGNOSTIC Encoder.forward: Bottleneck size: {h.numel() // h.shape[0]} values per sample")
+            self._diagnostic_bottleneck_printed = True
         return h
 
 

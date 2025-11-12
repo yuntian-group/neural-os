@@ -9,12 +9,12 @@ model:
     lossconfig:
       target: latent_diffusion.ldm.modules.losses.contperceptual.LPIPSWithDiscriminator
       params:
-        disc_start: 999999999999999
+        disc_start: 5000  # Start GAN loss after 5000 steps (let reconstruction stabilize first)
         kl_weight: 0.000001
         disc_weight: 0.5
-        perceptual_weight: 0.0  # Disable LPIPS for screenshots/UI (needs exact pixel matching)
-        disc_factor: 0.0  # Disable GAN loss for screenshots (prevents artifacts)
-        pixelloss_weight: 1.0  # Use L1 pixel loss (better for text/UI elements)
+        perceptual_weight: 0.1  # LPIPS weight to preserve text edges and high-frequency details
+        disc_factor: 0.5  # GAN loss weight (adaptive weighting will balance it automatically)
+        pixelloss_weight: 1.0  # Use L1 pixel loss as primary loss
 
     ddconfig:
       double_z: true

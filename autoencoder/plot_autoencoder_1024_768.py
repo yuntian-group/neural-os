@@ -287,6 +287,8 @@ if __name__ == "__main__":
         #('lr4.5e6_acc1', 'log.1024_768.4.5e7.cont.resetdisc.1e5.forui.debug.lr4.5e6.real.acc1'),
         #('lr4.5e6_acc1', 'log.1024_768.4.5e7.cont.resetdisc.1e5.forui.debug.lr4.5e6.real.acc1.long'),
         ('lr4.5e6_acc1.real', 'log.1024_768.4.5e7.cont.resetdisc.1e5.forui.debug.lr4.5e6.real.acc1.long.real'),
+        ('lr4.5e6_acc1.real.4.5e7', 'log.1024_768.4.5e7.cont.resetdisc.1e5.forui.debug.lr4.5e6.real.acc1.long.real.4.5e7'),
+        ('lr4.5e6_acc1.real.4.5e7.1e7', 'log.1024_768.4.5e7.cont.resetdisc.1e5.forui.debug.lr4.5e6.real.acc1.long.real.4.5e7.1e7'),
         #('autoencoder_cont_resetdisc_fix_1e5_forui_debug_lr3e3_real', 'log.1024_768.4.5e7.cont.resetdisc.1e5.forui.debug.lr3e3.real'),
         #('joint_onlineonly_eps222232aip22', 'log.fb.computecanada.challengingandsample.pretrainrnn.balanced.lr5e6.contbest.samplercover.newd.contfreezernn.newnewd.origunet.nospatial2.ONLINE.online.online.x0.joint_onlineonly.2.2.2.2.3.2.7.2.2.2.aip.2.2'),
     ]

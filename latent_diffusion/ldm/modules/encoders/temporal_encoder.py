@@ -8,6 +8,10 @@ from PIL import Image
 DEBUG = True
 DEBUG = False
 
+# Downsampling factor for cursor position scaling (8x for old models, 16x for new models)
+# This should match the autoencoder's downsampling factor
+CURSOR_POSITION_DOWNSAMPLING_FACTOR = 16
+
 def sinusoidal_init(num_positions, hidden_size):
     print ('INIT')
     """Generate sinusoidal embeddings similar to positional embeddings in Transformer."""
@@ -79,8 +83,8 @@ class TemporalEncoder(nn.Module):
         for layer in [self.lstm_projection_pre, self.lstm_projection_post, self.image_feature_projection]:
             nn.init.xavier_uniform_(layer.weight)
             nn.init.zeros_(layer.bias)
-        self.embedding_x.weight.data = sinusoidal_init(self.output_width*8, self.hidden_size)
-        self.embedding_y.weight.data = sinusoidal_init(self.output_height*8, self.hidden_size)
+        self.embedding_x.weight.data = sinusoidal_init(self.output_width*CURSOR_POSITION_DOWNSAMPLING_FACTOR, self.hidden_size)
+        self.embedding_y.weight.data = sinusoidal_init(self.output_height*CURSOR_POSITION_DOWNSAMPLING_FACTOR, self.hidden_size)
         self.image_position_embeddings.data = sinusoidal_init_2d(self.output_height, self.output_width, self.input_channels*8*8)
         
         for param in [
@@ -158,8 +162,8 @@ class TemporalEncoder(nn.Module):
         self.image_feature_projection = nn.Linear(self.input_channels, self.input_channels*8*8)
         self.lstm_projection_pre = nn.Linear(hidden_size, self.input_channels*8*8)
         self.lstm_projection_post = nn.Linear(self.input_channels*8*8, hidden_size)
-        self.embedding_x = nn.Embedding(self.output_width * 8, hidden_size)
-        self.embedding_y = nn.Embedding(self.output_height * 8, hidden_size)
+        self.embedding_x = nn.Embedding(self.output_width * CURSOR_POSITION_DOWNSAMPLING_FACTOR, hidden_size)
+        self.embedding_y = nn.Embedding(self.output_height * CURSOR_POSITION_DOWNSAMPLING_FACTOR, hidden_size)
         self.embedding_is_leftclick = nn.Embedding(2, hidden_size)
         self.embedding_is_rightclick = nn.Embedding(2, hidden_size)
         self.embedding_key_events = nn.Embedding(len(self.itos)*2, hidden_size)
@@ -291,7 +295,7 @@ class TemporalEncoder(nn.Module):
                         x_grid = torch.arange(self.output_width, device=device).view(1, 1, -1)
                         sigma = torch.exp(self.log_sigma)
                         #import pdb; pdb.set_trace()
-                        kernel = torch.exp(-((x_grid - (x_prev/8.0).view(-1, 1, 1))**2 + (y_grid - (y_prev/8.0).view(-1, 1, 1))**2) / (2 * sigma**2)).unsqueeze(1)
+                        kernel = torch.exp(-((x_grid - (x_prev/float(CURSOR_POSITION_DOWNSAMPLING_FACTOR)).view(-1, 1, 1))**2 + (y_grid - (y_prev/float(CURSOR_POSITION_DOWNSAMPLING_FACTOR)).view(-1, 1, 1))**2) / (2 * sigma**2)).unsqueeze(1)
                         output = torch.cat([output[:, :-1], kernel], dim=1)
                         c_dict = {'c_concat': output}
                         if hasattr(sampler, 'p_sample_loop'):
@@ -384,7 +388,7 @@ class TemporalEncoder(nn.Module):
                     
                     # Plot click/no-click circle
                     circle_color = 'red' if is_click else 'yellow'
-                    circle = plt.Circle((x_pos/8, y_pos/8), 3, color=circle_color, fill=False, linewidth=2)
+                    circle = plt.Circle((x_pos/CURSOR_POSITION_DOWNSAMPLING_FACTOR, y_pos/CURSOR_POSITION_DOWNSAMPLING_FACTOR), 3, color=circle_color, fill=False, linewidth=2)
                     ax.add_patch(circle)
                     
                     ax.set_title(f'Head {head_idx+1}')
@@ -412,11 +416,11 @@ class TemporalEncoder(nn.Module):
         x_grid = torch.arange(self.output_width, device=device).view(1, 1, -1)
         sigma = torch.exp(self.log_sigma)
         #import pdb; pdb.set_trace()
-        kernel = torch.exp(-((x_grid - (x/8.0).view(-1, 1, 1))**2 + (y_grid - (y/8.0).view(-1, 1, 1))**2) / (2 * sigma**2)).unsqueeze(1)
+        kernel = torch.exp(-((x_grid - (x/float(CURSOR_POSITION_DOWNSAMPLING_FACTOR)).view(-1, 1, 1))**2 + (y_grid - (y/float(CURSOR_POSITION_DOWNSAMPLING_FACTOR)).view(-1, 1, 1))**2) / (2 * sigma**2)).unsqueeze(1)
         output = torch.cat([output[:, :-1], kernel], dim=1)
         #print ('cheating')
         #output[:, 0, :, :] = 0
-        #output[torch.arange(batch_size), 0, (y//8).long(), (x//8).long()] = 1
+        #output[torch.arange(batch_size), 0, (y//CURSOR_POSITION_DOWNSAMPLING_FACTOR).long(), (x//CURSOR_POSITION_DOWNSAMPLING_FACTOR).long()] = 1
         
         return output
 
@@ -527,7 +531,7 @@ class TemporalEncoder(nn.Module):
                 
                 # Plot click/no-click circle
                 circle_color = 'red' if is_click else 'yellow'
-                circle = plt.Circle((x_pos/8, y_pos/8), 3, color=circle_color, fill=False, linewidth=2)
+                circle = plt.Circle((x_pos/CURSOR_POSITION_DOWNSAMPLING_FACTOR, y_pos/CURSOR_POSITION_DOWNSAMPLING_FACTOR), 3, color=circle_color, fill=False, linewidth=2)
                 ax.add_patch(circle)
                 
                 ax.set_title(f'Head {head_idx+1}')
@@ -552,7 +556,7 @@ class TemporalEncoder(nn.Module):
         x_grid = torch.arange(self.output_width, device=device).view(1, 1, -1)
         sigma = torch.exp(self.log_sigma)
         #import pdb; pdb.set_trace()
-        kernel = torch.exp(-((x_grid - (x/8.0).view(-1, 1, 1))**2 + (y_grid - (y/8.0).view(-1, 1, 1))**2) / (2 * sigma**2)).unsqueeze(1)
+        kernel = torch.exp(-((x_grid - (x/float(CURSOR_POSITION_DOWNSAMPLING_FACTOR)).view(-1, 1, 1))**2 + (y_grid - (y/float(CURSOR_POSITION_DOWNSAMPLING_FACTOR)).view(-1, 1, 1))**2) / (2 * sigma**2)).unsqueeze(1)
         output = torch.cat([output[:, :-1], kernel], dim=1)
 
         hidden_states = {

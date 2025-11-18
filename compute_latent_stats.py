@@ -34,13 +34,13 @@ def parse_args():
     parser.add_argument(
         "--csv_path",
         type=str,
-        required=True,
+        default=os.path.expanduser("~/train_dataset_encoded_online/train_dataset.target_frames.csv"),
         help="CSV file containing record_num and image_num information"
     )
     parser.add_argument(
         "--ckpt_path",
         type=str,
-        default="saved_kl4_bsz8_acc8_lr4.5e6_load_acc1_512_384_mar10_keyboard_1024_768_4.5e7_cont_1e5_forui_real_4.5e6_4.5e7_gan_p1.0/model-step=720000.ckpt",
+        default="autoencoder/saved_kl4_bsz8_acc8_lr4.5e6_load_acc1_512_384_mar10_keyboard_1024_768_4.5e7_cont_1e5_forui_real_4.5e6_4.5e7_gan_p1.0/model-step=720000.ckpt",
         help="Path to autoencoder model checkpoint"
     )
     parser.add_argument(

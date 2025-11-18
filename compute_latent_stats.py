@@ -253,7 +253,7 @@ def main():
         "num_frames_processed": len(all_latents),
         "num_videos_processed": len(processed_videos),
         "total_elements_per_channel": int(total_elements),
-        "processed_videos": sorted(processed_videos)
+        "processed_videos": sorted([int(v) for v in processed_videos])  # Convert numpy int64 to Python int
     }
     
     # Save stats to file

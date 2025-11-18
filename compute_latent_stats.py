@@ -143,12 +143,15 @@ def main():
         videos_to_process = unique_records[:args.num_videos]
         print(f"Processing {len(videos_to_process)} videos")
     
-    # Collect all frames to encode
-    all_frames = []
-    video_frame_pairs = []
+    # Initialize statistics accumulators (will be initialized after first latent)
+    sum_values = None
+    sum_squares = None
+    total_elements = 0
+    num_frames_processed = 0
     processed_videos = []
+    batch_buffer = []
     
-    print("Extracting frames from videos...")
+    print("Extracting and encoding frames from videos...")
     for record_num in tqdm(videos_to_process, desc="Processing videos"):
         # Get video path
         video_path = os.path.join(args.data_dir, f"{record_num}.mp4")
@@ -175,12 +178,41 @@ def main():
                 video.close()
                 continue
             
-            # Process ALL frames from this video
+            # Process ALL frames from this video - encode immediately
             for frame_idx in frame_indices:
                 frame_time = frame_idx / fps
                 frame_rgb = video.get_frame(frame_time)
-                all_frames.append(frame_rgb)
-                video_frame_pairs.append((record_num, frame_idx))
+                batch_buffer.append(frame_rgb)
+                
+                # When batch buffer is full, encode and accumulate statistics
+                if len(batch_buffer) >= args.batch_size:
+                    for frame in batch_buffer:
+                        try:
+                            latent = encode_frame(model, frame)
+                            
+                            # Initialize accumulators on first latent
+                            if sum_values is None:
+                                num_channels = latent.shape[0]
+                                sum_values = np.zeros(num_channels)
+                                sum_squares = np.zeros(num_channels)
+                                print(f"Latent vectors have {num_channels} channels")
+                                print(f"Sample latent shape: {latent.shape}")
+                            
+                            # Accumulate statistics immediately
+                            channel_sum = np.sum(latent, axis=tuple(range(1, latent.ndim)))
+                            sum_values += channel_sum
+                            
+                            channel_sum_squares = np.sum(np.square(latent), axis=tuple(range(1, latent.ndim)))
+                            sum_squares += channel_sum_squares
+                            
+                            n_elements = np.prod(latent.shape[1:])
+                            total_elements += n_elements
+                            num_frames_processed += 1
+                        except Exception as e:
+                            print(f"Error encoding frame: {e}")
+                            continue
+                    
+                    batch_buffer = []
             
             processed_videos.append(record_num)
             video.close()
@@ -188,62 +220,39 @@ def main():
             print(f"Error processing video {record_num} ({video_path}): {e}")
             continue
     
-    print(f"Extracted {len(all_frames)} frames total")
-    
-    if not all_frames:
-        print("Error: No frames were extracted. Please check your video files.")
-        return
-    
-    # Encode frames in batches
-    print("Encoding frames to latent space...")
-    all_latents = []
-    
-    for i in tqdm(range(0, len(all_frames), args.batch_size), desc="Encoding batches"):
-        batch_frames = all_frames[i:i+args.batch_size]
-        batch_latents = []
-        
-        for frame in batch_frames:
+    # Process remaining frames in buffer
+    if batch_buffer:
+        for frame in batch_buffer:
             try:
                 latent = encode_frame(model, frame)
-                batch_latents.append(latent)
+                
+                # Initialize accumulators on first latent (if buffer had first frame)
+                if sum_values is None:
+                    num_channels = latent.shape[0]
+                    sum_values = np.zeros(num_channels)
+                    sum_squares = np.zeros(num_channels)
+                    print(f"Latent vectors have {num_channels} channels")
+                    print(f"Sample latent shape: {latent.shape}")
+                
+                # Accumulate statistics immediately
+                channel_sum = np.sum(latent, axis=tuple(range(1, latent.ndim)))
+                sum_values += channel_sum
+                
+                channel_sum_squares = np.sum(np.square(latent), axis=tuple(range(1, latent.ndim)))
+                sum_squares += channel_sum_squares
+                
+                n_elements = np.prod(latent.shape[1:])
+                total_elements += n_elements
+                num_frames_processed += 1
             except Exception as e:
                 print(f"Error encoding frame: {e}")
                 continue
-        
-        all_latents.extend(batch_latents)
     
-    print(f"Encoded {len(all_latents)} frames to latent space")
-    
-    if not all_latents:
-        print("Error: No latents were encoded.")
+    if num_frames_processed == 0:
+        print("Error: No frames were encoded. Please check your video files.")
         return
     
-    # Get dimensions from first latent
-    sample_latent = all_latents[0]
-    num_channels = sample_latent.shape[0]
-    
-    print(f"Latent vectors have {num_channels} channels")
-    print(f"Sample latent shape: {sample_latent.shape}")
-    
-    # Initialize arrays to store running sum and sum of squares
-    sum_values = np.zeros(num_channels)
-    sum_squares = np.zeros(num_channels)
-    total_elements = 0
-    
-    # Compute statistics
-    print("Computing statistics...")
-    for latent in tqdm(all_latents, desc="Processing latents"):
-        # Compute sum per channel
-        channel_sum = np.sum(latent, axis=tuple(range(1, latent.ndim)))
-        sum_values += channel_sum
-        
-        # Compute sum of squares per channel
-        channel_sum_squares = np.sum(np.square(latent), axis=tuple(range(1, latent.ndim)))
-        sum_squares += channel_sum_squares
-        
-        # Count elements per channel
-        n_elements = np.prod(latent.shape[1:])
-        total_elements += n_elements
+    print(f"Encoded {num_frames_processed} frames to latent space")
     
     # Calculate mean and std
     mean = sum_values / total_elements
@@ -254,7 +263,7 @@ def main():
     stats = {
         "mean": mean.tolist(),
         "std": std.tolist(),
-        "num_frames_processed": len(all_latents),
+        "num_frames_processed": num_frames_processed,
         "num_files_processed": len(processed_videos),
         "total_elements_per_channel": int(total_elements),
         "sampled_records": sorted([int(v) for v in processed_videos])  # Convert numpy int64 to Python int
@@ -267,7 +276,7 @@ def main():
     print(f"\nStatistics saved to {args.output_file}")
     print(f"Mean: {mean}")
     print(f"Std: {std}")
-    print(f"Processed {len(all_latents)} frames from {len(processed_videos)} videos")
+    print(f"Processed {num_frames_processed} frames from {len(processed_videos)} videos")
 
 
 if __name__ == "__main__":

@@ -5,7 +5,6 @@ from torch.utils.data import Dataset  # Dataset class to inherit for custom data
 import os
 import torch
 from typing import List
-from latent_diffusion.ldm.modules.encoders.modules import BERTTokenizer
 import ast
 import lightning.pytorch as pl
 from einops import rearrange

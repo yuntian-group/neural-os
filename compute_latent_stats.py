@@ -40,7 +40,7 @@ def parse_args():
     parser.add_argument(
         "--ckpt_path",
         type=str,
-        default="autoencoder/saved_kl4_bsz8_acc8_lr4.5e6_load_acc1_512_384_mar10_keyboard_1024_768_4.5e7_cont_1e5_forui_real_4.5e6_4.5e7_gan_p1.0/model-step=720000.ckpt",
+        default="autoencoder/saved_kl4_bsz8_acc8_lr4.5e6_load_acc1_512_384_mar10_keyboard_1024_768_4.5e7_cont_1e5_forui_real_4.5e6_4.5e7_gan_p1.0/model-step=732000.ckpt",
         help="Path to autoencoder model checkpoint"
     )
     parser.add_argument(
@@ -71,32 +71,37 @@ def parse_args():
 
 
 @torch.no_grad()
-def encode_frame(model, frame_image):
+def encode_batch(model, frames):
     """
-    Encode a single frame image to latent space.
+    Encode a batch of frames to latent space.
     
     Args:
         model: The autoencoder model
-        frame_image: PIL Image or numpy array of frame
+        frames: List of PIL Images or numpy arrays
     
     Returns:
-        numpy array: Encoded latent vector
+        list of numpy arrays: Encoded latent vectors
     """
-    # Normalize image
-    if isinstance(frame_image, np.ndarray):
-        frame_image = Image.fromarray(frame_image)
+    # Normalize and stack frames into a batch
+    batch_tensors = []
+    for frame in frames:
+        if isinstance(frame, np.ndarray):
+            frame = Image.fromarray(frame)
+        image_tensor = normalize_image(frame)
+        batch_tensors.append(image_tensor)
     
-    image_tensor = normalize_image(frame_image)
-    image_tensor = torch.unsqueeze(image_tensor, dim=0)
-    image_tensor = rearrange(image_tensor, 'b h w c -> b c h w').to(device)
+    # Stack into batch: [B, H, W, C]
+    batch_tensor = torch.stack(batch_tensors, dim=0)
+    # Rearrange to [B, C, H, W]
+    batch_tensor = rearrange(batch_tensor, 'b h w c -> b c h w').to(device)
     
-    # Encode to latent
-    latent = model.encode(image_tensor).sample()
+    # Encode batch to latent
+    latents = model.encode(batch_tensor).sample()
     
-    # Convert to numpy
-    latent_np = latent.squeeze(0).cpu().numpy()
+    # Convert to numpy and return as list
+    latents_np = [latent.cpu().numpy() for latent in latents]
     
-    return latent_np
+    return latents_np
 
 
 def main():
@@ -178,27 +183,27 @@ def main():
                 video.close()
                 continue
             
-            # Process ALL frames from this video - encode immediately
+            # Process ALL frames from this video - batch encode for efficiency
             for frame_idx in frame_indices:
                 frame_time = frame_idx / fps
                 frame_rgb = video.get_frame(frame_time)
                 batch_buffer.append(frame_rgb)
                 
-                # When batch buffer is full, encode and accumulate statistics
+                # When batch buffer is full, encode batch and accumulate statistics
                 if len(batch_buffer) >= args.batch_size:
-                    for frame in batch_buffer:
-                        try:
-                            latent = encode_frame(model, frame)
-                            
-                            # Initialize accumulators on first latent
-                            if sum_values is None:
-                                num_channels = latent.shape[0]
-                                sum_values = np.zeros(num_channels)
-                                sum_squares = np.zeros(num_channels)
-                                print(f"Latent vectors have {num_channels} channels")
-                                print(f"Sample latent shape: {latent.shape}")
-                            
-                            # Accumulate statistics immediately
+                    try:
+                        latents = encode_batch(model, batch_buffer)
+                        
+                        # Initialize accumulators on first batch
+                        if sum_values is None:
+                            num_channels = latents[0].shape[0]
+                            sum_values = np.zeros(num_channels)
+                            sum_squares = np.zeros(num_channels)
+                            print(f"Latent vectors have {num_channels} channels")
+                            print(f"Sample latent shape: {latents[0].shape}")
+                        
+                        # Accumulate statistics for each latent in batch
+                        for latent in latents:
                             channel_sum = np.sum(latent, axis=tuple(range(1, latent.ndim)))
                             sum_values += channel_sum
                             
@@ -208,9 +213,8 @@ def main():
                             n_elements = np.prod(latent.shape[1:])
                             total_elements += n_elements
                             num_frames_processed += 1
-                        except Exception as e:
-                            print(f"Error encoding frame: {e}")
-                            continue
+                    except Exception as e:
+                        print(f"Error encoding batch: {e}")
                     
                     batch_buffer = []
             
@@ -222,19 +226,19 @@ def main():
     
     # Process remaining frames in buffer
     if batch_buffer:
-        for frame in batch_buffer:
-            try:
-                latent = encode_frame(model, frame)
-                
-                # Initialize accumulators on first latent (if buffer had first frame)
-                if sum_values is None:
-                    num_channels = latent.shape[0]
-                    sum_values = np.zeros(num_channels)
-                    sum_squares = np.zeros(num_channels)
-                    print(f"Latent vectors have {num_channels} channels")
-                    print(f"Sample latent shape: {latent.shape}")
-                
-                # Accumulate statistics immediately
+        try:
+            latents = encode_batch(model, batch_buffer)
+            
+            # Initialize accumulators on first batch (if buffer had first frames)
+            if sum_values is None:
+                num_channels = latents[0].shape[0]
+                sum_values = np.zeros(num_channels)
+                sum_squares = np.zeros(num_channels)
+                print(f"Latent vectors have {num_channels} channels")
+                print(f"Sample latent shape: {latents[0].shape}")
+            
+            # Accumulate statistics for each latent in batch
+            for latent in latents:
                 channel_sum = np.sum(latent, axis=tuple(range(1, latent.ndim)))
                 sum_values += channel_sum
                 
@@ -244,9 +248,8 @@ def main():
                 n_elements = np.prod(latent.shape[1:])
                 total_elements += n_elements
                 num_frames_processed += 1
-            except Exception as e:
-                print(f"Error encoding frame: {e}")
-                continue
+        except Exception as e:
+            print(f"Error encoding final batch: {e}")
     
     if num_frames_processed == 0:
         print("Error: No frames were encoded. Please check your video files.")

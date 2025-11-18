@@ -1,0 +1,62 @@
+save_path: saved_kl4_bsz8_acc8_lr4.5e6_load_acc1_512_384_mar10_keyboard_1024_768_4.5e7_cont_1e5_forui_real_4.5e6_4.5e7_gan_p1.0
+
+model:
+  base_learning_rate: 4.5e-07
+  target: latent_diffusion.ldm.models.autoencoder.AutoencoderKL
+  params:
+    monitor: val/rec_loss
+    embed_dim: 16
+    lossconfig:
+      target: latent_diffusion.ldm.modules.losses.contperceptual.LPIPSWithDiscriminator
+      params:
+        disc_start: 1
+        kl_weight: 0.000001
+        disc_weight: 0.5
+        perceptual_weight: 1.0  # Disable LPIPS for screenshots/UI (needs exact pixel matching)
+        disc_factor: 1.0  # Disable GAN loss for screenshots (prevents artifacts)
+        pixelloss_weight: 1.0  # Use L1 pixel loss (better for text/UI elements)
+
+    ddconfig:
+      double_z: true
+      z_channels: 16
+      resolution: 256
+      in_channels: 3
+      out_ch: 3
+      ch: 128
+      ch_mult:
+      - 1
+      - 1
+      - 2
+      - 2
+      - 4
+      num_res_blocks: 2
+      attn_resolutions:
+      - [16, 16]
+      dropout: 0.0
+
+data:
+  target: data.data_processing.datasets.DataModule
+  params:
+    batch_size: 4
+    num_workers: 4
+    wrap: false
+    shuffle: true
+    drop_last: true
+    pin_memory: true
+    prefetch_factor: 2
+    persistent_workers: true
+    train:
+      target: data.data_processing.datasets.ActionsData
+      params:
+        use_original_image: true
+        data_csv_paths:
+          - ../../train_dataset_encoded_online/train_dataset.target_frames.csv
+
+lightning:
+  trainer:
+    benchmark: True
+    max_epochs: 10000
+    limit_val_batches: 0
+    accelerator: gpu
+    devices: 1
+    accumulate_grad_batches: 1

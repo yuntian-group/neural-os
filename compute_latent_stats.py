@@ -52,8 +52,8 @@ def parse_args():
     parser.add_argument(
         "--num_videos",
         type=int,
-        default=100,
-        help="Number of videos to process (stops after processing this many unique videos)"
+        default=-1,
+        help="Number of videos to process (stops after processing this many unique videos). Use -1 to process all videos."
     )
     parser.add_argument(
         "--seed",
@@ -135,9 +135,13 @@ def main():
     unique_records = df['record_num'].unique()
     print(f"Found {len(unique_records)} unique videos in CSV")
     
-    # Process videos in order until we've processed num_videos
-    videos_to_process = unique_records[:args.num_videos]
-    print(f"Processing {len(videos_to_process)} videos")
+    # Process videos in order until we've processed num_videos (or all if num_videos == -1)
+    if args.num_videos == -1:
+        videos_to_process = unique_records
+        print(f"Processing all {len(videos_to_process)} videos")
+    else:
+        videos_to_process = unique_records[:args.num_videos]
+        print(f"Processing {len(videos_to_process)} videos")
     
     # Collect all frames to encode
     all_frames = []

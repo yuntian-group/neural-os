@@ -108,7 +108,7 @@ def smooth_losses(losses, window_size=100):
     #    window_size = max(1, len(losses) // 10)
     #return np.convolve(losses, np.ones(window_size)/window_size, mode='valid')
 
-def plot_and_compare_losses(losses_dict, output_png='loss.autoencoder.4.5e7.debug.png'):
+def plot_and_compare_losses(losses_dict, output_png='loss.autoencoder.4.5e7.final.png'):
     """
     Plot and compare multiple loss curves on a single graph.
     
@@ -286,9 +286,10 @@ if __name__ == "__main__":
         #('lr1e6_acc8', 'log.1024_768.4.5e7.cont.resetdisc.1e5.forui.debug.lr1e6.real.acc8'),
         #('lr4.5e6_acc1', 'log.1024_768.4.5e7.cont.resetdisc.1e5.forui.debug.lr4.5e6.real.acc1'),
         #('lr4.5e6_acc1', 'log.1024_768.4.5e7.cont.resetdisc.1e5.forui.debug.lr4.5e6.real.acc1.long'),
-        ('lr4.5e6_acc1.real', 'log.1024_768.4.5e7.cont.resetdisc.1e5.forui.debug.lr4.5e6.real.acc1.long.real'),
-        ('lr4.5e6_acc1.real.4.5e7', 'log.1024_768.4.5e7.cont.resetdisc.1e5.forui.debug.lr4.5e6.real.acc1.long.real.4.5e7'),
-        ('lr4.5e6_acc1.real.4.5e7.1e7', 'log.1024_768.4.5e7.cont.resetdisc.1e5.forui.debug.lr4.5e6.real.acc1.long.real.4.5e7.1e7'),
+        #('lr4.5e6_acc1.real', 'log.1024_768.4.5e7.cont.resetdisc.1e5.forui.debug.lr4.5e6.real.acc1.long.real'),
+        #('lr4.5e6_acc1.real.4.5e7', 'log.1024_768.4.5e7.cont.resetdisc.1e5.forui.debug.lr4.5e6.real.acc1.long.real.4.5e7'),
+        #('lr4.5e6_acc1.real.4.5e7.1e7', 'log.1024_768.4.5e7.cont.resetdisc.1e5.forui.debug.lr4.5e6.real.acc1.long.real.4.5e7.1e7'),
+        ('final-finetune', 'log.1024_768.4.5e7.cont.resetdisc.1e5.forui.debug.lr4.5e6.real.acc1.long.real.4.5e7.gan.p1.0'),
         #('autoencoder_cont_resetdisc_fix_1e5_forui_debug_lr3e3_real', 'log.1024_768.4.5e7.cont.resetdisc.1e5.forui.debug.lr3e3.real'),
         #('joint_onlineonly_eps222232aip22', 'log.fb.computecanada.challengingandsample.pretrainrnn.balanced.lr5e6.contbest.samplercover.newd.contfreezernn.newnewd.origunet.nospatial2.ONLINE.online.online.x0.joint_onlineonly.2.2.2.2.3.2.7.2.2.2.aip.2.2'),
     ]
@@ -296,7 +297,7 @@ if __name__ == "__main__":
     losses_dict = {}
     for label, log_file_path in log_file_paths:
         losses = extract_losses_from_log(log_file_path)
-        smoothed_losses = smooth_losses(losses, window_size=100)
+        smoothed_losses = smooth_losses(losses, window_size=10000)
         time_elapsed = elapsed_time_since_modified(log_file_path)
         if 'b128' in label:
             time_elapsed = 0.5

@@ -13,6 +13,14 @@ OLD_SCREEN_HEIGHT = 384
 NEW_SCREEN_WIDTH = 1024
 NEW_SCREEN_HEIGHT = 768
 
+# Downsampling factors
+OLD_DOWNSAMPLING_FACTOR = 8  # Old autoencoder had 8x downsampling
+NEW_DOWNSAMPLING_FACTOR = 16  # New autoencoder has 16x downsampling
+
+# Calculate latent dimensions (latent size doesn't change)
+LATENT_WIDTH = NEW_SCREEN_WIDTH // NEW_DOWNSAMPLING_FACTOR  # 1024 / 16 = 64
+LATENT_HEIGHT = NEW_SCREEN_HEIGHT // NEW_DOWNSAMPLING_FACTOR  # 768 / 16 = 48
+
 # Model details
 MODEL_NAME = "yuntian-deng/computer-doom-nibik-032k-updated-autoencoder-16x"
 
@@ -108,14 +116,13 @@ def resize_cursor_position_embeddings(state_dict, old_screen_width, old_screen_h
         else:
             print(f"WARNING: {img_pos_key} has unexpected size {img_pos.shape[1]}, expected {expected_hw}")
 
-def update_autoencoder_in_state_dict(diffusion_checkpoint_path, autoencoder_checkpoint_path, diffusion_config_path):
+def update_autoencoder_in_state_dict(diffusion_checkpoint_path, autoencoder_checkpoint_path):
     """
     Update the first_stage_model (autoencoder) in a diffusion model state_dict and resize cursor position embeddings.
     
     Args:
         diffusion_checkpoint_path: Path to the diffusion model checkpoint
         autoencoder_checkpoint_path: Path to the new autoencoder checkpoint
-        diffusion_config_path: Path to diffusion config (to get latent dimensions)
     
     Returns:
         Updated state_dict ready for saving
@@ -126,16 +133,8 @@ def update_autoencoder_in_state_dict(diffusion_checkpoint_path, autoencoder_chec
     print(f"Loading autoencoder checkpoint from: {autoencoder_checkpoint_path}")
     autoencoder_ckpt = torch.load(autoencoder_checkpoint_path, map_location='cpu', weights_only=False)
     
-    # Load diffusion config to get latent dimensions
-    diffusion_config = OmegaConf.load(diffusion_config_path)
-    
-    # Get latent dimensions from diffusion config (latent size doesn't change)
-    latent_height = diffusion_config.model.params.temporal_encoder_config.params.output_height
-    latent_width = diffusion_config.model.params.temporal_encoder_config.params.output_width
-    print(f"Latent dimensions: {latent_height}x{latent_width} (unchanged)")
-    
-    # Screen resolutions: old was 512x384, new is 1024x768
-    # These correspond to the change from 8x to 16x downsampling
+    # Latent dimensions calculated from screen size and downsampling factor
+    print(f"Latent dimensions: {LATENT_HEIGHT}x{LATENT_WIDTH} (calculated from {NEW_SCREEN_HEIGHT}x{NEW_SCREEN_WIDTH} / {NEW_DOWNSAMPLING_FACTOR}x)")
     print(f"Screen resolution change: {OLD_SCREEN_WIDTH}x{OLD_SCREEN_HEIGHT} -> {NEW_SCREEN_WIDTH}x{NEW_SCREEN_HEIGHT}")
     
     # Get state dicts
@@ -179,7 +178,7 @@ def update_autoencoder_in_state_dict(diffusion_checkpoint_path, autoencoder_chec
         diffusion_state_dict,
         OLD_SCREEN_WIDTH, OLD_SCREEN_HEIGHT,
         NEW_SCREEN_WIDTH, NEW_SCREEN_HEIGHT,
-        latent_width, latent_height  # Latent dimensions (unchanged)
+        LATENT_WIDTH, LATENT_HEIGHT  # Latent dimensions (unchanged)
     )
     
     # Verify some keys exist
@@ -200,8 +199,7 @@ def upload_model_to_hub():
     # Update the state_dict with new autoencoder (no intermediate file needed)
     state_dict = update_autoencoder_in_state_dict(
         DIFFUSION_MODEL_CHECKPOINT,
-        autoencoder_ckpt_path,
-        DIFFUSION_CONFIG
+        autoencoder_ckpt_path
     )
     
     # Load the configuration

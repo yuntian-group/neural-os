@@ -57,7 +57,7 @@ def visualize_reconstruction(model, image_path, save_path):
 def parse_args():
     parser = argparse.ArgumentParser(description="Visualize autoencoder encoding and decoding.")
     
-    parser.add_argument("--ckpt_path", type=str, default='saved_kl4_bsz8_acc8_lr4.5e6_load_acc1_512_384_mar10_keyboard_1024_768_4.5e7_cont_1e5_forui_debug_4.5e6/model-012000.ckpt',
+    parser.add_argument("--ckpt_path", type=str, default='saved_kl4_bsz8_acc8_lr4.5e6_load_acc1_512_384_mar10_keyboard_1024_768_4.5e7_cont_1e5_forui_real_4.5e6_4.5e7/model-step=108000.ckpt',
                         help="Path to model checkpoint.")
     
     parser.add_argument("--config", type=str, default="config_kl16_lr4.5e6.yaml",
@@ -66,7 +66,7 @@ def parse_args():
     #parser.add_argument("--image_paths", nargs='+', required=True,
     #                    help="Path to input image.")
     
-    parser.add_argument("--save_path", type=str, default="visualization_kl_512_384_mar10_keyboard_1024_768_notraining_forui_debug_4.5e6_12k",
+    parser.add_argument("--save_path", type=str, default="visualization_kl_512_384_mar10_keyboard_1024_768_notraining_forui_real_4.5e6_4.5e7_108k",
                         help="Where to save visualizations.")
     
     return parser.parse_args()

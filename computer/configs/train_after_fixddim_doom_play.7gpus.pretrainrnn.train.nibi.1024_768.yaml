@@ -125,5 +125,6 @@ lightning:
     limit_val_batches: 0
     accelerator: gpu
     devices: 1
+    strategy: fsdp
     accumulate_grad_batches: 1
     gradient_clip_val: 1

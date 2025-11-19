@@ -81,7 +81,7 @@ def resize_cursor_position_embeddings(state_dict, old_screen_width, old_screen_h
                 size=(new_x_size, 1),
                 mode='bilinear',
                 align_corners=False
-            ).transpose(1, 3).squeeze(0).squeeze(0)  # [new_size, hidden_size]
+            ).transpose(1, 3).squeeze(0).squeeze(0).contiguous()  # [new_size, hidden_size]
             state_dict[x_key] = new_x_emb_2d
         else:
             print(f"{x_key} size unchanged: {old_x_emb.shape[0]}")
@@ -101,7 +101,7 @@ def resize_cursor_position_embeddings(state_dict, old_screen_width, old_screen_h
                 size=(new_y_size, 1),
                 mode='bilinear',
                 align_corners=False
-            ).transpose(1, 3).squeeze(0).squeeze(0)  # [new_size, hidden_size]
+            ).transpose(1, 3).squeeze(0).squeeze(0).contiguous()  # [new_size, hidden_size]
             state_dict[y_key] = new_y_emb_2d
         else:
             print(f"{y_key} size unchanged: {old_y_emb.shape[0]}")

@@ -10,6 +10,8 @@ from tqdm import tqdm
 
 SCREEN_WIDTH = 512
 SCREEN_HEIGHT = 384
+SCREEN_WIDTH = 1024
+SCREEN_HEIGHT = 768
 
 def initialize_clean_state():
     """Create and save a clean container state with initialized desktop"""

@@ -331,7 +331,12 @@ class AutoencoderKL(pl.LightningModule):
         self.embed_dim = embed_dim
         # Use automatic optimization when discriminator is disabled (for gradient accumulation support)
         # Use manual optimization when discriminator is enabled (need to handle two optimizers)
-        self.automatic_optimization = not self.loss.use_discriminator
+        # Handle case where loss might be Identity or doesn't have use_discriminator attribute
+        if hasattr(self.loss, 'use_discriminator'):
+            self.automatic_optimization = not self.loss.use_discriminator
+        else:
+            # Default to automatic optimization if loss doesn't have use_discriminator (e.g., Identity loss)
+            self.automatic_optimization = True
         if colorize_nlabels is not None:
             assert type(colorize_nlabels)==int
             self.register_buffer("colorize", torch.randn(3, colorize_nlabels, 1, 1))

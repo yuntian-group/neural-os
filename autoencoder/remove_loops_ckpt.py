@@ -16,4 +16,19 @@ if 'state_dict' in a and 'loss.logvar' in a['state_dict']:
         a['state_dict']['loss.logvar'] = torch.tensor([logvar_init], device=device)
         print(f"Fixed logvar shape: converted scalar {logvar_init} to tensor shape [1]")
 
+# Remove loss.logvar from optimizer state dict (FSDP can't map it if it's not in current optimizer)
+# FSDP uses parameter names as keys, so we look for any key containing 'loss.logvar'
+if 'optimizer_states' in a:
+    for opt_idx, opt_state in enumerate(a['optimizer_states']):
+        removed_count = 0
+        # Remove from state dict (FSDP uses parameter names as keys)
+        if 'state' in opt_state:
+            keys_to_remove = [k for k in opt_state['state'].keys() if 'loss.logvar' in str(k)]
+            for key in keys_to_remove:
+                del opt_state['state'][key]
+                removed_count += 1
+        
+        if removed_count > 0:
+            print(f"Removed {removed_count} loss.logvar entries from optimizer {opt_idx} state")
+
 torch.save(a, os.path.join(d, 'model-step=098500.noloops.ckpt'))

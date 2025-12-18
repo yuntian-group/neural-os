@@ -353,21 +353,6 @@ class AutoencoderKL(pl.LightningModule):
                 if k.startswith(ik):
                     print("Deleting key {} from state_dict.".format(k))
                     del sd[k]
-        
-        # Fix logvar shape mismatch: convert scalar logvar to 1D tensor for FSDP compatibility
-        logvar_keys = [
-            'loss.logvar',
-            '_fsdp_wrapped_module.loss.logvar',
-        ]
-        for key in logvar_keys:
-            if key in sd:
-                logvar_param = sd[key]
-                # If it's a scalar (shape []), convert to 1D tensor (shape [1])
-                if logvar_param.dim() == 0:
-                    logvar_value = logvar_param.item()
-                    sd[key] = torch.tensor([logvar_value])
-                    print(f"Fixed {key} shape from scalar to 1D tensor for FSDP compatibility")
-        
         #self.load_state_dict(sd, strict=False)
         missing, unexpected = self.load_state_dict(sd, strict=False)
         print(f"Restored from {path} with {len(missing)} missing and {len(unexpected)} unexpected keys")
@@ -600,49 +585,8 @@ class AutoencoderKL(pl.LightningModule):
         else:
             return opt_ae
     
-    def load_state_dict(self, state_dict, strict=True):
-        """Override to fix logvar shape mismatch for FSDP compatibility"""
-        # Fix logvar shape mismatch: convert scalar logvar to 1D tensor for FSDP compatibility
-        # Check for both regular and FSDP-wrapped key names
-        logvar_keys = [
-            'loss.logvar',
-            '_fsdp_wrapped_module.loss.logvar',
-        ]
-        for key in logvar_keys:
-            if key in state_dict:
-                logvar_param = state_dict[key]
-                # If it's a scalar (shape []), convert to 1D tensor (shape [1])
-                if logvar_param.dim() == 0:
-                    logvar_value = logvar_param.item()
-                    # Preserve device if available, otherwise use CPU
-                    device = logvar_param.device if hasattr(logvar_param, 'device') else torch.device('cpu')
-                    state_dict[key] = torch.tensor([logvar_value], device=device)
-                    print(f"Fixed {key} shape from scalar to 1D tensor for FSDP compatibility")
-        
-        # Call parent's load_state_dict
-        return super().load_state_dict(state_dict, strict=strict)
-    
     def on_load_checkpoint(self, checkpoint):
-        """Override learning rate from checkpoint with config value and fix logvar shape for FSDP"""
-        # Fix logvar shape mismatch: convert scalar logvar to 1D tensor for FSDP compatibility
-        if 'state_dict' in checkpoint:
-            state_dict = checkpoint['state_dict']
-            # Check for both regular and FSDP-wrapped key names
-            logvar_keys = [
-                'loss.logvar',
-                '_fsdp_wrapped_module.loss.logvar',
-            ]
-            for key in logvar_keys:
-                if key in state_dict:
-                    logvar_param = state_dict[key]
-                    # If it's a scalar (shape []), convert to 1D tensor (shape [1])
-                    if logvar_param.dim() == 0:
-                        logvar_value = logvar_param.item()
-                        # Get device from the parameter or use CPU
-                        device = logvar_param.device if hasattr(logvar_param, 'device') else torch.device('cpu')
-                        state_dict[key] = torch.tensor([logvar_value], device=device)
-                        print(f"Fixed {key} shape from scalar to 1D tensor for FSDP compatibility")
-        
+        """Override learning rate from checkpoint with config value"""
         # Update optimizer learning rates to match config (checkpoint may have old LR)
         if 'optimizer_states' in checkpoint:
             expected_lr = self.learning_rate

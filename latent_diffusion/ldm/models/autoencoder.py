@@ -11,6 +11,7 @@ from latent_diffusion.ldm.modules.diffusionmodules.model import Encoder, Decoder
 from latent_diffusion.ldm.modules.distributions.distributions import DiagonalGaussianDistribution
 
 from latent_diffusion.ldm.util import instantiate_from_config
+from torch.optim.lr_scheduler import LambdaLR
 
 
 class VQModel(pl.LightningModule):
@@ -319,6 +320,7 @@ class AutoencoderKL(pl.LightningModule):
                  image_key="image",
                  colorize_nlabels=None,
                  monitor=None,
+                 scheduler_config=None,
                  ):
         super().__init__()
         self.image_key = image_key
@@ -342,6 +344,7 @@ class AutoencoderKL(pl.LightningModule):
             self.register_buffer("colorize", torch.randn(3, colorize_nlabels, 1, 1))
         if monitor is not None:
             self.monitor = monitor
+        self.scheduler_config = scheduler_config
         if ckpt_path is not None:
             self.init_from_ckpt(ckpt_path, ignore_keys=ignore_keys)
 
@@ -448,10 +451,16 @@ class AutoencoderKL(pl.LightningModule):
             if isinstance(aeloss_old_style, torch.Tensor):
                 aeloss_old_style = aeloss_old_style.item() if aeloss_old_style.numel() == 1 else aeloss_old_style
             
+            # Get current learning rates from optimizers
+            lr_ae = opt_ae.param_groups[0]['lr'] if opt_ae.param_groups else self.learning_rate
+            lr_disc = opt_disc.param_groups[0]['lr'] if opt_disc.param_groups else self.learning_rate
+            
             log_dict = {
                 "aeloss": aeloss_old_style,  # Old-style loss (for backward compatibility with existing plots)
                 "aeloss_new_style": aeloss_new_style,  # New-style loss (properly averaged, used for training)
                 "discloss": discloss,
+                "lr": lr_ae,
+                "lr_disc": lr_disc,
                 "grad_norm/encoder": encoder_grad_norm,
                 "grad_norm/decoder": decoder_grad_norm,
                 "grad_norm/quant_conv": quant_conv_grad_norm,
@@ -531,11 +540,15 @@ class AutoencoderKL(pl.LightningModule):
             if isinstance(aeloss_old_style, torch.Tensor):
                 aeloss_old_style = aeloss_old_style.item() if aeloss_old_style.numel() == 1 else aeloss_old_style
             
+            # Get current learning rate from optimizer
+            current_lr = optimizer.param_groups[0]['lr'] if optimizer.param_groups else self.learning_rate
+            
             # Log metrics
             log_dict = {
                 "aeloss": aeloss_old_style,
                 "aeloss_new_style": aeloss_new_style,
                 "discloss": self._current_discloss,
+                "lr": current_lr,
                 "grad_norm/encoder": encoder_grad_norm,
                 "grad_norm/decoder": decoder_grad_norm,
                 "grad_norm/quant_conv": quant_conv_grad_norm,
@@ -581,9 +594,39 @@ class AutoencoderKL(pl.LightningModule):
         if self.loss.use_discriminator:
             opt_disc = torch.optim.Adam(self.loss.discriminator.parameters(),
                                         lr=lr, betas=(0.5, 0.9))
-            return [opt_ae, opt_disc], []
+            
+            if self.scheduler_config is not None:
+                scheduler = instantiate_from_config(self.scheduler_config)
+                print("Setting up LambdaLR scheduler...")
+                scheduler = [
+                    {
+                        'scheduler': LambdaLR(opt_ae, lr_lambda=scheduler.schedule),
+                        'interval': 'step',
+                        'frequency': 1
+                    },
+                    {
+                        'scheduler': LambdaLR(opt_disc, lr_lambda=scheduler.schedule),
+                        'interval': 'step',
+                        'frequency': 1
+                    },
+                ]
+                return [opt_ae, opt_disc], scheduler
+            else:
+                return [opt_ae, opt_disc], []
         else:
-            return opt_ae
+            if self.scheduler_config is not None:
+                scheduler = instantiate_from_config(self.scheduler_config)
+                print("Setting up LambdaLR scheduler...")
+                scheduler = [
+                    {
+                        'scheduler': LambdaLR(opt_ae, lr_lambda=scheduler.schedule),
+                        'interval': 'step',
+                        'frequency': 1
+                    }
+                ]
+                return opt_ae, scheduler
+            else:
+                return opt_ae
     
     def on_load_checkpoint(self, checkpoint):
         """Override learning rate from checkpoint with config value"""

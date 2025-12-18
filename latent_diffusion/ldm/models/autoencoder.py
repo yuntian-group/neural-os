@@ -624,7 +624,7 @@ class AutoencoderKL(pl.LightningModule):
                         'frequency': 1
                     }
                 ]
-                return opt_ae, scheduler
+                return [opt_ae], scheduler
             else:
                 return opt_ae
     

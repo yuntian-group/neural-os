@@ -17,8 +17,9 @@ class LPIPSWithDiscriminator(nn.Module):
         self.perceptual_loss = LPIPS().eval()
         self.perceptual_weight = perceptual_weight
         # output log variance
+        # Not a parameter since it's not optimized - use buffer instead
         # FSDP requires 1D tensor with numel=1, not a scalar
-        self.logvar = nn.Parameter(torch.tensor([logvar_init]))
+        self.register_buffer('logvar', torch.tensor([logvar_init]))
 
         self.discriminator = NLayerDiscriminator(input_nc=disc_in_channels,
                                                  n_layers=disc_num_layers,

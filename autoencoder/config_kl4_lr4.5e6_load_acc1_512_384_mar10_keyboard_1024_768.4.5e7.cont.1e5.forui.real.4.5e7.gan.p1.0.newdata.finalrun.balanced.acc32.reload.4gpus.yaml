@@ -1,0 +1,74 @@
+save_path: saved_kl4_bsz8_acc8_lr4.5e6_load_acc1_512_384_mar10_keyboard_1024_768_4.5e7_cont_1e5_forui_real_4.5e6_4.5e7_gan_p1.0_newdata_finalrun_balanced_acc32_reload_4gpus
+
+model:
+  base_learning_rate: 1e-06
+  target: latent_diffusion.ldm.models.autoencoder.AutoencoderKL
+  params:
+    monitor: val/rec_loss
+    embed_dim: 16
+    lossconfig:
+      target: latent_diffusion.ldm.modules.losses.contperceptual.LPIPSWithDiscriminator
+      params:
+        disc_start: 99999999999999999999999999
+        kl_weight: 0.000001
+        disc_weight: 0.0
+        perceptual_weight: 0.1  # Disable LPIPS for screenshots/UI (needs exact pixel matching)
+        disc_factor: 1.0  # Disable GAN loss for screenshots (prevents artifacts)
+        pixelloss_weight: 1.0  # Use L1 pixel loss (better for text/UI elements)
+    scheduler_config:
+      target: latent_diffusion.ldm.lr_scheduler.LambdaLinearScheduler
+      params:
+        warm_up_steps: [500]          # adjust your warmup steps
+        cycle_lengths: [1000000000]    # essentially "infinite" if no decay
+        f_start: [1.e-6]               # initial LR multiplier
+        f_max: [1.]                    # max LR multiplier after warmup
+        f_min: [1.]                    # keep 1.0 for constant LR post-warmup
+
+    ddconfig:
+      double_z: true
+      z_channels: 16
+      resolution: 256
+      in_channels: 3
+      out_ch: 3
+      ch: 128
+      ch_mult:
+      - 1
+      - 1
+      - 2
+      - 2
+      - 4
+      num_res_blocks: 2
+      attn_resolutions:
+      - [16, 16]
+      dropout: 0.0
+
+data:
+  target: data.data_processing.datasets.DataModule
+  params:
+    batch_size: 4
+    num_workers: 4
+    wrap: false
+    shuffle: true
+    drop_last: true
+    pin_memory: true
+    prefetch_factor: 2
+    use_balanced_sampling: true
+    persistent_workers: true
+    train:
+      target: data.data_processing.datasets.ActionsData
+      params:
+        use_original_image: true
+        data_csv_paths:
+          - ../../neuralos-demo-newdata-autoencoder/train_dataset_encoded_online/train_dataset.target_frames.csv
+          - ../../train_dataset_encoded_online/train_dataset.target_frames.csv
+
+lightning:
+  trainer:
+    reload_dataloaders_every_n_epochs: 1
+    benchmark: True
+    max_epochs: 10000
+    limit_val_batches: 0
+    accelerator: gpu
+    devices: 4
+    accumulate_grad_batches: 8
+    strategy: ddp_find_unused_parameters_true

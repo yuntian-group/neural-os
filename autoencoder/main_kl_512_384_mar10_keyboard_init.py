@@ -8,7 +8,7 @@ from latent_diffusion.ldm.util import instantiate_from_config
 import torch
 import os, argparse
 from latent_diffusion.ldm.models.diffusion.ddpm import LatentDiffusion
-
+torch.set_float32_matmul_precision('high')
 def parse_args():
     parser = argparse.ArgumentParser(description="Runs the finetuning and inference script.")
 

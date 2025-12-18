@@ -85,6 +85,7 @@ def extract_losses_from_log(log_file_path):
     # Extract losses using regex (e.g., loss=1.88e+03)
     #loss_pattern = re.compile(r'loss_step_step=([\d\.eE+-]+)')
     loss_pattern = re.compile(r'aeloss_step=([\d\.eE+-]+)')
+    #loss_pattern = re.compile(r'rec_loss_step=([\d\.eE+-]+)')
     #losses = [math.log(float(loss)) for loss in loss_pattern.findall(log_content)]
     losses = [float(loss) for loss in loss_pattern.findall(log_content)]
     if len(losses) == 0:
@@ -108,7 +109,7 @@ def smooth_losses(losses, window_size=100):
     #    window_size = max(1, len(losses) // 10)
     #return np.convolve(losses, np.ones(window_size)/window_size, mode='valid')
 
-def plot_and_compare_losses(losses_dict, output_png='loss.autoencoder.4.5e7.final.png'):
+def plot_and_compare_losses(losses_dict, output_png='loss.autoencoder.4.5e7.final.newdata.final.balanced.png'):
     """
     Plot and compare multiple loss curves on a single graph.
     
@@ -289,7 +290,12 @@ if __name__ == "__main__":
         #('lr4.5e6_acc1.real', 'log.1024_768.4.5e7.cont.resetdisc.1e5.forui.debug.lr4.5e6.real.acc1.long.real'),
         #('lr4.5e6_acc1.real.4.5e7', 'log.1024_768.4.5e7.cont.resetdisc.1e5.forui.debug.lr4.5e6.real.acc1.long.real.4.5e7'),
         #('lr4.5e6_acc1.real.4.5e7.1e7', 'log.1024_768.4.5e7.cont.resetdisc.1e5.forui.debug.lr4.5e6.real.acc1.long.real.4.5e7.1e7'),
-        ('final-finetune', 'log.1024_768.4.5e7.cont.resetdisc.1e5.forui.debug.lr4.5e6.real.acc1.long.real.4.5e7.gan.p1.0'),
+        #('final-finetune', 'log.1024_768.4.5e7.cont.resetdisc.1e5.forui.debug.lr4.5e6.real.acc1.long.real.4.5e7.gan.p1.0'),
+        #('final-finetune-newdata', 'log.1024_768.4.5e7.cont.resetdisc.1e5.forui.debug.lr4.5e6.real.acc1.long.real.4.5e7.gan.p1.0.newdata'),
+        #('final-finetune-newdata-final', 'log.1024_768.4.5e7.cont.resetdisc.1e5.forui.debug.lr4.5e6.real.acc1.long.real.4.5e7.gan.p1.0.newdata.finalrun'),
+        ('final-finetune-newdata-final-balanced', 'log.1024_768.4.5e7.cont.resetdisc.1e5.forui.debug.lr4.5e6.real.acc1.long.real.4.5e7.gan.p1.0.newdata.finalrun.balanced'),
+        ('final-finetune-newdata-final-balanced-acc32', 'log.1024_768.4.5e7.cont.resetdisc.1e5.forui.debug.lr4.5e6.real.acc1.long.real.4.5e7.gan.p1.0.newdata.finalrun.balanced.acc32'),
+        ('final-finetune-newdata-final-balanced-acc32-reload', 'log.1024_768.4.5e7.cont.resetdisc.1e5.forui.debug.lr4.5e6.real.acc1.long.real.4.5e7.gan.p1.0.newdata.finalrun.balanced.acc32.reload'),
         #('autoencoder_cont_resetdisc_fix_1e5_forui_debug_lr3e3_real', 'log.1024_768.4.5e7.cont.resetdisc.1e5.forui.debug.lr3e3.real'),
         #('joint_onlineonly_eps222232aip22', 'log.fb.computecanada.challengingandsample.pretrainrnn.balanced.lr5e6.contbest.samplercover.newd.contfreezernn.newnewd.origunet.nospatial2.ONLINE.online.online.x0.joint_onlineonly.2.2.2.2.3.2.7.2.2.2.aip.2.2'),
     ]
@@ -297,7 +303,7 @@ if __name__ == "__main__":
     losses_dict = {}
     for label, log_file_path in log_file_paths:
         losses = extract_losses_from_log(log_file_path)
-        smoothed_losses = smooth_losses(losses, window_size=10000)
+        smoothed_losses = smooth_losses(losses, window_size=50000)
         time_elapsed = elapsed_time_since_modified(log_file_path)
         if 'b128' in label:
             time_elapsed = 0.5

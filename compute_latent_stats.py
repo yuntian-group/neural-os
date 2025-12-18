@@ -22,7 +22,7 @@ def parse_args():
     parser.add_argument(
         "--data_dir", 
         type=str, 
-        default=os.path.expanduser("~/train_dataset_encoded_online"),
+        default=os.path.expanduser("~/neuralos-demo-newdata-autoencoder/train_dataset_encoded_online"),
         help="Directory containing raw .mp4 video files"
     )
     parser.add_argument(
@@ -34,19 +34,19 @@ def parse_args():
     parser.add_argument(
         "--csv_path",
         type=str,
-        default=os.path.expanduser("~/train_dataset_encoded_online/train_dataset.target_frames.csv"),
+        default=os.path.expanduser("~/neuralos-demo-newdata-autoencoder/train_dataset_encoded_online/train_dataset.target_frames.csv"),
         help="CSV file containing record_num and image_num information"
     )
     parser.add_argument(
         "--ckpt_path",
         type=str,
-        default="autoencoder/saved_kl4_bsz8_acc8_lr4.5e6_load_acc1_512_384_mar10_keyboard_1024_768_4.5e7_cont_1e5_forui_real_4.5e6_4.5e7_gan_p1.0/model-step=732000.ckpt",
+        default="autoencoder/saved_kl4_bsz8_acc8_lr4.5e6_load_acc1_512_384_mar10_keyboard_1024_768_4.5e7_cont_1e5_forui_real_4.5e6_4.5e7_gan_p1.0_newdata_finalrun_balanced/model-step=004000.ckpt",
         help="Path to autoencoder model checkpoint"
     )
     parser.add_argument(
         "--config",
         type=str,
-        default="autoencoder/config_kl4_lr4.5e6_load_acc1_512_384_mar10_keyboard_1024_768.4.5e7.cont.1e5.forui.real.4.5e7.gan.p1.0.yaml",
+        default="autoencoder/config_kl4_lr4.5e6_load_acc1_512_384_mar10_keyboard_1024_768.4.5e7.cont.1e5.forui.real.4.5e7.gan.p1.0.newdata.finalrun.balanced.yaml",
         help="Path to autoencoder model config file"
     )
     parser.add_argument(

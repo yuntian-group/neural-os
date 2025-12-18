@@ -5,8 +5,8 @@ import time
 import argparse
 
 # Regular expression to extract the numeric step from filenames.
-CHECKPOINT_REGEX = re.compile(r"model-step=(\d+)\.ckpt")
 CHECKPOINT_REGEX = re.compile(r"model-(\d+)\.ckpt")
+CHECKPOINT_REGEX = re.compile(r"model-step=(\d+)\.ckpt")
 
 def get_checkpoint_step(filename):
     """

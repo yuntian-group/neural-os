@@ -401,6 +401,7 @@ class AutoencoderKL(pl.LightningModule):
             print ('saved checkpoint to', f"{self.trainer.save_dir}/model-{self.global_step:06d}.ckpt")
         
         if self.loss.use_discriminator:
+            assert False
             # Manual optimization mode: handle both optimizers in a single step
             opt_ae, opt_disc = self.optimizers()
             
@@ -482,6 +483,25 @@ class AutoencoderKL(pl.LightningModule):
             self._current_log_dict_disc = log_dict_disc
             self._current_aeloss = aeloss
             self._current_discloss = discloss
+
+            # Log per-batch losses during accumulation (shows variation even when model hasn't updated)
+            # Note: These are per-batch losses, not accumulated. The actual optimizer step happens
+            # every accumulate_grad_batches batches, but logging here shows batch-to-batch variation.
+            aeloss_new_style = aeloss
+            aeloss_old_style = log_dict_ae.get("train/total_loss", torch.tensor(0.0))
+            if isinstance(aeloss_old_style, torch.Tensor):
+                aeloss_old_style = aeloss_old_style.item() if aeloss_old_style.numel() == 1 else aeloss_old_style
+            
+            # Log per-batch metrics (will show variation during accumulation)
+            log_dict_batch = {
+                "aeloss_step": aeloss_old_style,
+                "aeloss_new_style_step": aeloss_new_style,
+                "discloss_step": discloss,
+                **{k: v for k, v in log_dict_ae.items() if k.startswith("train/")}
+            }
+            print (aeloss_old_style)
+            #self.log_dict(log_dict_batch, prog_bar=True, logger=True, on_step=True, on_epoch=False, sync_dist=True)
+            
             
             # Return loss for automatic optimization (Lightning handles backward/step)
             return aeloss

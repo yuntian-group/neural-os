@@ -744,6 +744,7 @@ class DataModule(pl.LightningDataModule):
         self.batch_size = batch_size
         self.dataset_configs = {}
         self.use_balanced_sampling = use_balanced_sampling
+        assert use_balanced_sampling
         if train:
             self.dataset_configs["train"] = train
         if validation:

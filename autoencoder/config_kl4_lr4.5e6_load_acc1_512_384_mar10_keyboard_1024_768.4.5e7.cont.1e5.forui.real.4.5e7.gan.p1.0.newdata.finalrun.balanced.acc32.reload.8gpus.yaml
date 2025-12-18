@@ -1,7 +1,7 @@
-save_path: saved_kl4_bsz8_acc8_lr4.5e6_load_acc1_512_384_mar10_keyboard_1024_768_4.5e7_cont_1e5_forui_real_4.5e6_4.5e7_gan_p1.0_newdata_finalrun_balanced_acc32_reload
+save_path: saved_kl4_bsz8_acc8_lr4.5e6_load_acc1_512_384_mar10_keyboard_1024_768_4.5e7_cont_1e5_forui_real_4.5e6_4.5e7_gan_p1.0_newdata_finalrun_balanced_acc32_reload_8gpus
 
 model:
-  base_learning_rate: 4.5e-06
+  base_learning_rate: 1e-06
   target: latent_diffusion.ldm.models.autoencoder.AutoencoderKL
   params:
     monitor: val/rec_loss
@@ -62,5 +62,5 @@ lightning:
     limit_val_batches: 0
     accelerator: gpu
     devices: 8
-    strategy: fsdp
     accumulate_grad_batches: 4
+    strategy: fsdp

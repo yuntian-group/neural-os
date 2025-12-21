@@ -800,7 +800,7 @@ class DataModule(pl.LightningDataModule):
                          **self.dataloader_kwargs)
 
 class BalancedEpochSampler(torch.utils.data.Sampler):
-    def __init__(self, dataset, shuffle=True, seed=23456):
+    def __init__(self, dataset, shuffle=True, seed=42):
         """
         A sampler that ensures balanced sampling across partitions with each example seen exactly once per epoch.
         

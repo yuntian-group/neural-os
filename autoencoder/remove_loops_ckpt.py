@@ -1,11 +1,11 @@
 import torch
 import os
 
-d = 'saved_kl4_bsz8_acc8_lr4.5e6_load_acc1_512_384_mar10_keyboard_1024_768_4.5e7_cont_1e5_forui_real_4.5e6_4.5e7_gan_p1.0_newdata_finalrun_balanced_acc32_reload'
+d = 'saved_kl4_bsz8_acc8_lr4.5e6_load_acc1_512_384_mar10_keyboard_1024_768_4.5e7_cont_1e5_forui_real_4.5e6_4.5e7_gan_p1.0_newdata_finalrun_balanced_acc32_reload_4gpus_cont_4.5e6_1e6_5e7'
 
-a = torch.load(os.path.join(d, 'model-step=098500.ckpt'))
+a = torch.load(os.path.join(d, 'model-step=051000.ckpt'))
 del a['loops']
-#del a['optimizer_states']
+del a['optimizer_states']
 
 # Fix logvar shape: convert from scalar to 1D tensor [1] for FSDP compatibility
 if 'state_dict' in a and 'loss.logvar' in a['state_dict']:
@@ -17,4 +17,4 @@ if 'state_dict' in a and 'loss.logvar' in a['state_dict']:
         print(f"Fixed logvar shape: converted scalar {logvar_init} to tensor shape [1]")
 
 
-torch.save(a, os.path.join(d, 'model-step=098500.noloops.ckpt'))
+torch.save(a, os.path.join(d, 'model-step=051000.noloops.ckpt'))

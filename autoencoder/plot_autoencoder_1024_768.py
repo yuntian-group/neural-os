@@ -109,7 +109,7 @@ def smooth_losses(losses, window_size=100):
     #    window_size = max(1, len(losses) // 10)
     #return np.convolve(losses, np.ones(window_size)/window_size, mode='valid')
 
-def plot_and_compare_losses(losses_dict, output_png='loss.autoencoder.4.5e7.final.newdata.final.balanced.png'):
+def plot_and_compare_losses(losses_dict, output_png='loss.autoencoder.4.5e7.final.newdata.final.balanced.4gpus.cont.1e6.5e7.png'):
     """
     Plot and compare multiple loss curves on a single graph.
     
@@ -293,9 +293,14 @@ if __name__ == "__main__":
         #('final-finetune', 'log.1024_768.4.5e7.cont.resetdisc.1e5.forui.debug.lr4.5e6.real.acc1.long.real.4.5e7.gan.p1.0'),
         #('final-finetune-newdata', 'log.1024_768.4.5e7.cont.resetdisc.1e5.forui.debug.lr4.5e6.real.acc1.long.real.4.5e7.gan.p1.0.newdata'),
         #('final-finetune-newdata-final', 'log.1024_768.4.5e7.cont.resetdisc.1e5.forui.debug.lr4.5e6.real.acc1.long.real.4.5e7.gan.p1.0.newdata.finalrun'),
-        ('final-finetune-newdata-final-balanced', 'log.1024_768.4.5e7.cont.resetdisc.1e5.forui.debug.lr4.5e6.real.acc1.long.real.4.5e7.gan.p1.0.newdata.finalrun.balanced'),
-        ('final-finetune-newdata-final-balanced-acc32', 'log.1024_768.4.5e7.cont.resetdisc.1e5.forui.debug.lr4.5e6.real.acc1.long.real.4.5e7.gan.p1.0.newdata.finalrun.balanced.acc32'),
-        ('final-finetune-newdata-final-balanced-acc32-reload', 'log.1024_768.4.5e7.cont.resetdisc.1e5.forui.debug.lr4.5e6.real.acc1.long.real.4.5e7.gan.p1.0.newdata.finalrun.balanced.acc32.reload'),
+        #('final-finetune-newdata-final-balanced', 'log.1024_768.4.5e7.cont.resetdisc.1e5.forui.debug.lr4.5e6.real.acc1.long.real.4.5e7.gan.p1.0.newdata.finalrun.balanced'),
+        #('final-finetune-newdata-final-balanced-acc32', 'log.1024_768.4.5e7.cont.resetdisc.1e5.forui.debug.lr4.5e6.real.acc1.long.real.4.5e7.gan.p1.0.newdata.finalrun.balanced.acc32'),
+        #('final-finetune-newdata-final-balanced-acc32-reload', 'log.1024_768.4.5e7.cont.resetdisc.1e5.forui.debug.lr4.5e6.real.acc1.long.real.4.5e7.gan.p1.0.newdata.finalrun.balanced.acc32.reload'),
+        #('final-finetune-newdata-final-balanced-acc32-reload-4gpus', 'log.1024_768.4.5e7.cont.resetdisc.1e5.forui.debug.lr4.5e6.real.acc1.long.real.4.5e7.gan.p1.0.newdata.finalrun.balanced.acc32.reload.4gpus'),
+        #('final-finetune-newdata-final-balanced-acc32-reload-4gpus-cont', 'log.1024_768.4.5e7.cont.resetdisc.1e5.forui.debug.lr4.5e6.real.acc1.long.real.4.5e7.gan.p1.0.newdata.finalrun.balanced.acc32.reload.4gpus.cont'),
+        ('final-finetune-newdata-final-balanced-acc32-reload-4gpus-cont-4.5e6', 'log.1024_768.4.5e7.cont.resetdisc.1e5.forui.debug.lr4.5e6.real.acc1.long.real.4.5e7.gan.p1.0.newdata.finalrun.balanced.acc32.reload.4gpus.cont.4.5e6'),
+        ('final-finetune-newdata-final-balanced-acc32-reload-4gpus-cont-4.5e6-1e6', 'log.1024_768.4.5e7.cont.resetdisc.1e5.forui.debug.lr4.5e6.real.acc1.long.real.4.5e7.gan.p1.0.newdata.finalrun.balanced.acc32.reload.4gpus.cont.4.5e6.1e6'),
+        ('final-finetune-newdata-final-balanced-acc32-reload-4gpus-cont-4.5e6-1e6-5e7', 'log.1024_768.4.5e7.cont.resetdisc.1e5.forui.debug.lr4.5e6.real.acc1.long.real.4.5e7.gan.p1.0.newdata.finalrun.balanced.acc32.reload.4gpus.cont.4.5e6.1e6.5e7'),
         #('autoencoder_cont_resetdisc_fix_1e5_forui_debug_lr3e3_real', 'log.1024_768.4.5e7.cont.resetdisc.1e5.forui.debug.lr3e3.real'),
         #('joint_onlineonly_eps222232aip22', 'log.fb.computecanada.challengingandsample.pretrainrnn.balanced.lr5e6.contbest.samplercover.newd.contfreezernn.newnewd.origunet.nospatial2.ONLINE.online.online.x0.joint_onlineonly.2.2.2.2.3.2.7.2.2.2.aip.2.2'),
     ]

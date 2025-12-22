@@ -391,7 +391,7 @@ class ActionsData(Dataset):
             print('Loading autoencoder model for reprocessing')
             config = OmegaConf.load("../autoencoder/config_kl4_lr4.5e6_load_acc1_512_384.yaml")
             #self.model = load_model_from_config(config, "autoencoder_saved_kl4_bsz8_acc8_lr4.5e6_load_acc1_model-603000.ckpt")
-            self.model = load_model_from_config(config, "../autoencoder/saved_kl4_bsz8_acc8_lr4.5e6_load_acc1_512_384/model-354000.ckpt")
+            self.model = load_model_from_config(config, "../autoencoder/saved_kl4_bsz8_acc8_lr4.5e6_load_acc1_512_384_mar10_keyboard_1024_768_4.5e7_cont_1e5_forui_real_4.5e6_4.5e7_gan_p1.0_newdata_finalrun_balanced_acc32_reload_4gpus_cont_4.5e6_1e6_5e7/model-step=057000.ckpt")
             #self.model.load_state_dict(torch.load("autoencoder_saved_kl4_bsz8_acc8_lr4.5e6_load_acc1_model-603000.ckpt"))
             #self.model = self.model.to(device)
             self.model.eval()

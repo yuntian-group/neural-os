@@ -144,6 +144,8 @@ if __name__ == "__main__":
             ckpt_folder = save_path[:-len('_pretrainrnn')]
         if save_path.endswith('_nibi'):
             ckpt_folder = save_path[:-len('_nibi')]
+        if save_path.endswith('_tune'):
+            ckpt_folder = save_path[:-len('_tune')]
         m = re.match(r'.*?(_to_\d+)$', save_path)
         if m:
             ckpt_folder = save_path[:-len(m.group(1))]

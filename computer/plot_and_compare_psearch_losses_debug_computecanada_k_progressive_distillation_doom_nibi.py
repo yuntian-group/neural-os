@@ -106,7 +106,7 @@ def smooth_losses(losses, window_size=100):
     #    window_size = max(1, len(losses) // 10)
     #return np.convolve(losses, np.ones(window_size)/window_size, mode='valid')
 
-def plot_and_compare_losses(losses_dict, output_png='loss_doom_7gpus.2.nibi.png'):
+def plot_and_compare_losses(losses_dict, output_png='loss_doom_7gpus.2.nibi.finalautoencoder.png'):
     """
     Plot and compare multiple loss curves on a single graph.
     
@@ -257,11 +257,15 @@ if __name__ == "__main__":
         #('32_to_16', 'log.train_progressive_distillation_32_to_16.bsz63.txt.freezernn'),
         #('16_to_8', 'log.train_progressive_distillation_16_to_8.bsz63.txt.freezernn'),
         #('32_to_16_32', 'log.train_progressive_distillation_32_to_16_32.bsz63.txt.freezernn'),
-        ('doom', 'log.train_after_fixddim_doom.rerun.rerun.rerun.play.7gpus.classicdoom.fixarrow.2.fix2.cont'),
-        #('doom_pretrainrnn', 'log.train_after_fixddim_doom.rerun.rerun.rerun.play.7gpus.classicdoom.fixarrow.2.fix2.cont.pretrainrnn'),
-        ('doom_pretrainrnn_train', 'log.train_after_fixddim_doom.rerun.rerun.rerun.play.7gpus.classicdoom.fixarrow.2.fix2.cont.pretrainrnn.train'),
-        ('doom_pretrainrnn_train_nibi', 'log.tfixarrow.2.fix2.cont.pretrainrnn.train.nibi.rerun'),
-        ('doom_pretrainrnn_train_nibi_def', 'log.tfixarrow.2.fix2.cont.pretrainrnn.train.nibi.rerun.3days.def'),
+        #('doom', 'log.train_after_fixddim_doom.rerun.rerun.rerun.play.7gpus.classicdoom.fixarrow.2.fix2.cont'),
+        ##('doom_pretrainrnn', 'log.train_after_fixddim_doom.rerun.rerun.rerun.play.7gpus.classicdoom.fixarrow.2.fix2.cont.pretrainrnn'),
+        #('doom_pretrainrnn_train', 'log.train_after_fixddim_doom.rerun.rerun.rerun.play.7gpus.classicdoom.fixarrow.2.fix2.cont.pretrainrnn.train'),
+        #('doom_pretrainrnn_train_nibi', 'log.tfixarrow.2.fix2.cont.pretrainrnn.train.nibi.rerun'),
+        #('doom_pretrainrnn_train_nibi_def', 'log.tfixarrow.2.fix2.cont.pretrainrnn.train.nibi.rerun.3days.def'),
+        ('1024_768', 'log.1024_768_1gpu.2.2.2.2'),
+        ('1024_768.8gpus', 'log.1024_768_1gpu.2.2.2.2.8gpus'),
+        ('1024_768.8gpus.2', 'log.1024_768_1gpu.2.2.2.2.8gpus.2'),
+        ('finalautoencoder.1gpu', 'log.finalautoencoder_1024_768.1gpu'),
         #('joint_onlineonly_eps222232aip22', 'log.fb.computecanada.challengingandsample.pretrainrnn.balanced.lr5e6.contbest.samplercover.newd.contfreezernn.newnewd.origunet.nospatial2.ONLINE.online.online.x0.joint_onlineonly.2.2.2.2.3.2.7.2.2.2.aip.2.2'),
     ]
     

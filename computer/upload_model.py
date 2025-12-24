@@ -143,6 +143,12 @@ MODEL_NAME = "yuntian-deng/computer-doom-nibik-032k-updated-autoencoder-16x-fixe
 MODEL_NAME = "yuntian-deng/computer-doom-nibik-032k-updated-autoencoder-16x-fixed-222222-192k"
 MODEL_NAME = "yuntian-deng/computer-doom-nibik-032k-updated-autoencoder-16x-fixed-222222-208k"
 MODEL_NAME = "yuntian-deng/computer-doom-nibik-032k-updated-autoencoder-16x-fixed-222222-236k"
+MODEL_NAME = "yuntian-deng/computer-doom-finalautoencoder-20k"
+MODEL_NAME = "yuntian-deng/computer-doom-finalautoencoder-28k"
+MODEL_NAME = "yuntian-deng/computer-doom-finalautoencoder-30k"
+MODEL_NAME = "yuntian-deng/computer-doom-finalautoencoder-32k"
+MODEL_NAME = "yuntian-deng/computer-doom-finalautoencoder-38k"
+MODEL_NAME = "yuntian-deng/computer-doom-finalautoencoder-42k"
 
 # latest
 
@@ -327,6 +333,12 @@ LOCAL_CHECKPOINT_PATH = "./test_scheduled_samplingk2777doom222222_pretrainrnn22_
 LOCAL_CHECKPOINT_PATH = "./test_scheduled_samplingk2777doom222222_pretrainrnn22_nibik2222222/model-step=192000.ckpt"
 LOCAL_CHECKPOINT_PATH = "./test_scheduled_samplingk2777doom222222_pretrainrnn22_nibik2222222/model-step=208000.ckpt"
 LOCAL_CHECKPOINT_PATH = "./test_scheduled_samplingk2777doom222222_pretrainrnn22_nibik2222222/model-step=236000.ckpt"
+LOCAL_CHECKPOINT_PATH = "./model_1024_768_finalautoencoder_tune//model-step=020000.ckpt"
+LOCAL_CHECKPOINT_PATH = "./model_1024_768_finalautoencoder_tune//model-step=028000.ckpt"
+LOCAL_CHECKPOINT_PATH = "./model_1024_768_finalautoencoder_tune//model-step=030000.ckpt"
+LOCAL_CHECKPOINT_PATH = "./model_1024_768_finalautoencoder_tune//model-step=032000.ckpt"
+LOCAL_CHECKPOINT_PATH = "./model_1024_768_finalautoencoder_tune//model-step=038000.ckpt"
+LOCAL_CHECKPOINT_PATH = "./model_1024_768_finalautoencoder_tune//model-step=042000.ckpt"
 CONFIG_PATH = "config_csllm.yaml"
 CONFIG_PATH = "configs/2e5_debug_gpt_firstframe.yaml"
 CONFIG_PATH = "configs/2e5_debug_gpt_firstframe_identity.yaml"

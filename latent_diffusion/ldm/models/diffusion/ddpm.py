@@ -53,6 +53,25 @@ def uniform_on_device(r1, r2, shape, device):
     return (r1 - r2) * torch.rand(*shape, device=device) + r2
 
 
+def geometric_sample_deterministic(m: int, n: int) -> int:
+    """
+    Deterministically maps integer m >= 1 to a value in {1, ..., n}
+    with probabilities:
+        P(1) = 1/2
+        P(2) = 1/4
+        ...
+        P(k) = 1/2^k
+    truncated at n.
+    """
+    if m < 1:
+        raise ValueError("m must be >= 1")
+
+    # Count trailing zeros in binary representation of m
+    tz = (m & -m).bit_length() - 1
+
+    return min(1 + tz, n)
+
+
 class DDPM(pl.LightningModule):
     # classic DDPM with Gaussian diffusion, in image space
     def __init__(self,
@@ -1326,7 +1345,11 @@ class LatentDiffusion(DDPM):
                         per_channel_std = self.trainer.datamodule.datasets['train'].per_channel_std.to(self.device)
                         self.temporal_encoder.per_channel_mean = per_channel_mean
                         self.temporal_encoder.per_channel_std = per_channel_std
-                        output_from_rnn = self.temporal_encoder(inputs_to_rnn, sampler, self.scheduled_sampling_length, self.scheduled_sampling_ddim_steps, self.first_stage_model)
+                        # Calculate scheduled sampling length deterministically based on global_step
+                        base = self.global_step + 1
+                        scheduled_sampling_length = geometric_sample_deterministic(base, self.scheduled_sampling_length)
+                        print (f"Scheduled sampling length: {scheduled_sampling_length}")
+                        output_from_rnn = self.temporal_encoder(inputs_to_rnn, sampler, scheduled_sampling_length, self.scheduled_sampling_ddim_steps, self.first_stage_model)
                 
                 #output_from_rnn = self.temporal_encoder(inputs_to_rnn)
                 #import pdb; pdb.set_trace()

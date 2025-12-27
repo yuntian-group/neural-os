@@ -148,8 +148,8 @@ if __name__ == "__main__":
             ckpt_folder = save_path[:-len('_tune')]
         if save_path.endswith('_ss'):
             ckpt_folder = save_path[:-len('_ss')]
-        if save_path.endswith('_noss'):
-            ckpt_folder = save_path[:-len('_noss')]
+        if save_path.endswith('_noss_noinitunet'):
+            ckpt_folder = save_path[:-len('_noss_noinitunet')]
         m = re.match(r'.*?(_to_\d+)$', save_path)
         if m:
             ckpt_folder = save_path[:-len(m.group(1))]

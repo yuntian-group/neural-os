@@ -149,6 +149,10 @@ MODEL_NAME = "yuntian-deng/computer-doom-finalautoencoder-30k"
 MODEL_NAME = "yuntian-deng/computer-doom-finalautoencoder-32k"
 MODEL_NAME = "yuntian-deng/computer-doom-finalautoencoder-38k"
 MODEL_NAME = "yuntian-deng/computer-doom-finalautoencoder-42k"
+MODEL_NAME = "yuntian-deng/computer-doom-finalautoencoder-50k"
+MODEL_NAME = "yuntian-deng/computer-doom-finalautoencoder-80k"
+MODEL_NAME = "yuntian-deng/computer-doom-finalautoencoder-ss-22k"
+MODEL_NAME = "yuntian-deng/computer-doom-finalautoencoder-ss-40k"
 
 # latest
 
@@ -339,6 +343,10 @@ LOCAL_CHECKPOINT_PATH = "./model_1024_768_finalautoencoder_tune//model-step=0300
 LOCAL_CHECKPOINT_PATH = "./model_1024_768_finalautoencoder_tune//model-step=032000.ckpt"
 LOCAL_CHECKPOINT_PATH = "./model_1024_768_finalautoencoder_tune//model-step=038000.ckpt"
 LOCAL_CHECKPOINT_PATH = "./model_1024_768_finalautoencoder_tune//model-step=042000.ckpt"
+LOCAL_CHECKPOINT_PATH = "./model_1024_768_finalautoencoder_tune//model-step=050000.ckpt"
+LOCAL_CHECKPOINT_PATH = "./model_1024_768_finalautoencoder_tune//model-step=080000.ckpt"
+LOCAL_CHECKPOINT_PATH = "./model_1024_768_finalautoencoder_tune_ss/model-step=022000.ckpt"
+LOCAL_CHECKPOINT_PATH = "./model_1024_768_finalautoencoder_tune_ss/model-step=040000.ckpt"
 CONFIG_PATH = "config_csllm.yaml"
 CONFIG_PATH = "configs/2e5_debug_gpt_firstframe.yaml"
 CONFIG_PATH = "configs/2e5_debug_gpt_firstframe_identity.yaml"

@@ -266,6 +266,7 @@ if __name__ == "__main__":
         ('1024_768.8gpus', 'log.1024_768_1gpu.2.2.2.2.8gpus'),
         ('1024_768.8gpus.2', 'log.1024_768_1gpu.2.2.2.2.8gpus.2'),
         ('finalautoencoder.1gpu', 'log.finalautoencoder_1024_768.1gpu'),
+        ('finalautoencoder.1gpu.ss', 'log.finalautoencoder_1024_768.1gpu.ss'),
         #('joint_onlineonly_eps222232aip22', 'log.fb.computecanada.challengingandsample.pretrainrnn.balanced.lr5e6.contbest.samplercover.newd.contfreezernn.newnewd.origunet.nospatial2.ONLINE.online.online.x0.joint_onlineonly.2.2.2.2.3.2.7.2.2.2.aip.2.2'),
     ]
     

@@ -297,6 +297,9 @@ class TemporalEncoder(nn.Module):
                         #import pdb; pdb.set_trace()
                         kernel = torch.exp(-((x_grid - (x_prev/float(CURSOR_POSITION_DOWNSAMPLING_FACTOR)).view(-1, 1, 1))**2 + (y_grid - (y_prev/float(CURSOR_POSITION_DOWNSAMPLING_FACTOR)).view(-1, 1, 1))**2) / (2 * sigma**2)).unsqueeze(1)
                         output = torch.cat([output[:, :-1], kernel], dim=1)
+                        #assert t == sequence_length - 1, (t, sequence_length-1)
+                        last_latent_frame = inputs[t-1]['image_features']  # [B, input_channels, H, W]
+                        output = torch.cat([output, last_latent_frame], dim=1)  # [B, output_channels + input_channels, H, W]
                         c_dict = {'c_concat': output}
                         if hasattr(sampler, 'p_sample_loop'):
                             print ('p_sample_loop')
@@ -350,6 +353,9 @@ class TemporalEncoder(nn.Module):
                                     #z_samples.append(batch_samples)
                         if not DEBUG:
                             image_features = torch.where(is_padding.view(-1, 1, 1, 1), image_features, samples_ddim)
+                            inputs_t['image_features'] = image_features# bsz, num_channels, height, width
+                        else:
+                            assert False
             assert image_features.shape[1] == self.input_channels, f"image_features.shape[1] = {image_features.shape[-1]} != self.input_channels = {self.input_channels}"
             if DEBUG:
                 image_features_prev = image_features
@@ -422,6 +428,9 @@ class TemporalEncoder(nn.Module):
         #output[:, 0, :, :] = 0
         #output[torch.arange(batch_size), 0, (y//CURSOR_POSITION_DOWNSAMPLING_FACTOR).long(), (x//CURSOR_POSITION_DOWNSAMPLING_FACTOR).long()] = 1
         
+        # Concatenate the last latent frame with the output
+        last_latent_frame = inputs[-1]['image_features']  # [B, input_channels, H, W]
+        output = torch.cat([output, last_latent_frame], dim=1)  # [B, output_channels + input_channels, H, W]
         return output
 
     def encode(self, x):
@@ -558,6 +567,10 @@ class TemporalEncoder(nn.Module):
         #import pdb; pdb.set_trace()
         kernel = torch.exp(-((x_grid - (x/float(CURSOR_POSITION_DOWNSAMPLING_FACTOR)).view(-1, 1, 1))**2 + (y_grid - (y/float(CURSOR_POSITION_DOWNSAMPLING_FACTOR)).view(-1, 1, 1))**2) / (2 * sigma**2)).unsqueeze(1)
         output = torch.cat([output[:, :-1], kernel], dim=1)
+
+        # Concatenate the last latent frame with the output
+        last_latent_frame = inputs_t['image_features']  # [B, input_channels, H, W]
+        output = torch.cat([output, last_latent_frame], dim=1)  # [B, output_channels + input_channels, H, W]
 
         hidden_states = {
             'h_lower': hidden_states_h_lower,

@@ -91,9 +91,9 @@ def load_model_from_config(config, ckpt, verbose=True):
         k: v for k, v in sd.items()
         if k in model_state and v.shape == model_state[k].shape #and ('temporal_encoder' not in k)
     }
-    # remove keys that starts with model.
-    print (f'removing keys that starts with model.')
-    sd = {k: v for k, v in sd.items() if not k.startswith('model.')}
+    ## remove keys that starts with model.
+    #print (f'removing keys that starts with model.')
+    #sd = {k: v for k, v in sd.items() if not k.startswith('model.')}
     print (len(sd), 'filtered state dict')
 
     try:

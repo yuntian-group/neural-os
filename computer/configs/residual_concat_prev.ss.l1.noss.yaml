@@ -1,4 +1,4 @@
-save_path: ./model_1024_768_finalautoencoder_tune_tune_ss_l1_noss
+save_path: ./model_1024_768_finalautoencoder_tune_tune_ss_l1_noss_noinitunet
 
 model:
   base_learning_rate: 5e-06

@@ -153,6 +153,7 @@ MODEL_NAME = "yuntian-deng/computer-doom-finalautoencoder-50k"
 MODEL_NAME = "yuntian-deng/computer-doom-finalautoencoder-80k"
 MODEL_NAME = "yuntian-deng/computer-doom-finalautoencoder-ss-22k"
 MODEL_NAME = "yuntian-deng/computer-doom-finalautoencoder-ss-40k"
+MODEL_NAME = "yuntian-deng/computer-doom-finalautoencoder-ss-46k"
 
 # latest
 
@@ -347,6 +348,7 @@ LOCAL_CHECKPOINT_PATH = "./model_1024_768_finalautoencoder_tune//model-step=0500
 LOCAL_CHECKPOINT_PATH = "./model_1024_768_finalautoencoder_tune//model-step=080000.ckpt"
 LOCAL_CHECKPOINT_PATH = "./model_1024_768_finalautoencoder_tune_ss/model-step=022000.ckpt"
 LOCAL_CHECKPOINT_PATH = "./model_1024_768_finalautoencoder_tune_ss/model-step=040000.ckpt"
+LOCAL_CHECKPOINT_PATH = "./model_1024_768_finalautoencoder_tune_ss/model-step=046000.ckpt"
 CONFIG_PATH = "config_csllm.yaml"
 CONFIG_PATH = "configs/2e5_debug_gpt_firstframe.yaml"
 CONFIG_PATH = "configs/2e5_debug_gpt_firstframe_identity.yaml"

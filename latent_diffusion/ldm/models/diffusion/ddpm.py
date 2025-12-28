@@ -1328,7 +1328,8 @@ class LatentDiffusion(DDPM):
                 if self.freezernn or self.run_eval:
                     output_from_rnn = self.temporal_encoder(inputs_to_rnn)
                     print ('warning: no grad')
-                else:
+                #else:
+                if True:
                     with torch.enable_grad():
                         # scheduled sampling
                         proposal = random.random()
@@ -1346,9 +1347,10 @@ class LatentDiffusion(DDPM):
                         self.temporal_encoder.per_channel_mean = per_channel_mean
                         self.temporal_encoder.per_channel_std = per_channel_std
                         # Calculate scheduled sampling length deterministically based on global_step
-                        base = self.global_step + 1
+                        base = self.global_step // 20 + 1
                         scheduled_sampling_length = geometric_sample_deterministic(base, self.scheduled_sampling_length)
-                        print (f"Scheduled sampling length: {scheduled_sampling_length}")
+                        if sampler is not None:
+                            print (f"Scheduled sampling length: {scheduled_sampling_length}")
                         output_from_rnn = self.temporal_encoder(inputs_to_rnn, sampler, scheduled_sampling_length, self.scheduled_sampling_ddim_steps, self.first_stage_model)
                 
                 #output_from_rnn = self.temporal_encoder(inputs_to_rnn)

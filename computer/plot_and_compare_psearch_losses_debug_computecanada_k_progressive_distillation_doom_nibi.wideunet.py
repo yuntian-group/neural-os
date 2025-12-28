@@ -106,7 +106,7 @@ def smooth_losses(losses, window_size=100):
     #    window_size = max(1, len(losses) // 10)
     #return np.convolve(losses, np.ones(window_size)/window_size, mode='valid')
 
-def plot_and_compare_losses(losses_dict, output_png='loss_doom_7gpus.2.nibi.finalautoencoder.wideunet.png'):
+def plot_and_compare_losses(losses_dict, output_png='loss_doom_7gpus.2.nibi.finalautoencoder.wideunet.ss.unfreeze.1vs64.png'):
     """
     Plot and compare multiple loss curves on a single graph.
     
@@ -269,6 +269,12 @@ if __name__ == "__main__":
         #('finalautoencoder.1gpu.ss', 'log.finalautoencoder_1024_768.1gpu.ss'),
         ('origunet_freezernn', 'log.residual_concat_prev.ss.l1.noss.freezernn'),
         ('wideunet_freezernn', 'log.residual_concat_prev.ss.l1.noss.wideunet.freezernn'),
+        ('origunet_freezernn ss', 'log.residual_concat_prev.ss.l1.noss.freezernn.ss'),
+        ('wideunet_freezernn ss', 'log.residual_concat_prev.ss.l1.noss.wideunet.freezernn.ss'),
+        ('origunet_freezernn ss2', 'log.residual_concat_prev.ss.l1.noss.freezernn.ss.ss'),
+        ('wideunet_freezernn ss2', 'log.residual_concat_prev.ss.l1.noss.wideunet.freezernn.ss.ss'),
+        ('wideunet_freezernn ss2 l1 unfreeze', 'log.residual_concat_prev.ss.l1.noss.wideunet.freezernn.ss.ss.unfreeze.ss1'),
+        ('wideunet_freezernn ss2 l64 unfreeze', 'log.residual_concat_prev.ss.l1.noss.wideunet.freezernn.ss.ss.unfreeze.ss64'),
         #('joint_onlineonly_eps222232aip22', 'log.fb.computecanada.challengingandsample.pretrainrnn.balanced.lr5e6.contbest.samplercover.newd.contfreezernn.newnewd.origunet.nospatial2.ONLINE.online.online.x0.joint_onlineonly.2.2.2.2.3.2.7.2.2.2.aip.2.2'),
     ]
     

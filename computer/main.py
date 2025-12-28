@@ -148,6 +148,10 @@ if __name__ == "__main__":
             ckpt_folder = save_path[:-len('_tune')]
         if save_path.endswith('_ss'):
             ckpt_folder = save_path[:-len('_ss')]
+        if save_path.endswith('_unfreeze_ss64'):
+            ckpt_folder = save_path[:-len('_unfreeze_ss64')]
+        if save_path.endswith('_unfreeze_ss1'):
+            ckpt_folder = save_path[:-len('_unfreeze_ss1')]
         if save_path.endswith('_noss_noinitunet_freezernn'):
             ckpt_folder = save_path[:-len('_noss_noinitunet_freezernn')]
         if save_path.endswith('_noss_noinitunet_wideunet_freezernn'):

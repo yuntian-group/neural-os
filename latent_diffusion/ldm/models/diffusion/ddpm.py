@@ -517,6 +517,7 @@ class LatentDiffusion(DDPM):
                  scheduled_sampling_ddim_steps,
                  first_stage_config,
                  cond_stage_config,
+                 scheduled_sampling_strategy='geometric',
                  temporal_encoder_config=None,  # New parameter
                  num_timesteps_cond=None,
                  cond_stage_key="image",
@@ -541,6 +542,7 @@ class LatentDiffusion(DDPM):
         self.scheduled_sampling_length = scheduled_sampling_length
         self.scheduled_sampling_ddim_steps = scheduled_sampling_ddim_steps
         self.scale_by_std = scale_by_std
+        self.scheduled_sampling_strategy = scheduled_sampling_strategy
         # Distillation flags
         self.distill_progressive = distill_progressive
         self.distill_params = distill_params or {}
@@ -1348,7 +1350,12 @@ class LatentDiffusion(DDPM):
                         self.temporal_encoder.per_channel_std = per_channel_std
                         # Calculate scheduled sampling length deterministically based on global_step
                         base = self.global_step // 20 + 1
-                        scheduled_sampling_length = geometric_sample_deterministic(base, self.scheduled_sampling_length)
+                        if self.scheduled_sampling_strategy == 'geometric':
+                            scheduled_sampling_length = geometric_sample_deterministic(base, self.scheduled_sampling_length)
+                        elif self.scheduled_sampling_strategy == 'uniform':
+                            scheduled_sampling_length = (base-1) % self.scheduled_sampling_length + 1
+                        else:
+                            assert False, f"Scheduled sampling strategy {self.scheduled_sampling_strategy} not implemented"
                         if sampler is not None:
                             print (f"Scheduled sampling length: {scheduled_sampling_length}")
                         output_from_rnn = self.temporal_encoder(inputs_to_rnn, sampler, scheduled_sampling_length, self.scheduled_sampling_ddim_steps, self.first_stage_model)

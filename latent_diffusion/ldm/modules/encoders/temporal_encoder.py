@@ -280,7 +280,7 @@ class TemporalEncoder(nn.Module):
             
             image_features = inputs_t['image_features'] # bsz, num_channels, height, width
 
-            if sampler is not None and t >= sequence_length - scheduled_sampling_length:
+            if sampler is not None and t >= sequence_length - scheduled_sampling_length and t > 0:
                 #import pdb; pdb.set_trace()
                 #for scheduled_sampling_ddim_steps in [8, 16, 32, 64]:
                 if True:

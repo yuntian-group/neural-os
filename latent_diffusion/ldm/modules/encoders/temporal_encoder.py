@@ -279,6 +279,7 @@ class TemporalEncoder(nn.Module):
 
             
             image_features = inputs_t['image_features'] # bsz, num_channels, height, width
+            #scheduled_sampling_length = 64
 
             if sampler is not None and t >= sequence_length - scheduled_sampling_length and t > 0:
                 #import pdb; pdb.set_trace()
@@ -313,6 +314,7 @@ class TemporalEncoder(nn.Module):
                                                     verbose=False,)
                         # only apply sampling mask where is_padding is False
                         # save images for debugging
+                        #DEBUG = True
                         if DEBUG:
                             #import pdb; pdb.set_trace()
                             decode_batch_size = 1
@@ -326,7 +328,8 @@ class TemporalEncoder(nn.Module):
                                         image = batch_encoded_images[kkk].permute(1, 2, 0).cpu().numpy()
                                         image = image.astype(np.uint8)
                                         image = Image.fromarray(image)
-                                        image.save(f'finalscheduled_sampling_ddim_step_{idx}_{t}_sample_{kkk}_{scheduled_sampling_ddim_steps}.png')
+                                        #image.save(f'finalscheduled_sampling_ddim_step_{idx}_{t}_sample_{kkk}_{scheduled_sampling_ddim_steps}.png')
+                                        image.save(f'debugss_{scheduled_sampling_length}_{idx}_{t}_sample_{kkk}_{scheduled_sampling_ddim_steps}.png')
                                     #x_samples_ddim.append(batch_decoded)
                                     batch_gt = image_features[idx:min(idx + decode_batch_size, samples.shape[0])]
                                     batch_samples = batch_gt * self.per_channel_std.view(1, -1, 1, 1) + self.per_channel_mean.view(1, -1, 1, 1)
@@ -337,7 +340,7 @@ class TemporalEncoder(nn.Module):
                                         image = batch_encoded_images[kkk].permute(1, 2, 0).cpu().numpy()
                                         image = image.astype(np.uint8)
                                         image = Image.fromarray(image)
-                                        image.save(f'finalscheduled_sampling_ddim_step_{idx}_{t}_sample_{kkk}.gt.png')
+                                        image.save(f'debugss_{scheduled_sampling_length}_{idx}_{t}_sample_{kkk}.gt.png')
                                     batch_gt = image_features_prev[idx:min(idx + decode_batch_size, samples.shape[0])]
                                     batch_samples = batch_gt * self.per_channel_std.view(1, -1, 1, 1) + self.per_channel_mean.view(1, -1, 1, 1)
                                     batch_decoded = first_stage_model.decode(batch_samples)
@@ -347,15 +350,18 @@ class TemporalEncoder(nn.Module):
                                         image = batch_encoded_images[kkk].permute(1, 2, 0).cpu().numpy()
                                         image = image.astype(np.uint8)
                                         image = Image.fromarray(image)
-                                        image.save(f'finalscheduled_sampling_ddim_step_{idx}_{t}_sample_{kkk}.prev.png')
+                                        image.save(f'debugss_{scheduled_sampling_length}_{idx}_{t}_sample_{kkk}.prev.png')
                                     #batch_encoded = self.encode_first_stage(batch_decoded).sample()
                                     #z_samples.append(batch_encoded)
                                     #z_samples.append(batch_samples)
-                        if not DEBUG:
-                            image_features = torch.where(is_padding.view(-1, 1, 1, 1), image_features, samples_ddim)
-                            inputs_t['image_features'] = image_features# bsz, num_channels, height, width
-                        else:
-                            assert False
+                                    #import pdb; pdb.set_trace()
+                        image_features = torch.where(is_padding.view(-1, 1, 1, 1), image_features, samples_ddim)
+                        inputs_t['image_features'] = image_features# bsz, num_channels, height, width
+                        #if not DEBUG:
+                        #    image_features = torch.where(is_padding.view(-1, 1, 1, 1), image_features, samples_ddim)
+                        #    inputs_t['image_features'] = image_features# bsz, num_channels, height, width
+                        #else:
+                        #    assert False
             assert image_features.shape[1] == self.input_channels, f"image_features.shape[1] = {image_features.shape[-1]} != self.input_channels = {self.input_channels}"
             if DEBUG:
                 image_features_prev = image_features

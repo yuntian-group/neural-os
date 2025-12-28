@@ -429,7 +429,7 @@ class TemporalEncoder(nn.Module):
         # Use the last channel of the temporal encoder output as a gating signal (before we overwrite it with the kernel).
         gate_logits = output[:, -1:, :, :]  # [B, 1, H, W]
         gate = torch.sigmoid(gate_logits)  # [B, 1, H, W]
-        import pdb; pdb.set_trace()
+        #import pdb; pdb.set_trace()
 
         device = output.device
         y_grid = torch.arange(self.output_height, device=device).view(1, -1, 1)

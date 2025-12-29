@@ -292,18 +292,19 @@ class TemporalEncoder(nn.Module):
                         output = output.reshape(batch_size, self.output_channels, self.output_height, self.output_width)
                         # concatenate output with Gaussian kernel of positions
                         # Use the last channel of the temporal encoder output as a gating signal (before we overwrite it with the kernel).
-                        gate_logits = output[:, -1:, :, :]  # [B, 1, H, W]
-                        gate = torch.sigmoid(gate_logits)  # [B, 1, H, W]
+                        #gate_logits = output[:, -1:, :, :]  # [B, 1, H, W]
+                        #gate = torch.sigmoid(gate_logits)  # [B, 1, H, W]
                         device = output.device
                         y_grid = torch.arange(self.output_height, device=device).view(1, -1, 1)
                         x_grid = torch.arange(self.output_width, device=device).view(1, 1, -1)
                         sigma = torch.exp(self.log_sigma)
                         #import pdb; pdb.set_trace()
                         kernel = torch.exp(-((x_grid - (x_prev/float(CURSOR_POSITION_DOWNSAMPLING_FACTOR)).view(-1, 1, 1))**2 + (y_grid - (y_prev/float(CURSOR_POSITION_DOWNSAMPLING_FACTOR)).view(-1, 1, 1))**2) / (2 * sigma**2)).unsqueeze(1)
-                        output = torch.cat([output[:, :-1] * (1.0 - gate), kernel], dim=1)
+                        #output = torch.cat([output[:, :-1] * (1.0 - gate), kernel], dim=1)
+                        output = torch.cat([output[:, :-1], kernel], dim=1)
                         #assert t == sequence_length - 1, (t, sequence_length-1)
-                        last_latent_frame = inputs[t-1]['image_features']  # [B, input_channels, H, W]
-                        output = torch.cat([output, last_latent_frame * gate], dim=1)  # [B, output_channels + input_channels, H, W]
+                        #last_latent_frame = inputs[t-1]['image_features']  # [B, input_channels, H, W]
+                        #output = torch.cat([output, last_latent_frame * gate], dim=1)  # [B, output_channels + input_channels, H, W]
                         c_dict = {'c_concat': output}
                         if hasattr(sampler, 'p_sample_loop'):
                             print ('p_sample_loop')
@@ -427,8 +428,8 @@ class TemporalEncoder(nn.Module):
         output = output.reshape(batch_size, self.output_channels, self.output_height, self.output_width)
         # concatenate output with Gaussian kernel of positions
         # Use the last channel of the temporal encoder output as a gating signal (before we overwrite it with the kernel).
-        gate_logits = output[:, -1:, :, :]  # [B, 1, H, W]
-        gate = torch.sigmoid(gate_logits)  # [B, 1, H, W]
+        #gate_logits = output[:, -1:, :, :]  # [B, 1, H, W]
+        #gate = torch.sigmoid(gate_logits)  # [B, 1, H, W]
         #import pdb; pdb.set_trace()
 
         device = output.device
@@ -437,14 +438,15 @@ class TemporalEncoder(nn.Module):
         sigma = torch.exp(self.log_sigma)
         #import pdb; pdb.set_trace()
         kernel = torch.exp(-((x_grid - (x/float(CURSOR_POSITION_DOWNSAMPLING_FACTOR)).view(-1, 1, 1))**2 + (y_grid - (y/float(CURSOR_POSITION_DOWNSAMPLING_FACTOR)).view(-1, 1, 1))**2) / (2 * sigma**2)).unsqueeze(1)
-        output = torch.cat([output[:, :-1] * (1.0 - gate), kernel], dim=1)
+        #output = torch.cat([output[:, :-1] * (1.0 - gate), kernel], dim=1)
+        output = torch.cat([output[:, :-1], kernel], dim=1)
         #print ('cheating')
         #output[:, 0, :, :] = 0
         #output[torch.arange(batch_size), 0, (y//CURSOR_POSITION_DOWNSAMPLING_FACTOR).long(), (x//CURSOR_POSITION_DOWNSAMPLING_FACTOR).long()] = 1
         
         # Gated carry: use gate_logits -> sigmoid -> expand to latent channels, then blend previous latent vs proposal.
-        last_latent_frame = inputs[-1]['image_features']  # [B, input_channels, H, W]
-        output = torch.cat([output, last_latent_frame * gate], dim=1)  # [B, output_channels + input_channels, H, W]
+        #last_latent_frame = inputs[-1]['image_features']  # [B, input_channels, H, W]
+        #output = torch.cat([output, last_latent_frame * gate], dim=1)  # [B, output_channels + input_channels, H, W]
         return output
 
     def encode(self, x):
@@ -575,19 +577,20 @@ class TemporalEncoder(nn.Module):
         # Reshape to spatial feature map: [B, output_channels*output_height*output_width] -> [B, output_channels, output_height, output_width]
         output = output.reshape(batch_size, self.output_channels, self.output_height, self.output_width)
         # Use the last channel of the temporal encoder output as a gating signal (before we overwrite it with the kernel).
-        gate_logits = output[:, -1:, :, :]  # [B, 1, H, W]
-        gate = torch.sigmoid(gate_logits)  # [B, 1, H, W]
+        #gate_logits = output[:, -1:, :, :]  # [B, 1, H, W]
+        #gate = torch.sigmoid(gate_logits)  # [B, 1, H, W]
         device = output.device
         y_grid = torch.arange(self.output_height, device=device).view(1, -1, 1)
         x_grid = torch.arange(self.output_width, device=device).view(1, 1, -1)
         sigma = torch.exp(self.log_sigma)
         #import pdb; pdb.set_trace()
         kernel = torch.exp(-((x_grid - (x/float(CURSOR_POSITION_DOWNSAMPLING_FACTOR)).view(-1, 1, 1))**2 + (y_grid - (y/float(CURSOR_POSITION_DOWNSAMPLING_FACTOR)).view(-1, 1, 1))**2) / (2 * sigma**2)).unsqueeze(1)
-        output = torch.cat([output[:, :-1] * (1.0 - gate), kernel], dim=1)
+        #output = torch.cat([output[:, :-1] * (1.0 - gate), kernel], dim=1)
+        output = torch.cat([output[:, :-1], kernel], dim=1)
 
         # Concatenate the last latent frame with the output
-        last_latent_frame = inputs_t['image_features']  # [B, input_channels, H, W]
-        output = torch.cat([output, last_latent_frame * gate], dim=1)  # [B, output_channels + input_channels, H, W]
+        #last_latent_frame = inputs_t['image_features']  # [B, input_channels, H, W]
+        #output = torch.cat([output, last_latent_frame * gate], dim=1)  # [B, output_channels + input_channels, H, W]
 
         hidden_states = {
             'h_lower': hidden_states_h_lower,

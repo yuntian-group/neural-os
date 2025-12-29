@@ -158,6 +158,8 @@ if __name__ == "__main__":
             ckpt_folder = save_path[:-len('_noss_noinitunet_wideunet_freezernn')]
         if save_path.endswith('_2gpus'):
             ckpt_folder = save_path[:-len('_2gpus')]
+        if save_path.endswith('_u320'):
+            ckpt_folder = save_path[:-len('_u320')]
         if save_path.endswith('_2gpus_gate'):
             ckpt_folder = save_path[:-len('_2gpus_gate')]
         m = re.match(r'.*?(_to_\d+)$', save_path)

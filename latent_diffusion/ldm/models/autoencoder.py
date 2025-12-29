@@ -567,7 +567,7 @@ class AutoencoderKL(pl.LightningModule):
                                         last_layer=self.get_last_layer(), split="val")
 
         if self.loss.use_discriminator:
-        discloss, log_dict_disc = self.loss(inputs, reconstructions, posterior, 1, self.global_step,
+            discloss, log_dict_disc = self.loss(inputs, reconstructions, posterior, 1, self.global_step,
                                             last_layer=self.get_last_layer(), split="val")
         else:
             discloss = torch.tensor(0.0, device=inputs.device)

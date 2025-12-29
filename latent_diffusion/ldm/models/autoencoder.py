@@ -514,7 +514,7 @@ class AutoencoderKL(pl.LightningModule):
             
             # Return loss for automatic optimization (Lightning handles backward/step)
             return aeloss
-    
+
     def on_before_optimizer_step(self, optimizer):
         """Hook called before optimizer step - used for gradient clipping and logging in automatic mode"""
         if not self.loss.use_discriminator:
@@ -567,8 +567,8 @@ class AutoencoderKL(pl.LightningModule):
                                         last_layer=self.get_last_layer(), split="val")
 
         if self.loss.use_discriminator:
-            discloss, log_dict_disc = self.loss(inputs, reconstructions, posterior, 1, self.global_step,
-                                                last_layer=self.get_last_layer(), split="val")
+        discloss, log_dict_disc = self.loss(inputs, reconstructions, posterior, 1, self.global_step,
+                                            last_layer=self.get_last_layer(), split="val")
         else:
             discloss = torch.tensor(0.0, device=inputs.device)
             log_dict_disc = {
@@ -592,8 +592,8 @@ class AutoencoderKL(pl.LightningModule):
                                   lr=lr, betas=(0.5, 0.9))
         
         if self.loss.use_discriminator:
-            opt_disc = torch.optim.Adam(self.loss.discriminator.parameters(),
-                                        lr=lr, betas=(0.5, 0.9))
+        opt_disc = torch.optim.Adam(self.loss.discriminator.parameters(),
+                                    lr=lr, betas=(0.5, 0.9))
             
             if self.scheduler_config is not None:
                 scheduler = instantiate_from_config(self.scheduler_config)
@@ -612,7 +612,7 @@ class AutoencoderKL(pl.LightningModule):
                 ]
                 return [opt_ae, opt_disc], scheduler
             else:
-                return [opt_ae, opt_disc], []
+        return [opt_ae, opt_disc], []
         else:
             if self.scheduler_config is not None:
                 scheduler = instantiate_from_config(self.scheduler_config)

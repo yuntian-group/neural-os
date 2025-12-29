@@ -7,6 +7,77 @@ from data.data_processing.datasets import ActionsData
 from latent_diffusion.ldm.models.diffusion.ddpm import LatentDiffusion, disabled_train
 
 
+def _copy_tensor_overlapping(dst: torch.Tensor, src: torch.Tensor) -> torch.Tensor:
+    """
+    Copy src into dst on the overlapping top-left slice.
+
+    Requirements:
+      - src.ndim == dst.ndim
+      - for every dimension: src.shape[d] <= dst.shape[d]
+    """
+    if src.ndim != dst.ndim:
+        raise ValueError(f"ndim mismatch: src.ndim={src.ndim} dst.ndim={dst.ndim}")
+    if any(s > d for s, d in zip(src.shape, dst.shape)):
+        raise ValueError(f"shape not compatible: src.shape={tuple(src.shape)} dst.shape={tuple(dst.shape)}")
+    # keep dst's existing init for the "new" region; overwrite only the overlap
+    out = dst.clone()
+    slices = tuple(slice(0, int(s)) for s in src.shape)
+    out[slices] = src.to(dtype=dst.dtype)
+    return out
+
+
+def _build_partial_unet_state_dict(
+    model_state: dict,
+    ckpt_state: dict,
+    prefix: str = "model.diffusion_model.",
+    verbose: bool = True,
+) -> dict:
+    """
+    Build a state_dict to load into the model, allowing partial loads for UNet tensors.
+
+    For keys under `prefix`:
+      - if shapes match: load as-is
+      - if ckpt tensor is smaller (elementwise per-dim): copy into model tensor
+      - otherwise: skip
+
+    For keys outside `prefix`: only load if shapes match exactly.
+    """
+    out_sd = {}
+    exact_loaded = 0
+    partial_loaded = 0
+    skipped = 0
+
+    for k, v in ckpt_state.items():
+        if k not in model_state:
+            continue
+        dst = model_state[k]
+        if not torch.is_tensor(v) or not torch.is_tensor(dst):
+            continue
+
+        if k.startswith(prefix):
+            if v.shape == dst.shape:
+                out_sd[k] = v.to(dtype=dst.dtype)
+                exact_loaded += 1
+            elif v.ndim == dst.ndim and all(int(s) <= int(d) for s, d in zip(v.shape, dst.shape)):
+                out_sd[k] = _copy_tensor_overlapping(dst, v)
+                partial_loaded += 1
+            else:
+                assert False, f"Shape mismatch: {k} {v.shape} {dst.shape}"
+        else:
+            if v.shape == dst.shape:
+                out_sd[k] = v.to(dtype=dst.dtype)
+                exact_loaded += 1
+            else:
+                assert False, f"Shape mismatch: {k} {v.shape} {dst.shape}"
+
+    if verbose:
+        print(
+            f"[load_model_from_config] prepared state_dict: "
+            f"{exact_loaded} exact, {partial_loaded} partial (prefix={prefix}), {skipped} skipped"
+        )
+    return out_sd
+
+
 def init_model(config: OmegaConf):
 
     """
@@ -87,6 +158,13 @@ def load_model_from_config(config, ckpt, verbose=True):
     sd = pl_sd["state_dict"]
     model = instantiate_from_config(config.model)
     model_state = model.state_dict()
+    sd = _build_partial_unet_state_dict(
+        model_state=model_state,
+        ckpt_state=sd,
+        prefix="model.diffusion_model.",
+        verbose=verbose,
+    )
+    print(len(sd), 'filtered/partial state dict')
     sd = {
         k: v for k, v in sd.items()
         if k in model_state and v.shape == model_state[k].shape #and ('temporal_encoder' not in k)
@@ -95,7 +173,6 @@ def load_model_from_config(config, ckpt, verbose=True):
     #print (f'removing keys that starts with model.')
     #sd = {k: v for k, v in sd.items() if not k.startswith('model.')}
     print (len(sd), 'filtered state dict')
-
     try:
         m, u = model.load_state_dict(sd, strict=False)
 

@@ -1,4 +1,4 @@
-save_path: ./model_1024_768_finalautoencoder_tune_ss_u320
+save_path: ./model_1024_768_finalautoencoder_tune_ss_u320_freezernn
 
 model:
   base_learning_rate: 5e-06
@@ -8,7 +8,7 @@ model:
     beta_schedule: linear_snr0
     use_ema: false
     pretrain: false
-    freezernn: false
+    freezernn: True
     run_eval: false
     pretrain2: false
     pretrain3: false

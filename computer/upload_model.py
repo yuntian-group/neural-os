@@ -155,6 +155,10 @@ MODEL_NAME = "yuntian-deng/computer-doom-finalautoencoder-ss-22k"
 MODEL_NAME = "yuntian-deng/computer-doom-finalautoencoder-ss-40k"
 MODEL_NAME = "yuntian-deng/computer-doom-finalautoencoder-ss-46k"
 MODEL_NAME = "yuntian-deng/computer-doom-finalautoencoder-ss-wideunet-ss-ss-8k"
+MODEL_NAME = "yuntian-deng/computer-doom-finalautoencoder-u320-freezernn-4k"
+MODEL_NAME = "yuntian-deng/computer-doom-finalautoencoder-u320-freezernn-8k"
+MODEL_NAME = "yuntian-deng/computer-doom-finalautoencoder-u320-freezernn-2gpus-1k"
+MODEL_NAME = "yuntian-deng/computer-doom-finalautoencoder-u320-freezernn-2gpus-2k"
 
 # latest
 
@@ -351,6 +355,9 @@ LOCAL_CHECKPOINT_PATH = "./model_1024_768_finalautoencoder_tune_ss/model-step=02
 LOCAL_CHECKPOINT_PATH = "./model_1024_768_finalautoencoder_tune_ss/model-step=040000.ckpt"
 LOCAL_CHECKPOINT_PATH = "./model_1024_768_finalautoencoder_tune_ss/model-step=046000.ckpt"
 LOCAL_CHECKPOINT_PATH = "./model_1024_768_finalautoencoder_tune_tune_ss_l5_noss_noinitunet_wideunet_freezernn_ss_ss/model-step=008000.ckpt"
+LOCAL_CHECKPOINT_PATH = "./model_1024_768_finalautoencoder_tune_ss_u320_freezernn/model-step=008000.ckpt"
+LOCAL_CHECKPOINT_PATH = "./model_1024_768_finalautoencoder_tune_ss_u320_freezernn_2gpus_2gpus/model-step=001000.ckpt"
+LOCAL_CHECKPOINT_PATH = "./model_1024_768_finalautoencoder_tune_ss_u320_freezernn_2gpus_2gpus/model-step=002000.ckpt"
 CONFIG_PATH = "config_csllm.yaml"
 CONFIG_PATH = "configs/2e5_debug_gpt_firstframe.yaml"
 CONFIG_PATH = "configs/2e5_debug_gpt_firstframe_identity.yaml"

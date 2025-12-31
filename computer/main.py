@@ -164,6 +164,8 @@ if __name__ == "__main__":
             ckpt_folder = save_path[:-len('_u192_freezernn')]
         if save_path.endswith('_2gpus_gate'):
             ckpt_folder = save_path[:-len('_2gpus_gate')]
+        if save_path.endswith('_pretrainrnn'):
+            ckpt_folder = save_path[:-len('_pretrainrnn')]
         m = re.match(r'.*?(_to_\d+)$', save_path)
         if m:
             ckpt_folder = save_path[:-len(m.group(1))]

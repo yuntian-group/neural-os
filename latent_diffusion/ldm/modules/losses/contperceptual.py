@@ -90,24 +90,24 @@ class LPIPSWithDiscriminator(nn.Module):
             # generator update
             if self.use_discriminator:
                 # Only compute discriminator forward pass if discriminator is enabled
-            if cond is None:
-                assert not self.disc_conditional
-                logits_fake = self.discriminator(reconstructions.contiguous())
-            else:
-                assert self.disc_conditional
-                logits_fake = self.discriminator(torch.cat((reconstructions.contiguous(), cond), dim=1))
-            g_loss = -torch.mean(logits_fake)
+                if cond is None:
+                    assert not self.disc_conditional
+                    logits_fake = self.discriminator(reconstructions.contiguous())
+                else:
+                    assert self.disc_conditional
+                    logits_fake = self.discriminator(torch.cat((reconstructions.contiguous(), cond), dim=1))
+                g_loss = -torch.mean(logits_fake)
 
                 disc_factor = adopt_weight(self.disc_factor, global_step, threshold=self.discriminator_iter_start)
                 if disc_factor > 0.0:
-                try:
-                        # Use new-style loss for adaptive weight calculation to match the loss used for training
-                        d_weight = self.calculate_adaptive_weight(nll_loss_new_style, g_loss, last_layer=last_layer)
-                except RuntimeError:
-                    assert not self.training
+                    try:
+                            # Use new-style loss for adaptive weight calculation to match the loss used for training
+                            d_weight = self.calculate_adaptive_weight(nll_loss_new_style, g_loss, last_layer=last_layer)
+                    except RuntimeError:
+                        assert not self.training
+                        d_weight = torch.tensor(0.0)
+                else:
                     d_weight = torch.tensor(0.0)
-            else:
-                d_weight = torch.tensor(0.0)
             else:
                 # Skip discriminator computation when disabled
                 g_loss = torch.tensor(0.0, device=inputs.device)
@@ -143,21 +143,21 @@ class LPIPSWithDiscriminator(nn.Module):
             # second pass for discriminator update
             if self.use_discriminator:
                 # Only compute discriminator training if discriminator is enabled
-            if cond is None:
-                logits_real = self.discriminator(inputs.contiguous().detach())
-                logits_fake = self.discriminator(reconstructions.contiguous().detach())
-            else:
-                logits_real = self.discriminator(torch.cat((inputs.contiguous().detach(), cond), dim=1))
-                logits_fake = self.discriminator(torch.cat((reconstructions.contiguous().detach(), cond), dim=1))
+                if cond is None:
+                    logits_real = self.discriminator(inputs.contiguous().detach())
+                    logits_fake = self.discriminator(reconstructions.contiguous().detach())
+                else:
+                    logits_real = self.discriminator(torch.cat((inputs.contiguous().detach(), cond), dim=1))
+                    logits_fake = self.discriminator(torch.cat((reconstructions.contiguous().detach(), cond), dim=1))
 
-            disc_factor = adopt_weight(self.disc_factor, global_step, threshold=self.discriminator_iter_start)
-            d_loss = disc_factor * self.disc_loss(logits_real, logits_fake)
+                disc_factor = adopt_weight(self.disc_factor, global_step, threshold=self.discriminator_iter_start)
+                d_loss = disc_factor * self.disc_loss(logits_real, logits_fake)
 
-            log = {"{}/disc_loss".format(split): d_loss.clone().detach().mean(),
-                   "{}/logits_real".format(split): logits_real.detach().mean(),
-                   "{}/logits_fake".format(split): logits_fake.detach().mean()
-                   }
-            return d_loss, log
+                log = {"{}/disc_loss".format(split): d_loss.clone().detach().mean(),
+                       "{}/logits_real".format(split): logits_real.detach().mean(),
+                       "{}/logits_fake".format(split): logits_fake.detach().mean()
+                       }
+                return d_loss, log
             else:
                 # Return zero loss when discriminator is disabled (shouldn't be called, but handle gracefully)
                 d_loss = torch.tensor(0.0, device=inputs.device)

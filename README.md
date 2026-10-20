@@ -119,14 +119,17 @@ This research was supported by Compute Canada through the Resources for Research
 
 ## Citation
 
-If you use this code in your research, please cite our paper:
+If you use this code in your research, please cite [NeuralOS: Towards Simulating Operating Systems via Neural Generative Models](https://proceedings.iclr.cc/paper_files/paper/2026/hash/2174a6749c3f769358cd21ade1221b34-Abstract-Conference.html) (ICLR 2026).
 
-```
-@article{rivard2025neuralos,
-  title={NeuralOS: Towards Simulating Operating Systems via Neural Generative Models},
-  author={Rivard, Luke and Sun, Sun and Guo, Hongyu and Chen, Wenhu and Deng, Yuntian},
-  journal={arXiv preprint arXiv:2507.08800},
-  year={2025}
+```bibtex
+@inproceedings{rivard2026neuralos,
+  title = {{NeuralOS: Towards Simulating Operating Systems via Neural Generative Models}},
+  author = {Rivard, Luke and Sun, Sun and Guo, Hongyu and Chen, Wenhu and Deng, Yuntian},
+  booktitle = {International Conference on Learning Representations},
+  pages = {19648--19677},
+  year = {2026},
+  url = {https://proceedings.iclr.cc/paper_files/paper/2026/hash/2174a6749c3f769358cd21ade1221b34-Abstract-Conference.html}
 }
-
 ```
+
+[2025 preprint](https://arxiv.org/abs/2507.08800).

@@ -1,0 +1,27 @@
+cff-version: 1.2.0
+message: If you use this code in your research, please cite the NeuralOS paper below.
+type: software
+title: NeuralOS
+authors:
+- name: NeuralOS contributors
+repository-code: https://github.com/yuntian-group/neural-os
+url: https://neural-os.com/
+preferred-citation:
+  type: conference-paper
+  title: 'NeuralOS: Towards Simulating Operating Systems via Neural Generative Models'
+  authors:
+  - family-names: Rivard
+    given-names: Luke
+  - family-names: Sun
+    given-names: Sun
+  - family-names: Guo
+    given-names: Hongyu
+  - family-names: Chen
+    given-names: Wenhu
+  - family-names: Deng
+    given-names: Yuntian
+  collection-title: International Conference on Learning Representations
+  year: 2026
+  start: '19648'
+  end: '19677'
+  url: https://proceedings.iclr.cc/paper_files/paper/2026/hash/2174a6749c3f769358cd21ade1221b34-Abstract-Conference.html
